@@ -1,0 +1,70 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\nicho\\Desktop\\FullStackDev-Wil\\BlastPro\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{3E8ADCB0-ED36-5C5B-E264-1F8D0667C0B2}|BlastPro\\BlastPro.csproj|c:\\users\\nicho\\desktop\\fullstackdev-wil\\blastpro\\blastpro\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3E8ADCB0-ED36-5C5B-E264-1F8D0667C0B2}|BlastPro\\BlastPro.csproj|solutionrelative:blastpro\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3E8ADCB0-ED36-5C5B-E264-1F8D0667C0B2}|BlastPro\\BlastPro.csproj|c:\\users\\nicho\\desktop\\fullstackdev-wil\\blastpro\\blastpro\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3E8ADCB0-ED36-5C5B-E264-1F8D0667C0B2}|BlastPro\\BlastPro.csproj|solutionrelative:blastpro\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3E8ADCB0-ED36-5C5B-E264-1F8D0667C0B2}|BlastPro\\BlastPro.csproj|c:\\users\\nicho\\desktop\\fullstackdev-wil\\blastpro\\blastpro\\data\\databaseseeder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3E8ADCB0-ED36-5C5B-E264-1F8D0667C0B2}|BlastPro\\BlastPro.csproj|solutionrelative:blastpro\\data\\databaseseeder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ApplicationDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\nicho\\Desktop\\FullStackDev-Wil\\BlastPro\\BlastPro\\Data\\ApplicationDbContext.cs",
+              "RelativeDocumentMoniker": "BlastPro\\Data\\ApplicationDbContext.cs",
+              "ToolTip": "C:\\Users\\nicho\\Desktop\\FullStackDev-Wil\\BlastPro\\BlastPro\\Data\\ApplicationDbContext.cs",
+              "RelativeToolTip": "BlastPro\\Data\\ApplicationDbContext.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAADwvzUAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-17T08:44:20.473Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "DatabaseSeeder.cs",
+              "DocumentMoniker": "C:\\Users\\nicho\\Desktop\\FullStackDev-Wil\\BlastPro\\BlastPro\\Data\\DatabaseSeeder.cs",
+              "RelativeDocumentMoniker": "BlastPro\\Data\\DatabaseSeeder.cs",
+              "ToolTip": "C:\\Users\\nicho\\Desktop\\FullStackDev-Wil\\BlastPro\\BlastPro\\Data\\DatabaseSeeder.cs",
+              "RelativeToolTip": "BlastPro\\Data\\DatabaseSeeder.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-17T08:46:17.227Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\nicho\\Desktop\\FullStackDev-Wil\\BlastPro\\BlastPro\\Program.cs",
+              "RelativeDocumentMoniker": "BlastPro\\Program.cs",
+              "ToolTip": "C:\\Users\\nicho\\Desktop\\FullStackDev-Wil\\BlastPro\\BlastPro\\Program.cs",
+              "RelativeToolTip": "BlastPro\\Program.cs",
+              "ViewState": "AgIAABwAAAAAAAAAAAAQwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-17T08:45:26.032Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
