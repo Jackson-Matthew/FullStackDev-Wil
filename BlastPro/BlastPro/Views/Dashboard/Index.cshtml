@@ -1,1 +1,36 @@
+@model List<BlastPro.Mvc.Controllers.ProjectSummaryDto>
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_Layout";
+}
 
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Projects</h2>
+        <a class="btn btn-primary" href="#">New Blast Project</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">No projects yet.</div>
+    }
+    else
+    {
+        <div class="list-group">
+            @foreach (var p in Model)
+            {
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="mb-1">@p.Name</h5>
+                            <small class="text-muted">
+                                @p.SiteLocation &middot; @p.BlastType
+                            </small>
+                        </div>
+                        <span class="badge bg-secondary align-self-center">@p.Status</span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
