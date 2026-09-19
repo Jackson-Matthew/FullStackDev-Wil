@@ -21,7 +21,7 @@ public class AccountController : Controller
 
     // GET: /Account/Login
     [HttpGet]
-    [AllowAnonymous]
+    [AllowAnonymous]                 
     public IActionResult Login(string? returnUrl = null)
     {
         if (User.Identity?.IsAuthenticated == true)
@@ -32,7 +32,7 @@ public class AccountController : Controller
 
     // POST: /Account/Login
     [HttpPost]
-    [AllowAnonymous]
+    [AllowAnonymous]                  
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
@@ -46,25 +46,22 @@ public class AccountController : Controller
         }
 
         var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, result.Data.UserId),
-            new(ClaimTypes.Email,          result.Data.Email),
-            new(ClaimTypes.Name,           result.Data.FullName),
-            new("companyId",               result.Data.CompanyId.ToString()),
-            new("jwt",                     result.Data.Token)
-        };
+    {
+        new(ClaimTypes.NameIdentifier, result.Data.UserId),
+        new(ClaimTypes.Email,          result.Data.Email),
+        new(ClaimTypes.Name,           result.Data.FullName),
+        new("companyId",               result.Data.CompanyId.ToString()),
+        new("jwt",                     result.Data.Token)
+    };
         foreach (var role in result.Data.Roles)
             claims.Add(new Claim(ClaimTypes.Role, role));
 
-        var identity = new ClaimsIdentity(
-            claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(identity),
             new AuthenticationProperties { IsPersistent = model.RememberMe });
 
-        _logger.LogInformation("User {Email} signed in.", model.Email);
         return RedirectToLocal(model.ReturnUrl);
     }
 

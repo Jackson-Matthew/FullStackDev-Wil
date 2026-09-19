@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace BlastPro.Data.Migrations
+namespace BlastPro.Api.Data.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -75,6 +75,10 @@ namespace BlastPro.Data.Migrations
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     CompanyId = table.Column<int>(type: "int", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    NickName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Gender = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Country = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    TimeZoneId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     CertificationId = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
@@ -323,6 +327,7 @@ namespace BlastPro.Data.Migrations
                     MaxChargePerDelayKg = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
                     PowderFactorKgPerTonne = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: true),
                     PredictedPpvMmPerSecond = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: true),
+                    PredictedFlyrockMetres = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: true),
                     IsCurrent = table.Column<bool>(type: "bit", nullable: false),
                     CalculatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()")
                 },
@@ -330,6 +335,7 @@ namespace BlastPro.Data.Migrations
                 {
                     table.PrimaryKey("PK_CalculationResults", x => x.Id);
                     table.CheckConstraint("CK_CalculationResults_MaxCharge_NonNegative", "[MaxChargePerDelayKg] >= 0");
+                    table.CheckConstraint("CK_CalculationResults_PredictedFlyrock_NonNegative", "[PredictedFlyrockMetres] IS NULL OR [PredictedFlyrockMetres] >= 0");
                     table.CheckConstraint("CK_CalculationResults_TotalCost_NonNegative", "[TotalCost] >= 0");
                     table.CheckConstraint("CK_CalculationResults_TotalDrilling_NonNegative", "[TotalDrillingMetres] >= 0");
                     table.CheckConstraint("CK_CalculationResults_TotalExplosive_NonNegative", "[TotalExplosiveKg] >= 0");

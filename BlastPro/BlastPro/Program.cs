@@ -17,7 +17,7 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
 });
 
 // ---------------------------------------------------------------------------
-// 2. Cookie authentication (browser session) — the JWT lives inside the cookie
+// 2. Cookie authentication — the JWT lives inside the cookie
 // ---------------------------------------------------------------------------
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -38,7 +38,7 @@ builder.Services.AddControllersWithViews();
 var app = builder.Build();
 
 // ---------------------------------------------------------------------------
-// 3. Middleware — copy JWT from cookie into every outbound API call
+// 3. Middleware — copy the JWT from the cookie into every outbound API call
 // ---------------------------------------------------------------------------
 app.Use(async (context, next) =>
 {
@@ -60,8 +60,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-
-app.UseAuthentication();
+app.UseAuthentication();   
 app.UseAuthorization();
 
 app.MapControllerRoute(

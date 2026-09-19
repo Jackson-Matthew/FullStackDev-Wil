@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using BlastPro.Api.Models.Entities;  
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,6 +82,7 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 // ---------------------------------------------------------------------------
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 builder.Services.AddOpenApi();
 
 // ---------------------------------------------------------------------------
@@ -102,7 +104,9 @@ var app = builder.Build();
 // ---------------------------------------------------------------------------
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi();      // JSON spec (already there)
+    app.UseSwagger();      // serves /swagger/v1/swagger.json
+    app.UseSwaggerUI();    // serves /swagger/index.html  ← visual UI
 }
 
 app.UseHttpsRedirection();
@@ -122,12 +126,29 @@ using (var scope = app.Services.CreateScope())
 
     await db.Database.MigrateAsync();
 
+    // 1. Roles
     foreach (var role in new[] { "MainCompanyUser", "Blaster" })
     {
         if (!await roleManager.RoleExistsAsync(role))
             await roleManager.CreateAsync(new IdentityRole(role));
     }
 
+    // 2. Company
+    var company = await db.Companies.FirstOrDefaultAsync(c => c.Name == "Xploma");
+    if (company is null)
+    {
+        company = new Company
+        {
+            Name = "Xploma",
+            IsActive = true,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        };
+        db.Companies.Add(company);
+        await db.SaveChangesAsync();
+    }
+
+    // 3. Admin user — attached to the company
     const string adminEmail = "admin@xploma.co.za";
     if (await userManager.FindByEmailAsync(adminEmail) is null)
     {
@@ -138,7 +159,7 @@ using (var scope = app.Services.CreateScope())
             EmailConfirmed = true,
             IsActive = true,
             FullName = "Xploma Admin",
-            CompanyId = 1
+            CompanyId = company.Id
         };
 
         var result = await userManager.CreateAsync(admin, "Admin@12345!");
