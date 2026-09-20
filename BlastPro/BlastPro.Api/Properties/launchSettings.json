@@ -1,12 +1,12 @@
-﻿{
+{
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "BlastPro.Mvc": {
+    "BlastPro.Api": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      "launchUrl": "Account/Login",
-      "applicationUrl": "https://localhost:7001;http://localhost:5001",
+      "launchUrl": "swagger",
+      "applicationUrl": "https://localhost:7002;http://localhost:5002",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
