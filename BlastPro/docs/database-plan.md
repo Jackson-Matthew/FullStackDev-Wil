@@ -2,7 +2,7 @@
 
 ## Development database
 
-Task 2 uses Entity Framework Core with SQL Server LocalDB. The development database is named `BlastProTask2`. The connection string is stored in `BlastPro/appsettings.Development.json` and is used only in the Development environment.
+Task 2 uses Entity Framework Core with SQL Server LocalDB. The local database is named `BlastProTask2Api`. The default connection string is stored in `BlastPro.Api/appsettings.json`. The MVC project does not hold a database connection string; it calls the API. Hosting outside local development must override the connection through deployment configuration.
 
 Azure is not configured in this phase. The project uses the EF Core SQL Server provider so a future Azure SQL connection can use the same entities and migrations.
 
@@ -49,6 +49,8 @@ The additional `AspNet*` tables are standard ASP.NET Core Identity tables for ro
 
 ## Migrations
 
+Normal API startup applies migrations automatically. The commands below are only for database development, run from the `BlastPro` solution directory.
+
 Restore the repository-scoped EF tool:
 
 ```powershell
@@ -58,13 +60,13 @@ dotnet tool restore
 Create a migration after changing the EF model:
 
 ```powershell
-dotnet tool run dotnet-ef migrations add MigrationName --project BlastPro/BlastPro.csproj --startup-project BlastPro/BlastPro.csproj --output-dir Data/Migrations
+dotnet tool run dotnet-ef migrations add MigrationName --project BlastPro.Api/BlastPro.Api.csproj --startup-project BlastPro.Api/BlastPro.Api.csproj --output-dir Data/Migrations
 ```
 
 Apply pending migrations to LocalDB:
 
 ```powershell
-dotnet tool run dotnet-ef database update --project BlastPro/BlastPro.csproj --startup-project BlastPro/BlastPro.csproj
+dotnet tool run dotnet-ef database update --project BlastPro.Api/BlastPro.Api.csproj --startup-project BlastPro.Api/BlastPro.Api.csproj
 ```
 
 Do not edit the LocalDB schema manually. Change the entity model, create a migration, review it and apply it.

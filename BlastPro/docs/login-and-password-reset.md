@@ -1,16 +1,30 @@
 # Login and password reset
 
-Run both projects using their HTTPS launch profiles:
+## Run from Visual Studio
 
-```powershell
-dotnet run --project BlastPro/BlastPro.Api/BlastPro.Api.csproj
-dotnet run --project BlastPro/BlastPro/BlastPro.Mvc.csproj
-```
+1. Open `BlastPro/BlastPro.slnx` from the repository root. Do not open the older
+   nested solution inside the MVC project.
+2. If the solution is already open, stop debugging and reopen it to load the shared
+   launch profile.
+3. Select **BlastPro** in the startup dropdown next to the green Run button.
+4. Press **F5**. The API and MVC projects start together, and the browser opens
+   `https://localhost:7001/Account/Login`.
 
-These commands are run in separate terminals from the repository root. Open
-`https://localhost:7001/Account/Login`. The API uses `https://localhost:7002`.
-Use an existing local account. Normal API startup applies migrations and the
-existing initial account setup. The automated tests never connect to LocalDB.
+The shared `BlastPro.slnxLaunch` profile starts the API first and then the MVC app.
+If the profile is not visible, enable Multi-Project Launch Profiles in Visual Studio
+Options and reopen the solution. You can also right-click the solution, choose
+Configure Startup Projects, and set both BlastPro.Api and BlastPro.Mvc to Start.
+
+The API uses the saved LocalDB database **BlastProTask2Api**. No terminal connection
+string override is required. Startup applies the current migrations and initial
+account setup automatically. The MVC app calls the API and does not connect directly
+to SQL Server. The old BlastProTask2 database is left intact and is no longer selected
+by the application's saved settings.
+
+The API runs at `https://localhost:7002`; Swagger is available at
+`https://localhost:7002/swagger` but no longer opens a second browser window. Use an
+existing account in the new database, or the initial development account if the
+new database has just been created. Automated tests never connect to LocalDB.
 
 ## Login behaviour
 
