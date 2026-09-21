@@ -9,6 +9,10 @@
         <div class="card-body p-4">
             <h2 class="mb-1">Welcome to BlastPro!</h2>
             <p class="text-muted mb-4">Sign in to continue</p>
+            @if (ViewData["Notice"] is string notice)
+            {
+                <div class="alert alert-info" role="status">@notice</div>
+            }
 
             <form asp-action="Login" asp-controller="Account" method="post" novalidate>
                 <input type="hidden" asp-for="ReturnUrl" />

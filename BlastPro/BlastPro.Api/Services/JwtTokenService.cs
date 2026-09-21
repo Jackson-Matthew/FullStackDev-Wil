@@ -1,4 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using BlastPro.Api.Models.Entities;
@@ -27,6 +27,7 @@ public class JwtTokenService : IJwtTokenService
             new(ClaimTypes.NameIdentifier, user.Id),
             new(ClaimTypes.Email,          user.Email!),
             new(ClaimTypes.Name,           user.FullName),
+            new("security_stamp",          user.SecurityStamp ?? string.Empty),
             new("companyId",               user.CompanyId.ToString())
         };
         claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
