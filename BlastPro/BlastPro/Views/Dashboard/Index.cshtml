@@ -17,13 +17,13 @@
         </a>
     </div>
 
-    @if (!Model.Any())
+    @if (ViewData["Error"] == null && !Model.Any())
     {
         <div class="alert alert-info">
             No projects yet. Click <strong>New Blast Project</strong> to get started.
         </div>
     }
-    else
+    else if (ViewData["Error"] == null)
     {
         <div class="list-group">
             @foreach (var p in Model)

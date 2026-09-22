@@ -15,6 +15,7 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+builder.Services.AddHttpContextAccessor();
 
 // ---------------------------------------------------------------------------
 // 2. Cookie authentication — the JWT lives inside the cookie
@@ -38,19 +39,8 @@ builder.Services.AddControllersWithViews();
 var app = builder.Build();
 
 // ---------------------------------------------------------------------------
-// 3. Middleware — copy the JWT from the cookie into every outbound API call
+// 3. Middleware
 // ---------------------------------------------------------------------------
-app.Use(async (context, next) =>
-{
-    var jwt = context.User.FindFirst("jwt")?.Value;
-    if (!string.IsNullOrEmpty(jwt))
-    {
-        var api = context.RequestServices.GetRequiredService<IApiClient>();
-        api.SetBearerToken(jwt);
-    }
-    await next();
-});
-
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
