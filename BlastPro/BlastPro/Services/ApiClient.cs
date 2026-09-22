@@ -8,8 +8,19 @@ namespace BlastPro.Mvc.Services;
 public class ApiClient : IApiClient
 {
     private readonly HttpClient _http;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ApiClient(HttpClient http) => _http = http;
+    public ApiClient(HttpClient http, IHttpContextAccessor httpContextAccessor)
+    {
+        _http = http;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    private void SetCurrentUserToken()
+    {
+        if (_httpContextAccessor.HttpContext is { } context)
+            SetBearerToken(context.User.FindFirst("jwt")?.Value);
+    }
 
     public void SetBearerToken(string? token)
     {
@@ -22,6 +33,7 @@ public class ApiClient : IApiClient
     {
         try
         {
+            SetCurrentUserToken();
             var response = await _http.GetAsync(path);
             return await ReadResultAsync<T>(response);
         }
@@ -35,6 +47,7 @@ public class ApiClient : IApiClient
     {
         try
         {
+            SetCurrentUserToken();
             var response = await _http.PostAsJsonAsync(path, payload);
             return await ReadResultAsync<T>(response);
         }
@@ -48,6 +61,7 @@ public class ApiClient : IApiClient
     {
         try
         {
+            SetCurrentUserToken();
             var response = await _http.PutAsJsonAsync(path, payload);
             return await ReadResultAsync<T>(response);
         }
@@ -61,6 +75,7 @@ public class ApiClient : IApiClient
     {
         try
         {
+            SetCurrentUserToken();
             var response = await _http.DeleteAsync(path);
             if (response.IsSuccessStatusCode) return new ApiResult { Success = true };
 
