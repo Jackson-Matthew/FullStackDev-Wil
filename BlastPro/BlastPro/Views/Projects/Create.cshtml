@@ -1,0 +1,119 @@
+@model BlastPro.Mvc.Models.ViewModels.Projects.CreateProjectViewModel
+
+@{
+    ViewData["Title"] = "Create Project";
+    Layout = "_Layout";
+}
+
+<link rel="stylesheet" href="~/css/create-project.css" asp-append-version="true" />
+
+
+<div class="container create-project-page">
+
+    <div class="create-project-card">
+
+        <form asp-controller="Projects" asp-action="Create" method="post" novalidate>
+
+
+
+            <div class="create-project-header">
+
+                <h2 class="create-project-title">
+                    Create New Project
+                </h2>
+
+                <p class="create-project-subtitle">
+                    Set up a new blasting design project.
+                </p>
+
+            </div>
+
+            <div class="create-project-body">
+
+                <div asp-validation-summary="ModelOnly" class="create-validation-summary mb-3"></div>
+
+
+                <div class="mb-4">
+
+                    <label asp-for="Name" class="create-label"></label>
+
+                    <input asp-for="Name"
+                           class="form-control create-input"
+                           placeholder="Enter project name (e.g. North Mine Phase 1)"
+                           autofocus />
+
+                    <span asp-validation-for="Name" class="create-validation"></span>
+
+                </div>
+
+
+                <div class="mb-4">
+
+                    <label asp-for="SiteLocation" class="create-label"></label>
+
+                    <div class="create-input-wrapper">
+
+                        <input asp-for="SiteLocation"
+                               class="form-control create-input has-icon"
+                               placeholder="e.g. Krugersdorp, Gauteng, ZA" />
+
+                        <i class="bi bi-geo-alt create-input-icon"></i>
+
+                    </div>
+
+                    <span asp-validation-for="SiteLocation" class="create-validation"></span>
+
+                </div>
+
+                <div class="mb-2">
+
+                    <label asp-for="BlastType" class="create-label"></label>
+
+                    <select asp-for="BlastType" class="form-select create-select">
+
+                        <option value="">Select a blast type</option>
+                        <option value="Production">Production</option>
+                        <option value="Pre-split">Pre-split</option>
+                        <option value="Trim">Trim</option>
+                        <option value="Development">Development</option>
+                        <option value="Trench">Trench</option>
+
+                    </select>
+
+                    <span asp-validation-for="BlastType" class="create-validation"></span>
+
+                </div>
+
+            </div>
+
+            <div class="create-project-footer">
+
+                <a asp-controller="Dashboard"
+                   asp-action="Index"
+                   class="create-cancel-btn">
+
+                    Cancel
+
+                </a>
+
+                <a asp-controller="Dashboard"
+                   asp-action="Index"
+                   class="create-submit-btn">
+
+                    Create Project
+
+                </a>
+               
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
