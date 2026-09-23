@@ -20,3 +20,6 @@
 _ReSharper*/
 packages/
 *.nupkg
+
+# Local messages contain private one time password reset links
+**/App_Data/PasswordReset/

@@ -1,5 +1,6 @@
 using BlastPro.Mvc.Services;
 using BlastPro.Mvc.Services.Interfaces;
+using BlastPro.Mvc.Filters;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 var apiBaseUrl = builder.Configuration["ApiBaseUrl"]
     ?? throw new InvalidOperationException("ApiBaseUrl missing from configuration.");
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl);
@@ -29,12 +31,12 @@ builder.Services
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.SlidingExpiration = true;
+        options.SlidingExpiration = false;
         options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
     });
 
 builder.Services.AddAuthorization();
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options => options.Filters.Add<ApiAuthenticationFilter>());
 
 var app = builder.Build();
 

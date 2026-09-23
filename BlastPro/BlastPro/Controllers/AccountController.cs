@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BlastPro.Mvc.Controllers;
 
+[Authorize]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public class AccountController : Controller
 {
     private readonly IApiClient _api;
@@ -22,11 +24,12 @@ public class AccountController : Controller
     // GET: /Account/Login
     [HttpGet]
     [AllowAnonymous]                 
-    public IActionResult Login(string? returnUrl = null)
+    public IActionResult Login(string? returnUrl = null, bool expired = false)
     {
         if (User.Identity?.IsAuthenticated == true)
             return RedirectToAction("Index", "Dashboard");
 
+        if (expired) ViewData["Notice"] = "Your session has ended. Please sign in again.";
         return View(new LoginViewModel { ReturnUrl = returnUrl });
     }
 
@@ -41,10 +44,20 @@ public class AccountController : Controller
         var result = await _api.LoginAsync(model.Email, model.Password);
         if (!result.Success || result.Data is null)
         {
-            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            ModelState.AddModelError(string.Empty, result.StatusCode == System.Net.HttpStatusCode.Unauthorized
+                ? "Invalid login attempt. Check your details or try again later."
+                : "Sign in is temporarily unavailable. Please try again shortly.");
             return View(model);
         }
 
+        var now = DateTimeOffset.UtcNow;
+        var tokenExpiry = new DateTimeOffset(DateTime.SpecifyKind(result.Data.ExpiresAtUtc, DateTimeKind.Utc));
+        if (string.IsNullOrEmpty(result.Data.Token) || tokenExpiry <= now)
+        {
+            ModelState.AddModelError(string.Empty, "Sign in is temporarily unavailable. Please try again shortly.");
+            return View(model);
+        }
+        var cookieExpiry = model.RememberMe ? tokenExpiry : new[] { tokenExpiry, now.AddMinutes(60) }.Min();
         var claims = new List<Claim>
     {
         new(ClaimTypes.NameIdentifier, result.Data.UserId),
@@ -60,7 +73,11 @@ public class AccountController : Controller
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(identity),
-            new AuthenticationProperties { IsPersistent = model.RememberMe });
+            new AuthenticationProperties
+            {
+                IsPersistent = model.RememberMe, IssuedUtc = now,
+                ExpiresUtc = cookieExpiry, AllowRefresh = false
+            });
 
         return RedirectToLocal(model.ReturnUrl);
     }
@@ -87,7 +104,13 @@ public class AccountController : Controller
     {
         if (!ModelState.IsValid) return View(model);
 
-        await _api.ForgotPasswordAsync(model.Email);
+        var result = await _api.ForgotPasswordAsync(model.Email);
+        if (!result.Success || result.Data is null)
+        {
+            ModelState.AddModelError(string.Empty, "Password reset is temporarily unavailable. Please try again later.");
+            return View(model);
+        }
+        TempData["DevelopmentResetDelivery"] = result.Data.IsDevelopmentDelivery;
 
         // Always show the same confirmation — do not reveal account existence
         return RedirectToAction(nameof(ForgotPasswordConfirmation));
@@ -96,15 +119,22 @@ public class AccountController : Controller
     // GET: /Account/ForgotPasswordConfirmation
     [HttpGet]
     [AllowAnonymous]
-    public IActionResult ForgotPasswordConfirmation() => View();
+    public IActionResult ForgotPasswordConfirmation()
+    {
+        if (TempData["DevelopmentResetDelivery"] is not bool developmentDelivery)
+            return RedirectToAction(nameof(ForgotPassword));
+        ViewData["DevelopmentResetDelivery"] = developmentDelivery;
+        return View();
+    }
 
     // GET: /Account/ResetPassword
     [HttpGet]
     [AllowAnonymous]
-    public IActionResult ResetPassword(string email, string token)
+    public IActionResult ResetPassword(string? email, string? token)
     {
-        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
-            return BadRequest("Invalid password reset request.");
+        Response.Headers["Referrer-Policy"] = "no-referrer";
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(token) || token.Length > 4096)
+            return View("ResetPasswordInvalid");
 
         return View(new ResetPasswordViewModel { Email = email, Token = token });
     }
@@ -115,6 +145,7 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
     {
+        Response.Headers["Referrer-Policy"] = "no-referrer";
         if (!ModelState.IsValid) return View(model);
 
         var result = await _api.ResetPasswordAsync(
@@ -127,13 +158,16 @@ public class AccountController : Controller
             return View(model);
         }
 
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        TempData["PasswordResetComplete"] = true;
         return RedirectToAction(nameof(ResetPasswordConfirmation));
     }
 
     // GET: /Account/ResetPasswordConfirmation
     [HttpGet]
     [AllowAnonymous]
-    public IActionResult ResetPasswordConfirmation() => View();
+    public IActionResult ResetPasswordConfirmation()
+        => TempData["PasswordResetComplete"] is true ? View() : RedirectToAction(nameof(Login));
 
     // GET: /Account/AccessDenied
     [HttpGet]
