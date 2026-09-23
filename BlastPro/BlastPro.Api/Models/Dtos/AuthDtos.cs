@@ -1,6 +1,10 @@
-﻿namespace BlastPro.Api.Models.Dtos;
+using System.ComponentModel.DataAnnotations;
 
-public record LoginRequest(string Email, string Password);
+namespace BlastPro.Api.Models.Dtos;
+
+public record LoginRequest(
+    [Required, EmailAddress, StringLength(254)] string Email,
+    [Required] string Password);
 
 public class LoginResponse
 {
@@ -13,6 +17,9 @@ public class LoginResponse
     public IList<string> Roles { get; set; } = new List<string>();
 }
 
-public record ForgotPasswordRequest(string Email);
+public record ForgotPasswordRequest([Required, EmailAddress, StringLength(254)] string Email);
 
-public record ResetPasswordRequest(string Email, string Token, string NewPassword);
+public record ResetPasswordRequest(
+    [Required, EmailAddress, StringLength(254)] string Email,
+    [Required, StringLength(4096)] string Token,
+    [Required, StringLength(100, MinimumLength = 8)] string NewPassword);

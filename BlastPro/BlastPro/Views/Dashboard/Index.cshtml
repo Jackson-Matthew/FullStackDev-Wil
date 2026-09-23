@@ -1,52 +1,234 @@
 @model List<BlastPro.Mvc.Models.Dtos.ProjectSummaryDto>
+
 @{
     ViewData["Title"] = "Dashboard";
     Layout = "_Layout";
 }
 
-<div class="container mt-4">
+<link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+
+
+<div class="container dashboard-page">
 
     @if (ViewData["Error"] != null)
     {
-        <div class="alert alert-warning">@ViewData["Error"]</div>
-    }
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>My Projects</h2>
-        <a class="btn btn-primary" asp-controller="Projects" asp-action="Create">
-            + New Blast Project
-        </a>
-    </div>
-
-    @if (ViewData["Error"] == null && !Model.Any())
-    {
-        <div class="alert alert-info">
-            No projects yet. Click <strong>New Blast Project</strong> to get started.
+        <div class="alert dashboard-error">
+            @ViewData["Error"]
         </div>
     }
-    else if (ViewData["Error"] == null)
+
+
+    @if (ViewData["Error"] == null)
     {
-        <div class="list-group">
-            @foreach (var p in Model)
+
+        <div class="project-filters">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <label for="projectSearch"
+                           class="filter-label">
+
+                        Search Projects
+
+                    </label>
+
+                    <input type="text"
+                           id="projectSearch"
+                           class="form-control project-search"
+                           placeholder="Search by project name..." />
+
+                </div>
+
+
+                <div class="col-md-3">
+
+                    <label for="statusFilter"
+                           class="filter-label">
+
+                        Status
+
+                    </label>
+
+                    <select id="statusFilter"
+                            class="form-select project-status">
+
+                        <option value="all">
+                            All Statuses
+                        </option>
+
+                        <option value="reviewed">
+                            Reviewed
+                        </option>
+
+                        <option value="draft">
+                            Draft
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-md-3 d-flex align-items-end">
+
+                    <a class="new-project-btn"
+                       asp-controller="Projects"
+                       asp-action="Create">
+
+                        + New Blast Project
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="projects-card">
+
+            <div class="projects-card-header">
+                Current Blast Designs
+            </div>
+
+            <div class="project-header">
+
+                <div>
+                    Project Name
+                </div>
+
+                <div>
+                    Date Created
+                </div>
+
+                <div>
+                    Status
+                </div>
+
+                <div>
+                    Actions
+                </div>
+
+            </div>
+
+
+            @if (!Model.Any())
             {
-                <div class="list-group-item">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-1">
+                <div class="no-projects">
+
+                    No projects yet.
+
+                    <br />
+
+                    Click
+                    <strong>New Blast Project</strong>
+                    to get started.
+
+                </div>
+            }
+            else
+            {
+
+                <div id="projectList">
+
+                    @foreach (var p in Model)
+                    {
+                        <div class="project-row"
+                             data-project-name="@p.Name.ToLower()"
+                             data-project-status="@p.Status.ToLower()">
+
+
+                            @* Project Name *@
+
+                            <div>
+
                                 <a asp-controller="Projects"
                                    asp-action="Details"
                                    asp-route-id="@p.Id"
-                                   class="text-decoration-none">
+                                   class="project-name">
+
                                     @p.Name
+
                                 </a>
-                            </h5>
-                            <small class="text-muted">
-                                @p.SiteLocation &middot; @p.BlastType
-                            </small>
+
+                            </div>
+
+                            <div class="project-date">
+                            </div>
+
+                            <div>
+
+                                @if (p.Status?.ToLower() == "reviewed")
+                                {
+                                    <span class="project-status-badge status-reviewed">
+                                        Reviewed
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="project-status-badge status-draft">
+                                        Draft
+                                    </span>
+                                }
+
+                            </div>
+
+                            <div class="project-actions">
+
+                                <a asp-controller="Projects"
+                                   asp-action="Details"
+                                   asp-route-id="@p.Id"
+                                   class="project-action view"
+                                   title="View Project">
+
+                                    <i class="bi bi-arrow-right"></i>
+
+                                </a>
+
+                                <form asp-controller="Projects"
+                                      asp-action="Delete"
+                                      asp-route-id="@p.Id"
+                                      method="post"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Are you sure you want to delete this project?');">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <button type="submit"
+                                            class="project-action delete"
+                                            title="Delete Project">
+
+                                        <i class="bi bi-trash"></i>
+
+                                    </button>
+
+                                </form>
+
+                            </div>
+
                         </div>
-                        <span class="badge bg-secondary">@p.Status</span>
-                    </div>
+                    }
+
+                </div>
+
+                <div id="noSearchResults"
+                     class="no-projects"
+                     style="display: none;">
+
+                    No projects match your search.
+
                 </div>
             }
+
         </div>
+
     }
+
 </div>
+
+
+@section Scripts {
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
+}

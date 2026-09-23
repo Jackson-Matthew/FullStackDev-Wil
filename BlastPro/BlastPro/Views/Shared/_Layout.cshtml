@@ -4,113 +4,310 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - BlastPro</title>
+
     <script type="importmap"></script>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/BlastPro.styles.css" asp-append-version="true" />
+
+    @* Bootstrap Icons *@
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <style>
+
+        html {
+            min-height: 100%;
+        }
+
+        body {
+            background-image:
+                linear-gradient(
+                    rgba(100, 100, 100, 0.65),
+                    rgba(100, 100, 100, 0.65)
+                ),
+                url('/images/blast-background.jpg');
+
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+      
+            color: #FFFFFF;
+
+            min-height: 100vh;
+            margin: 0 !important;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .blastpro-navbar {
+            background-color: #000000;
+            min-height: 70px;
+            padding: 0 25px;
+            border-bottom: none;
+        }
+
+        .blastpro-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .blast-text {
+            color: #FF0000;
+        }
+
+        .pro-text {
+            color: #FFFFFF;
+        }
+
+        .blastpro-brand:hover .blast-text {
+            color: #FF0000;
+        }
+
+        .blastpro-brand:hover .pro-text {
+            color: #FFFFFF;
+        }
+
+        .blastpro-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .blastpro-nav .nav-link {
+            color: #FFFFFF !important;
+            font-weight: 500;
+            padding: 10px 15px !important;
+            transition: color 0.2s ease;
+        }
+
+        .blastpro-nav .nav-link:hover,
+        .blastpro-nav .nav-link.active {
+            color: #FF0000 !important;
+        }
+
+        .blastpro-right {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .blastpro-profile {
+            color: #FFFFFF;
+            text-decoration: none;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: color 0.2s ease;
+        }
+
+        .blastpro-profile:hover {
+            color: #FF0000;
+        }
+
+        .blastpro-logout {
+            background-color: transparent;
+            border: 1px solid #FF0000;
+            color: #FF0000;
+            padding: 7px 16px;
+            border-radius: 4px;
+            font-weight: 500;
+
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+
+            transition: all 0.2s ease;
+        }
+
+        .blastpro-logout:hover {
+            background-color: #FF0000;
+            color: #000000;
+        }
+
+        .blastpro-logout i {
+            font-size: 1rem;
+        }
+
+        .blastpro-toggler {
+            border: 1px solid #FFFFFF;
+        }
+
+        .blastpro-toggler .navbar-toggler-icon {
+            filter: invert(1);
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Footer: sits at the bottom of the page */
+        .blastpro-footer {
+            position: static !important;
+            line-height: normal !important;
+            white-space: normal;
+            color: #CCCCCC;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .blastpro-footer a {
+            color: #FFFFFF;
+            text-decoration: none;
+        }
+
+        .blastpro-footer a:hover {
+            color: #FF0000;
+        }
+
+    </style>
 </head>
+
 <body>
+
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+
+        <nav class="navbar navbar-expand-md blastpro-navbar">
+
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Dashboard" asp-action="Index">BlastPro</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
-                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+
+                <a class="blastpro-brand"
+                   asp-area=""
+                   asp-controller="Dashboard"
+                   asp-action="Index">
+                    <span class="blast-text">Blast</span><span class="pro-text">Pro</span>
+                </a>
+
+                @* Mobile menu button *@
+                <button class="navbar-toggler blastpro-toggler"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#blastproNavigation"
+                        aria-controls="blastproNavigation"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
 
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            @* --- Visible to all authenticated users --- *@
+                <div class="collapse navbar-collapse"
+                     id="blastproNavigation">
+
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <ul class="navbar-nav blastpro-nav mx-auto">
+
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Projects" asp-action="Index">Projects</a>
+                                <a class="nav-link"
+                                   asp-controller="Dashboard"
+                                   asp-action="Index">
+                                    Dashboard
+                                </a>
                             </li>
 
-                            @* --- MainCompanyUser only --- *@
-                            @if (User.IsInRole("MainCompanyUser"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Blasters" asp-action="Index">Blasters</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Company" asp-action="Index">Company</a>
-                                </li>
-                            }
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   asp-controller="PatternDesign"
+                                   asp-action="Index">
+                                    Pattern Design
+                                </a>
+                            </li>
 
-                            @* --- Visible to all authenticated users --- *@
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Profile" asp-action="Index">Profile</a>
+                                <a class="nav-link"
+                                   asp-controller="Results"
+                                   asp-action="Index">
+                                    Results
+                                </a>
                             </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Home</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                            </li>
-                        }
-                    </ul>
 
-                    @* --- Right-hand side: user info + logout --- *@
-                    <ul class="navbar-nav">
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item d-flex align-items-center me-3">
-                                <span class="text-muted small">
-                                    @User.Identity.Name
-                                    @if (User.IsInRole("MainCompanyUser"))
-                                    {
-                                        <span class="badge bg-primary ms-1">Admin</span>
-                                    }
-                                    else if (User.IsInRole("Blaster"))
-                                    {
-                                        <span class="badge bg-secondary ms-1">Blaster</span>
-                                    }
-                                </span>
-                            </li>
                             <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
-                                </form>
+                                <a class="nav-link"
+                                   asp-controller="Company"
+                                   asp-action="Index">
+                                    Company
+                                </a>
                             </li>
-                        }
-                        else
-                        {
+
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Login</a>
+                                <a class="nav-link"
+                                   asp-controller="Reports"
+                                   asp-action="Index">
+                                    Reports
+                                </a>
                             </li>
-                        }
-                    </ul>
+
+                        </ul>
+
+                        <div class="blastpro-right">
+
+                            <a class="blastpro-profile"
+                               asp-controller="Profile"
+                               asp-action="Index">
+                                @User.Identity.Name
+                            </a>
+
+                            <form asp-controller="Account"
+                                  asp-action="Logout"
+                                  method="post"
+                                  class="d-inline">
+
+                                @Html.AntiForgeryToken()
+
+                                <button type="submit"
+                                        class="blastpro-logout">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                    Logout
+                                </button>
+
+                            </form>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <ul class="navbar-nav ms-auto">
+
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   style="color: #FFFFFF !important;"
+                                   asp-controller="Account"
+                                   asp-action="Login">
+                                    Login
+                                </a>
+                            </li>
+
+                        </ul>
+                    }
+
                 </div>
+
             </div>
+
         </nav>
+
     </header>
 
-    <div class="container">
+    <div class="container flex-grow-1">
+
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
+
     </div>
 
-    <footer class="border-top footer text-muted mt-4">
-        <div class="container py-3">
-            &copy; 2026 - BlastPro - Xploma
-            &nbsp;|&nbsp;
-            <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script src="~/js/site.js"
+            asp-append-version="true"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>

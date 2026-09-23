@@ -38,6 +38,9 @@ builder.Services
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+builder.Services.AddDataProtection();
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+    options.TokenLifespan = TimeSpan.FromHours(1));
 
 // ---------------------------------------------------------------------------
 // 3. JWT
@@ -62,6 +65,18 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ClockSkew = TimeSpan.FromMinutes(1)
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var users = context.HttpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
+                var user = await users.GetUserAsync(context.Principal!);
+                // Resetting a password changes this stamp and invalidates previously issued tokens.
+                if (user is null || !user.IsActive || string.IsNullOrEmpty(user.SecurityStamp)
+                    || user.SecurityStamp != context.Principal!.FindFirst("security_stamp")?.Value)
+                    context.Fail("The session is no longer valid.");
+            }
+        };
     });
 
 builder.Services.AddAuthorization();
@@ -75,6 +90,7 @@ builder.Services.AddAuthorization();
 // builder.Services.AddScoped<IBlasterService, BlasterService>();
 // builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IPasswordResetDelivery, DevelopmentPasswordResetDelivery>();
 
 // ---------------------------------------------------------------------------
 // 5. Controllers + Swagger (with Bearer Authorize button)
@@ -149,6 +165,7 @@ app.MapControllers();
 // ---------------------------------------------------------------------------
 // 8. Migrate + seed
 // ---------------------------------------------------------------------------
+if (!app.Environment.IsEnvironment("Testing"))
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

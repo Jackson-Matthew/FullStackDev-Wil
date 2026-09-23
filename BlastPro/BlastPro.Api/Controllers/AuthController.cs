@@ -1,6 +1,7 @@
-﻿using BlastPro.Api.Models.Dtos;
+using BlastPro.Api.Models.Dtos;
 using BlastPro.Api.Models.Entities;
 using BlastPro.Api.Services.Interfaces;
+using BlastPro.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,15 +15,18 @@ public class AuthController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IJwtTokenService _jwt;
     private readonly ILogger<AuthController> _logger;
+    private readonly IPasswordResetDelivery _resetDelivery;
 
     public AuthController(
         UserManager<ApplicationUser> userManager,
         IJwtTokenService jwt,
-        ILogger<AuthController> logger)
+        ILogger<AuthController> logger,
+        IPasswordResetDelivery resetDelivery)
     {
         _userManager = userManager;
         _jwt = jwt;
         _logger = logger;
+        _resetDelivery = resetDelivery;
     }
 
     // POST /api/auth/login
@@ -34,18 +38,20 @@ public class AuthController : ControllerBase
             string.IsNullOrWhiteSpace(request.Password))
             return BadRequest(new { message = "Email and password are required." });
 
-        var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null || !user.IsActive)
+        var user = await _userManager.FindByEmailAsync(request.Email.Trim());
+        if (user is null || !user.IsActive || await _userManager.IsLockedOutAsync(user))
             return Unauthorized(new { message = "Invalid login attempt." });
 
         var valid = await _userManager.CheckPasswordAsync(user, request.Password);
         if (!valid)
         {
-            await _userManager.AccessFailedAsync(user);
+            var failure = await _userManager.AccessFailedAsync(user);
+            if (!failure.Succeeded) return StatusCode(503, new { message = "Sign in is temporarily unavailable." });
             return Unauthorized(new { message = "Invalid login attempt." });
         }
 
-        await _userManager.ResetAccessFailedCountAsync(user);
+        var reset = await _userManager.ResetAccessFailedCountAsync(user);
+        if (!reset.Succeeded) return StatusCode(503, new { message = "Sign in is temporarily unavailable." });
 
         var roles = await _userManager.GetRolesAsync(user);
         var (token, expires) = _jwt.CreateToken(user, roles);
@@ -67,18 +73,27 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
-        var user = await _userManager.FindByEmailAsync(request.Email);
+        // Delivery health is checked before the address to avoid account discovery.
+        try { await _resetDelivery.PrepareAsync(); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            _logger.LogWarning("Password reset delivery is unavailable.");
+            return StatusCode(503, new { message = "Password reset is temporarily unavailable." });
+        }
+        var user = await _userManager.FindByEmailAsync(request.Email.Trim());
 
         if (user is not null && user.IsActive)
         {
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            // TODO: send email. For dev, log it:
-            _logger.LogInformation(
-                "Password reset token for {Email}: {Token}", user.Email, token);
+            try { await _resetDelivery.SendAsync(user.Email!, PasswordResetTokens.Encode(token)); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+            {
+                _logger.LogError("A password reset message could not be saved.");
+            }
         }
 
         // Always same response — do not leak whether the account exists
-        return Ok(new { message = "If the account exists, a reset link has been sent." });
+        return Ok(new { message = "If an eligible account exists, a reset link has been requested.", isDevelopmentDelivery = true });
     }
 
     // POST /api/auth/reset-password
@@ -86,15 +101,18 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
-        var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null)
-            return Ok(new { message = "Password reset complete." });
+        const string invalidLink = "This reset link is invalid or has expired. Please request a new link.";
+        var user = await _userManager.FindByEmailAsync(request.Email.Trim());
+        var token = PasswordResetTokens.Decode(request.Token);
+        if (user is null || !user.IsActive || token is null)
+            return BadRequest(new { message = invalidLink });
 
         var result = await _userManager.ResetPasswordAsync(
-            user, request.Token, request.NewPassword);
+            user, token, request.NewPassword);
 
         if (!result.Succeeded)
-            return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+            return BadRequest(new { errors = result.Errors.Select(e =>
+                e.Code == "InvalidToken" ? invalidLink : e.Description) });
 
         return Ok(new { message = "Password reset complete." });
     }

@@ -1,4 +1,6 @@
 <Solution>
+  <Folder Name="/BlastPro/" />
   <Project Path="BlastPro.Api/BlastPro.Api.csproj" />
+  <Project Path="BlastPro.Tests/BlastPro.Tests.csproj" />
   <Project Path="BlastPro/BlastPro.Mvc.csproj" />
 </Solution>
