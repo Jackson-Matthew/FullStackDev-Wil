@@ -10,6 +10,19 @@ public class ApiClient(HttpClient http, IHttpContextAccessor contextAccessor) : 
 {
     private const string Unavailable = "The service is temporarily unavailable. Please try again shortly.";
 
+    private void SetCurrentUserToken()
+    {
+        if (contextAccessor.HttpContext is { } ctx)
+            SetBearerToken(ctx.User.FindFirst("jwt")?.Value);
+    }
+
+    public void SetBearerToken(string? token)
+    {
+        http.DefaultRequestHeaders.Authorization = string.IsNullOrEmpty(token)
+            ? null
+            : new AuthenticationHeaderValue("Bearer", token);
+    }
+
     public Task<ApiResult<T>> GetAsync<T>(string path) => SendAsync<T>(HttpMethod.Get, path);
     public Task<ApiResult<T>> PostAsync<T>(string path, object payload) => SendAsync<T>(HttpMethod.Post, path, payload);
     public Task<ApiResult<T>> PutAsync<T>(string path, object payload) => SendAsync<T>(HttpMethod.Put, path, payload);
@@ -66,5 +79,7 @@ public class ApiClient(HttpClient http, IHttpContextAccessor contextAccessor) : 
         }
     }
 }
-
-public sealed class ApiAuthenticationException : Exception;
+public sealed class ApiAuthenticationException : Exception
+{
+    public ApiAuthenticationException(string? message = null) : base(message) { }
+}

@@ -17,6 +17,7 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+builder.Services.AddHttpContextAccessor();
 
 // ---------------------------------------------------------------------------
 // 2. Cookie authentication — the JWT lives inside the cookie

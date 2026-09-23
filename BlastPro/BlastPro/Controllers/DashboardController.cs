@@ -24,7 +24,7 @@ public class DashboardController : Controller
         if (!result.Success)
         {
             _logger.LogWarning("Dashboard API call failed: {Error}", result.Error);
-            ViewData["Error"] = "Could not load projects. The API may be offline.";
+            ViewData["Error"] = "Could not load projects. Check that the API is running, then refresh this page or sign in again.";
             return View(new List<ProjectSummaryDto>());
         }
 
