@@ -4,50 +4,77 @@
     Layout = "_Layout";
 }
 
-<div class="container" style="max-width: 420px; margin-top: 80px;">
-    <div class="card shadow-sm">
-        <div class="card-body p-4">
-            <h2 class="mb-1">Welcome to BlastPro!</h2>
-            <p class="text-muted mb-4">Sign in to continue</p>
-            @if (ViewData["Notice"] is string notice)
-            {
-                <div class="alert alert-info" role="status">@notice</div>
-            }
+<link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
 
-            <form asp-action="Login" asp-controller="Account" method="post" novalidate>
-                <input type="hidden" asp-for="ReturnUrl" />
+<div class="container login-page">
+    <div class="login-card">
 
-                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+        <div class="login-brand">
+            <h1 class="login-logo"><span class="text-brand-red">Blast</span>Pro</h1>
+            <p class="login-tagline">
+                <span class="text-brand-red">Drill</span> and
+                <span class="text-brand-red">Blast</span> Engineering Software
+            </p>
+        </div>
 
-                <div class="mb-3">
-                    <label asp-for="Email" class="form-label"></label>
-                    <input asp-for="Email" class="form-control" autocomplete="username" autofocus />
-                    <span asp-validation-for="Email" class="text-danger small"></span>
+        @if (ViewData["Notice"] is string notice)
+        {
+            <div class="alert login-notice" role="status">@notice</div>
+        }
+
+        <form asp-action="Login" asp-controller="Account" method="post" novalidate>
+            <input type="hidden" asp-for="ReturnUrl" />
+
+            <div asp-validation-summary="ModelOnly" class="login-validation-summary mb-3"></div>
+
+            @* Email *@
+            <div class="mb-4">
+                <label asp-for="Email" class="login-label"></label>
+                <div class="login-input-wrapper">
+                    <i class="bi bi-envelope login-input-icon"></i>
+                    <input asp-for="Email"
+                           class="form-control login-input"
+                           placeholder="example@something.com"
+                           autocomplete="username"
+                           autofocus />
                 </div>
+                <span asp-validation-for="Email" class="login-validation"></span>
+            </div>
 
-                <div class="mb-3">
-                    <label asp-for="Password" class="form-label"></label>
-                    <input asp-for="Password" class="form-control" autocomplete="current-password" />
-                    <span asp-validation-for="Password" class="text-danger small"></span>
-                </div>
-
-                <div class="form-check mb-3">
-                    <input asp-for="RememberMe" class="form-check-input" />
-                    <label asp-for="RememberMe" class="form-check-label"></label>
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100">Login</button>
-
-                <div class="text-center mt-3">
-                    <a asp-action="ForgotPassword" asp-controller="Account">
-                        Forgot your password?
+            @* Password *@
+            <div class="mb-3">
+                <div class="login-label-row">
+                    <label asp-for="Password" class="login-label"></label>
+                    <a asp-action="ForgotPassword" asp-controller="Account" class="forgot-link">
+                        Forgot Password?
                     </a>
                 </div>
-            </form>
-        </div>
+                <div class="login-input-wrapper">
+                    <i class="bi bi-lock login-input-icon"></i>
+                    <input asp-for="Password"
+                           class="form-control login-input"
+                           placeholder="Enter your password"
+                           autocomplete="current-password" />
+                    <button type="button" class="password-toggle" data-target="Password" title="Show password">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+                <span asp-validation-for="Password" class="login-validation"></span>
+            </div>
+
+            @* Remember Me *@
+            <div class="form-check login-check mb-4">
+                <input asp-for="RememberMe" class="form-check-input" />
+                <label asp-for="RememberMe" class="form-check-label"></label>
+            </div>
+
+            <button type="submit" class="sign-in-btn">Sign In</button>
+        </form>
+
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/auth.js" asp-append-version="true"></script>
 }
