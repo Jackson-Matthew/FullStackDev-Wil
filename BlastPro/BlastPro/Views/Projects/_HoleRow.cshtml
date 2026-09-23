@@ -1,0 +1,97 @@
+﻿@model BlastPro.Mvc.Models.ViewModels.Projects.BlastHoleViewModel
+@using System.Globalization
+@using BlastPro.Mvc.Models.ViewModels.Projects
+
+@{
+    var index = ViewData["HoleIndex"]?.ToString() ?? "0";
+    var prefix = $"Holes[{index}]";
+    var inv = CultureInfo.InvariantCulture;
+}
+
+<tr class="hole-row">
+
+    @* Select *@
+    <td class="col-select">
+        <input type="checkbox"
+               class="hole-checkbox hole-select"
+               aria-label="Select hole @Model.Number" />
+    </td>
+
+    @* Hole Number *@
+    <td class="col-number">
+        <span class="hole-number">@Model.Number</span>
+        <input type="hidden"
+               class="hole-number-input"
+               name="@(prefix).Number"
+               value="@Model.Number" />
+    </td>
+
+    @* X *@
+    <td>
+        <input type="number" step="0.01"
+               class="cell-input"
+               data-field="X"
+               name="@(prefix).X"
+               value="@Model.X.ToString("0.00", inv)" />
+    </td>
+
+    @* Y *@
+    <td>
+        <input type="number" step="0.01"
+               class="cell-input"
+               data-field="Y"
+               name="@(prefix).Y"
+               value="@Model.Y.ToString("0.00", inv)" />
+    </td>
+
+    @* Depth *@
+    <td>
+        <input type="number" step="0.1" min="0"
+               class="cell-input"
+               data-field="Depth"
+               name="@(prefix).Depth"
+               value="@Model.Depth.ToString("0.0", inv)" />
+    </td>
+
+    @* Explosive *@
+    <td class="col-explosive">
+        <select class="form-select form-select-sm cell-select"
+                data-field="Explosive"
+                name="@(prefix).Explosive">
+
+            @foreach (var explosive in PatternDesignViewModel.Explosives)
+            {
+                <option value="@explosive" selected="@(explosive == Model.Explosive)">@explosive</option>
+            }
+
+        </select>
+    </td>
+
+    @* Charge *@
+    <td>
+        <input type="number" step="0.1" min="0"
+               class="cell-input"
+               data-field="Charge"
+               name="@(prefix).Charge"
+               value="@Model.Charge.ToString("0.0", inv)" />
+    </td>
+
+    @* Stemming *@
+    <td>
+        <input type="number" step="0.1" min="0"
+               class="cell-input"
+               data-field="Stemming"
+               name="@(prefix).Stemming"
+               value="@Model.Stemming.ToString("0.0", inv)" />
+    </td>
+
+    @* Delay *@
+    <td>
+        <input type="number" step="1" min="0"
+               class="cell-input delay-input"
+               data-field="Delay"
+               name="@(prefix).Delay"
+               value="@Model.Delay" />
+    </td>
+
+</tr>

@@ -1,1 +1,434 @@
+/* =========================================================
+       PATTERN DESIGN PAGE
+       ========================================================= */
 
+.design-page {
+    padding-top: 25px;
+    padding-bottom: 40px;
+}
+
+
+/* =========================================================
+       BACK BUTTON
+       ========================================================= */
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 16px;
+    background-color: #FF8C00;
+    border: 1px solid #FF8C00;
+    border-radius: 5px;
+    color: #FFFFFF;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+    .back-btn:hover {
+        background-color: #E07B00;
+        border-color: #E07B00;
+        color: #FFFFFF;
+    }
+
+
+/* =========================================================
+       HEADER
+       ========================================================= */
+
+.design-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+    margin-bottom: 20px;
+}
+
+.design-title {
+    color: #000000;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0;
+}
+
+.design-status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+    .design-status-badge.status-reviewed {
+        background-color: #E6F7EA;
+        color: #1E7B34;
+        border: 1px solid #BFE5C8;
+    }
+
+    .design-status-badge.status-draft {
+        background-color: #FFFFFF;
+        color: #000000;
+        border: 1px solid #000000;
+    }
+
+
+/* =========================================================
+       MESSAGES + VALIDATION
+       ========================================================= */
+
+.design-alert-success {
+    background-color: #E6F7EA;
+    border: 1px solid #1E7B34;
+    color: #1E7B34;
+}
+
+.design-validation-summary {
+    color: #FF0000;
+    font-size: 0.9rem;
+}
+
+    .design-validation-summary ul {
+        padding-left: 18px;
+        margin-bottom: 0;
+    }
+
+    .design-validation-summary.validation-summary-valid {
+        display: none;
+    }
+
+
+/* =========================================================
+       CARDS
+       ========================================================= */
+
+.design-card {
+    background-color: #FFFFFF;
+    border: 1px solid #000000;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.design-card-header {
+    padding: 16px 20px 10px 20px;
+}
+
+.design-card-title {
+    color: #000000;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0;
+}
+
+.design-card-body {
+    padding: 0 20px 20px 20px;
+}
+
+
+/* =========================================================
+       PROJECT PARAMETERS
+       ========================================================= */
+
+.param-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+}
+
+.param-label {
+    color: #555555;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.param-input-wrapper {
+    position: relative;
+}
+
+.param-input {
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0D0;
+    border-radius: 6px;
+    min-height: 40px;
+    color: #000000;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.9rem;
+}
+
+    .param-input.has-unit {
+        padding-right: 50px;
+    }
+
+    .param-input:focus {
+        border-color: #FF0000;
+        box-shadow: 0 0 0 0.15rem rgba(255, 0, 0, 0.2);
+    }
+
+select.param-input {
+    font-family: inherit;
+}
+
+.param-unit {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999999;
+    font-size: 0.75rem;
+    pointer-events: none;
+}
+
+
+/* =========================================================
+       HOLE PATTERN HEADER + TOOLBAR
+       ========================================================= */
+
+.hole-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-bottom: 16px;
+}
+
+.hole-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tool-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0 14px;
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0D0;
+    border-radius: 5px;
+    color: #000000;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .tool-btn:hover {
+        border-color: #000000;
+    }
+
+.tool-btn-danger {
+    background-color: #FFECEC;
+    border-color: #FF0000;
+    color: #FF0000;
+}
+
+    .tool-btn-danger:hover {
+        background-color: #FFDADA;
+        border-color: #CC0000;
+        color: #CC0000;
+    }
+
+
+/* =========================================================
+       HOLE TABLE
+       ========================================================= */
+
+.hole-table-wrapper {
+    overflow-x: auto;
+}
+
+.hole-table {
+    width: 100%;
+    min-width: 820px;
+    border-collapse: collapse;
+}
+
+    .hole-table thead th {
+        background-color: #EDEDED;
+        color: #000000;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 12px 10px;
+        border-top: 1px solid #D0D0D0;
+        border-bottom: 1px solid #D0D0D0;
+        white-space: nowrap;
+    }
+
+    .hole-table tbody td {
+        padding: 6px 10px;
+        border-bottom: 1px solid #E0E0E0;
+        vertical-align: middle;
+        font-size: 0.85rem;
+    }
+
+    .hole-table tbody tr.hole-row:nth-child(even) {
+        background-color: #F7F7F7;
+    }
+
+    .hole-table tbody tr.hole-row.is-selected {
+        background-color: #FFF3F3;
+    }
+
+.col-select {
+    width: 44px;
+    text-align: center;
+}
+
+.col-number {
+    width: 44px;
+}
+
+.col-explosive {
+    min-width: 220px;
+}
+
+.hole-number {
+    color: #000000;
+}
+
+.no-holes {
+    padding: 30px 20px !important;
+    text-align: center;
+    color: #000000;
+}
+
+
+/* =========================================================
+       CHECKBOXES
+       ========================================================= */
+
+.hole-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #FF0000;
+    cursor: pointer;
+}
+
+
+/* =========================================================
+       EDITABLE CELLS
+       ========================================================= */
+
+.cell-input {
+    width: 100%;
+    max-width: 110px;
+    padding: 4px 6px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: #000000;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.85rem;
+    -moz-appearance: textfield;
+}
+
+    .cell-input:hover {
+        border-color: #D0D0D0;
+    }
+
+    .cell-input:focus {
+        outline: none;
+        background-color: #FFFFFF;
+        border-color: #FF0000;
+        box-shadow: 0 0 0 0.12rem rgba(255, 0, 0, 0.2);
+    }
+
+    .cell-input::-webkit-outer-spin-button,
+    .cell-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+.delay-input {
+    color: #FF0000;
+    font-weight: 700;
+}
+
+.cell-select {
+    border: 1px solid #D0D0D0;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    color: #000000;
+}
+
+    .cell-select:focus {
+        border-color: #FF0000;
+        box-shadow: 0 0 0 0.12rem rgba(255, 0, 0, 0.2);
+    }
+
+
+/* =========================================================
+       FOOTER ACTIONS
+       ========================================================= */
+
+.design-footer {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.save-draft-btn,
+.calculate-btn {
+    min-height: 40px;
+    padding: 0 18px;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.save-draft-btn {
+    background-color: #000000;
+    border: 1px solid #000000;
+    color: #FFFFFF;
+}
+
+    .save-draft-btn:hover {
+        background-color: #333333;
+        border-color: #333333;
+    }
+
+.calculate-btn {
+    background-color: #FF0000;
+    border: 1px solid #FF0000;
+    color: #FFFFFF;
+}
+
+    .calculate-btn:hover {
+        background-color: #CC0000;
+        border-color: #CC0000;
+    }
+
+
+/* =========================================================
+       RESPONSIVE
+       ========================================================= */
+
+@media (max-width: 992px) {
+
+    .param-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+
+    .param-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .design-footer button {
+        width: 100%;
+    }
+}
