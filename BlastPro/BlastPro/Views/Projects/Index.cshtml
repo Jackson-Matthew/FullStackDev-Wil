@@ -20,7 +20,7 @@
        BACK BUTTON + TITLE
        ========================================================= *@
 
-    <a asp-controller="Projects"
+    <a asp-controller="Dashboard"
        asp-action="Index"
        class="back-btn">
 
@@ -50,10 +50,19 @@
         <div class="alert design-alert-success" role="status">@success</div>
     }
 
+    @if (ViewData["Info"] is string info)
+    {
+        <div class="alert alert-info" role="status">@info</div>
+    }
 
-    <form asp-controller="Projects"
+    @if (ViewData["Error"] is string error)
+    {
+        <div class="alert alert-danger" role="alert">@error</div>
+    }
+
+
+    <form asp-controller="PatternDesign"
           asp-action="SaveDraft"
-          asp-route-id="@Model.ProjectId"
           method="post"
           id="designForm"
           novalidate>
@@ -61,6 +70,7 @@
         <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
         <input type="hidden" name="ProjectName" value="@Model.ProjectName" />
         <input type="hidden" name="Status" value="@Model.Status" />
+        <input type="hidden" name="RowVersion" value="@Model.RowVersion" />
 
         <div asp-validation-summary="All" class="design-validation-summary mb-3"></div>
 
@@ -247,7 +257,7 @@
                             <th>Y (m)</th>
                             <th>Depth (m)</th>
                             <th class="col-explosive">Explosive</th>
-                            <th>Charge (m)</th>
+                            <th>Charge (kg)</th>
                             <th>Stemming (m)</th>
                             <th>Delay (ms)</th>
                         </tr>
@@ -257,9 +267,9 @@
 
                         @for (int i = 0; i < Model.Holes.Count; i++)
                         {
-                            <partial name="_HoleRow"
+                            <partial name="~/Views/Projects/_HoleRow.cshtml"
                                      model="Model.Holes[i]"
-                                     view-data='new ViewDataDictionary(ViewData) { ["HoleIndex"] = i.ToString() }' />
+                                     view-data='new ViewDataDictionary(ViewData) { ["HoleIndex"] = i.ToString(), ["ExplosiveProducts"] = Model.ExplosiveProducts }' />
                         }
 
                         <tr id="noHolesRow" style="@(Model.Holes.Any() ? "display: none;" : "")">
@@ -280,9 +290,9 @@
         @* Template used by JavaScript when adding new holes *@
 
         <template id="holeRowTemplate">
-            <partial name="_HoleRow"
+            <partial name="~/Views/Projects/_HoleRow.cshtml"
                      model="new BlastHoleViewModel { Number = 0 }"
-                     view-data='new ViewDataDictionary(ViewData) { ["HoleIndex"] = "__index__" }' />
+                     view-data='new ViewDataDictionary(ViewData) { ["HoleIndex"] = "__index__", ["ExplosiveProducts"] = Model.ExplosiveProducts }' />
         </template>
 
 

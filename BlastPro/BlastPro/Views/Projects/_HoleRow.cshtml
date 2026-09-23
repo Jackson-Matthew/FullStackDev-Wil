@@ -6,6 +6,8 @@
     var index = ViewData["HoleIndex"]?.ToString() ?? "0";
     var prefix = $"Holes[{index}]";
     var inv = CultureInfo.InvariantCulture;
+    var explosiveProducts = ViewData["ExplosiveProducts"] as IReadOnlyList<ExplosiveProductOptionViewModel>
+        ?? Array.Empty<ExplosiveProductOptionViewModel>();
 }
 
 <tr class="hole-row">
@@ -20,6 +22,9 @@
     @* Hole Number *@
     <td class="col-number">
         <span class="hole-number">@Model.Number</span>
+        <input type="hidden"
+               name="@(prefix).Id"
+               value="@Model.Id" />
         <input type="hidden"
                class="hole-number-input"
                name="@(prefix).Number"
@@ -56,12 +61,14 @@
     @* Explosive *@
     <td class="col-explosive">
         <select class="form-select form-select-sm cell-select"
-                data-field="Explosive"
-                name="@(prefix).Explosive">
+                data-field="ExplosiveProductId"
+                name="@(prefix).ExplosiveProductId">
 
-            @foreach (var explosive in PatternDesignViewModel.Explosives)
+            <option value="">Select product</option>
+
+            @foreach (var product in explosiveProducts)
             {
-                <option value="@explosive" selected="@(explosive == Model.Explosive)">@explosive</option>
+                <option value="@product.Id" selected="@(product.Id == Model.ExplosiveProductId)">@product.Name</option>
             }
 
         </select>

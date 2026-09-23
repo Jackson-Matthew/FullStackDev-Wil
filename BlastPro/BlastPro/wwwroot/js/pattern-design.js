@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", function () {
             setField(newRow, "Charge", readNumber(lastRow, "Charge", 8.5).toFixed(1));
             setField(newRow, "Stemming", readNumber(lastRow, "Stemming", 3.5).toFixed(1));
             setField(newRow, "Delay", readNumber(lastRow, "Delay", 0) + DELAY_STEP);
-            setField(newRow, "Explosive", getField(lastRow, "Explosive").value);
+            setField(newRow, "ExplosiveProductId", getField(lastRow, "ExplosiveProductId").value);
 
         }
 
