@@ -1,1 +1,401 @@
+@model BlastPro.Mvc.Models.ViewModels.Results.ResultsViewModel
+@using System.Globalization
 
+@{
+    ViewData["Title"] = Model.ProjectId > 0 ? $"{Model.ProjectName} — Results" : "Results";
+    Layout = "_Layout";
+
+    var inv = CultureInfo.InvariantCulture;
+}
+
+<link rel="stylesheet" href="~/css/results.css" asp-append-version="true" />
+
+
+<div class="container results-page">
+
+
+    @if (Model.ProjectId <= 0)
+    {
+        <div class="results-empty-state">
+
+            <i class="bi bi-bar-chart-line results-empty-icon"></i>
+
+            <h3 class="results-empty-title">No project selected</h3>
+
+            <p class="results-empty-text">
+                Pick a project from the dashboard to view its results.
+            </p>
+
+            <a asp-controller="Dashboard" asp-action="Index" class="results-empty-btn">
+                Go to Dashboard
+            </a>
+
+        </div>
+    }
+    else
+    {
+
+        @*back button*@
+           
+        <a asp-controller="Projects"
+           asp-action="Details"
+           asp-route-id="@Model.ProjectId"
+           class="results-back-btn">
+
+            Back to Pattern Design
+
+        </a>
+
+
+        @* suc and err msg *@
+
+        @if (ViewData["Success"] is string success)
+        {
+            <div class="alert results-alert-success" role="status">@success</div>
+        }
+
+        @if (ViewData["Error"] is string error)
+        {
+            <div class="alert results-alert-error" role="alert">@error</div>
+        }
+
+
+        @if (!Model.HasResults)
+        {
+
+            @* if there no results *@
+
+            <div class="results-header">
+                <h2 class="results-title">@Model.ProjectName — Results Analysis</h2>
+                <span class="results-status-badge results-status-none">Not Calculated</span>
+            </div>
+
+            <div class="results-empty-state">
+
+                <i class="bi bi-calculator results-empty-icon"></i>
+
+                <h3 class="results-empty-title">No results yet</h3>
+
+                <p class="results-empty-text">
+                    Calculate blast physics from Pattern Design to see results here.
+                </p>
+
+                <a asp-controller="Projects"
+                   asp-action="Details"
+                   asp-route-id="@Model.ProjectId"
+                   class="results-empty-btn">
+
+                    Go to Pattern Design
+
+                </a>
+
+            </div>
+
+        }
+        else
+        {
+
+            @*header*@
+
+            <div class="results-header">
+
+                <h2 class="results-title">@Model.ProjectName — Results Analysis</h2>
+
+                <span class="results-status-badge">
+                    Calculation Complete
+                </span>
+
+            </div>
+
+
+            @if (Model.IsOutdated)
+            {
+                <div class="results-outdated-banner">
+
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+
+                    <span>
+                        These results were calculated on @Model.CalculatedAtUtc?.ToString("dd MMM yyyy, HH:mm", inv) UTC,
+                        before the pattern was last edited. Recalculate for up-to-date results.
+                    </span>
+
+                    <a asp-controller="Projects"
+                       asp-action="Details"
+                       asp-route-id="@Model.ProjectId">
+
+                        Recalculate
+
+                    </a>
+
+                </div>
+            }
+
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+                    <div class="stat-label">Total Holes</div>
+                    <div class="stat-value">@Model.TotalHoles</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+                    <div class="stat-label">Total Explosive</div>
+                    <div class="stat-value">
+                        @Model.FormatNumber(Model.TotalExplosiveKg)
+                        <span class="stat-unit">kg</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-activity"></i></div>
+                    <div class="stat-label">Total Drilling</div>
+                    <div class="stat-value">
+                        @Model.FormatNumber(Model.TotalDrillingMetres)
+                        <span class="stat-unit">m</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-credit-card-fill"></i></div>
+                    <div class="stat-label">Total Cost</div>
+                    <div class="stat-value">
+                        @if (Model.TotalCost is not null)
+                        {
+                            @(Model.CurrencyPrefix)
+                            @Model.FormatNumber(Model.TotalCost.Value)
+                        }
+                        else
+                        {
+                            <span class="stat-unavailable">Unavailable</span>
+                        }
+                    </div>
+                </div>
+
+            </div>
+
+
+            @*max charge*@
+
+            <div class="metrics-grid">
+
+                @{
+                    var radius = 50.0;
+                    var arcLength = Math.PI * radius;
+                    var pct = Math.Clamp(Model.MaxChargeSafetyIndexPercent, 0, 100) / 100.0;
+                    var dashArray = $"{(arcLength * pct).ToString("0.##", inv)} {arcLength.ToString("0.##", inv)}";
+                    var severityClass = Model.MaxChargeSeverityLabel.ToLowerInvariant() switch
+                    {
+                        "high" => "gauge high",
+                        "medium" => "gauge medium",
+                        _ => "gauge low"
+                    };
+                }
+
+                <div class="metric-card">
+
+                    <div>
+                        <div class="stat-label">Max Charge Per Delay</div>
+                        <div class="stat-value">
+                            @Model.FormatNumber(Model.MaxChargePerDelayKg)
+                            <span class="stat-unit">kg</span>
+                        </div>
+                        <div class="metric-sub">Predicted safety index within structural load</div>
+                    </div>
+
+                    <div class="gauge-wrapper @severityClass">
+
+                        <svg viewBox="0 0 120 66" class="gauge-svg">
+                            <path d="M 10 60 A 50 50 0 0 1 110 60"
+                                  class="gauge-track" />
+                            <path d="M 10 60 A 50 50 0 0 1 110 60"
+                                  class="gauge-fill"
+                                  stroke-dasharray="@dashArray" />
+                        </svg>
+
+                        <span class="gauge-label">@Model.MaxChargeSeverityLabel.ToUpperInvariant()</span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="metric-card">
+
+                    <div>
+                        <div class="stat-label">Powder Factor</div>
+                        <div class="stat-value">
+                            @if (Model.PowderFactorKgPerTonne is not null)
+                            {
+                                @Model.FormatNumber(Model.PowderFactorKgPerTonne.Value, 2)
+                                <span class="stat-unit">kg/tonne</span>
+                            }
+                            else
+                            {
+                                <span class="stat-unavailable">Unavailable</span>
+                            }
+                        </div>
+                        @if (Model.PowderFactorTargetMin is not null && Model.PowderFactorTargetMax is not null)
+                        {
+                            <div class="metric-sub">
+                                Target range: @Model.FormatNumber(Model.PowderFactorTargetMin.Value, 2) - @Model.FormatNumber(Model.PowderFactorTargetMax.Value, 2) kg/tonne
+                            </div>
+                        }
+                    </div>
+
+                    <div class="range-bar-wrapper">
+
+                        <div class="range-track">
+                            <div class="range-fill" style="width: @(Model.PowderFactorPositionPercent.ToString("0.##", inv))%;"></div>
+                        </div>
+
+                        <div class="range-labels">
+                            <span>@Model.FormatNumber(Model.PowderFactorScaleMin, 1)</span>
+                            <span class="range-current">
+                                @(Model.PowderFactorKgPerTonne is not null ? Model.FormatNumber(Model.PowderFactorKgPerTonne.Value, 2) : "—")
+                            </span>
+                            <span>@Model.FormatNumber(Model.PowderFactorScaleMax, 1)</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            @*warnings *@
+
+            <div class="warnings-card">
+
+                <div class="warnings-header">
+
+                    <h3 class="warnings-title">Safety &amp; Compliance Warnings</h3>
+
+                    <span class="warnings-count-badge @(Model.WarningCount == 0 ? "warnings-count-clear" : "")">
+                        @(Model.WarningCount == 0 ? "No Issues Found" : $"{Model.WarningCount} {(Model.WarningCount == 1 ? "Issue" : "Issues")} Found")
+                    </span>
+
+                </div>
+
+                @if (Model.WarningCount == 0)
+                {
+                    <div class="warning-row severity-clear">
+                        <i class="bi bi-check-circle-fill warning-icon"></i>
+                        <span>No safety or compliance warnings for the current results.</span>
+                    </div>
+                }
+                else
+                {
+                    foreach (var warning in Model.Warnings)
+                    {
+                        var isCritical = warning.Severity == "Critical";
+
+                        <div class="warning-row @(isCritical ? "severity critical" : "severity warning")">
+
+                            <i class="bi @(isCritical ? "bi-exclamation-circle-fill" : "bi-exclamation-triangle-fill") warning-icon"></i>
+
+                            <span>@warning.Message</span>
+
+                        </div>
+                    }
+                }
+
+            </div>
+
+
+            @*the past results*@
+
+            @if (Model.PreviousResults.Any())
+            {
+                <div class="previous-results-card">
+
+                    <div class="previous-results-header">
+                        Previous Calculations
+                    </div>
+
+                    <div class="previous-results-table">
+
+                        <div class="previous-results-row previous-results-row-head">
+                            <div>Calculated</div>
+                            <div>Total Cost</div>
+                            <div>Powder Factor</div>
+                            <div>Warnings</div>
+                        </div>
+
+                        @foreach (var previous in Model.PreviousResults)
+                        {
+                            <div class="previous-results-row">
+
+                                <div>
+                                    @previous.CalculatedAtUtc.ToString("dd MMM yyyy, HH:mm", inv)
+                                    @if (!string.IsNullOrWhiteSpace(previous.CalculatedByName))
+                                    {
+                                        <span class="previous-results-by">by @previous.CalculatedByName</span>
+                                    }
+                                </div>
+
+                                <div>
+                                    @if (previous.TotalCost is not null)
+                                    {
+                                        @(Model.CurrencyPrefix)
+                                        @Model.FormatNumber(previous.TotalCost.Value)
+                                    }
+                                    else
+                                    {
+                                        <span class="stat-unavailable">—</span>
+                                    }
+                                </div>
+
+                                <div>
+                                    @(previous.PowderFactorKgPerTonne is not null
+                                        ? Model.FormatNumber(previous.PowderFactorKgPerTonne.Value, 2) + " kg/t"
+                                        : "—")
+                                </div>
+
+                                <div>@previous.WarningCount</div>
+
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+            }
+
+
+            @*footer *@
+
+            <div class="results-footer">
+
+                <form asp-controller="Results"
+                      asp-action="Save"
+                      method="post"
+                      class="d-inline">
+
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="projectId" value="@Model.ProjectId" />
+
+                    <button type="submit" class="save-results-btn">
+                        Save Results
+                    </button>
+
+                </form>
+
+                <a asp-controller="Reports"
+                   asp-action="Preview"
+                   asp-route-projectId="@Model.ProjectId"
+                   class="generate-report-btn">
+
+                    Generate Report
+
+                </a>
+
+            </div>
+
+        }
+
+    }
+
+</div>
