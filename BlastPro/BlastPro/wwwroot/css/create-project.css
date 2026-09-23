@@ -1,0 +1,140 @@
+﻿.create-project-page {
+    max-width: 460px;
+    margin-top: 60px;
+    margin-bottom: 40px;
+}
+
+.create-project-card {
+    background-color: #FFFFFF;
+    border: 1px solid #000000;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.create-project-header {
+    padding: 25px 25px 20px 25px;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+.create-project-title {
+    color: #000000;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.create-project-subtitle {
+    color: #333333;
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
+
+.create-project-body {
+    padding: 25px;
+}
+
+.create-label {
+    color: #000000;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.create-input-wrapper {
+    position: relative;
+}
+
+.create-input,
+.create-select {
+    background-color: #FFFFFF;
+    border: 1px solid #D0D0D0;
+    border-radius: 8px;
+    min-height: 44px;
+    color: #000000;
+    font-size: 0.9rem;
+}
+
+    .create-input::placeholder {
+        color: #AAAAAA;
+    }
+
+    .create-input:focus,
+    .create-select:focus {
+        border-color: #FF0000;
+        box-shadow: 0 0 0 0.15rem rgba(255, 0, 0, 0.2);
+    }
+
+    .create-input.has-icon {
+        padding-right: 40px;
+    }
+
+.create-input-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888888;
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.create-validation {
+    color: #FF0000;
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 6px;
+}
+
+.create-validation-summary {
+    color: #FF0000;
+    font-size: 0.9rem;
+}
+
+    .create-validation-summary ul {
+        padding-left: 18px;
+        margin-bottom: 0;
+    }
+
+.create-project-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 18px 25px;
+    border-top: 1px solid #E0E0E0;
+}
+
+.create-cancel-btn,
+.create-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 22px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.create-cancel-btn {
+    background-color: #FFFFFF;
+    border: 1px solid #000000;
+    color: #000000;
+}
+
+    .create-cancel-btn:hover {
+        background-color: #F5F5F5;
+        color: #000000;
+    }
+
+.create-submit-btn {
+    background-color: #FF0000;
+    border: 1px solid #FF0000;
+    color: #FFFFFF;
+}
+
+    .create-submit-btn:hover {
+        background-color: #CC0000;
+        border-color: #CC0000;
+        color: #FFFFFF;
+    }
