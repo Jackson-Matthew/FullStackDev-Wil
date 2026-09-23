@@ -1,0 +1,318 @@
+﻿@model BlastPro.Mvc.Models.ViewModels.Projects.PatternDesignViewModel
+@using System.Globalization
+@using BlastPro.Mvc.Models.ViewModels.Projects
+
+@{
+    ViewData["Title"] = $"{Model.ProjectName} — Pattern Design";
+    Layout = "_Layout";
+
+    var inv = CultureInfo.InvariantCulture;
+    bool isReviewed = Model.Status?.ToLower() == "reviewed";
+}
+
+<link rel="stylesheet" href="~/css/pattern-design.css" asp-append-version="true" />
+
+
+<div class="container design-page">
+
+
+    @* =========================================================
+       BACK BUTTON + TITLE
+       ========================================================= *@
+
+    <a asp-controller="Projects"
+       asp-action="Index"
+       class="back-btn">
+
+        Back to Dashboard
+
+    </a>
+
+    <div class="design-header">
+
+        <h2 class="design-title">
+            @Model.ProjectName — Pattern Design
+        </h2>
+
+        <span class="design-status-badge @(isReviewed ? "status-reviewed" : "status-draft")">
+            @(isReviewed ? "Reviewed" : "Draft")
+        </span>
+
+    </div>
+
+
+    @* =========================================================
+       MESSAGES
+       ========================================================= *@
+
+    @if (ViewData["Success"] is string success)
+    {
+        <div class="alert design-alert-success" role="status">@success</div>
+    }
+
+
+    <form asp-controller="Projects"
+          asp-action="SaveDraft"
+          asp-route-id="@Model.ProjectId"
+          method="post"
+          id="designForm"
+          novalidate>
+
+        <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
+        <input type="hidden" name="ProjectName" value="@Model.ProjectName" />
+        <input type="hidden" name="Status" value="@Model.Status" />
+
+        <div asp-validation-summary="All" class="design-validation-summary mb-3"></div>
+
+
+        @* =====================================================
+           PROJECT PARAMETERS
+           ===================================================== *@
+
+        <div class="design-card">
+
+            <div class="design-card-header">
+                <h3 class="design-card-title">Project Parameters</h3>
+            </div>
+
+            <div class="design-card-body">
+
+                <div class="param-grid">
+
+
+                    @* Rock Type *@
+
+                    <div>
+
+                        <label for="RockType" class="param-label">Rock Type</label>
+
+                        <select id="RockType"
+                                name="RockType"
+                                class="form-select param-input">
+
+                            @foreach (var rock in PatternDesignViewModel.RockTypes)
+                            {
+                                <option value="@rock" selected="@(rock == Model.RockType)">@rock</option>
+                            }
+
+                        </select>
+
+                    </div>
+
+
+                    @* Rock Density *@
+
+                    <div>
+
+                        <label for="RockDensity" class="param-label">Rock Density</label>
+
+                        <div class="param-input-wrapper">
+
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   id="RockDensity"
+                                   name="RockDensity"
+                                   class="form-control param-input has-unit"
+                                   value="@Model.RockDensity.ToString("0.00", inv)" />
+
+                            <span class="param-unit">t/m³</span>
+
+                        </div>
+
+                    </div>
+
+
+                    @* Burden *@
+
+                    <div>
+
+                        <label for="Burden" class="param-label">Burden</label>
+
+                        <div class="param-input-wrapper">
+
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   id="Burden"
+                                   name="Burden"
+                                   class="form-control param-input has-unit"
+                                   value="@Model.Burden.ToString("0.00", inv)" />
+
+                            <span class="param-unit">m</span>
+
+                        </div>
+
+                    </div>
+
+
+                    @* Spacing *@
+
+                    <div>
+
+                        <label for="Spacing" class="param-label">Spacing</label>
+
+                        <div class="param-input-wrapper">
+
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   id="Spacing"
+                                   name="Spacing"
+                                   class="form-control param-input has-unit"
+                                   value="@Model.Spacing.ToString("0.00", inv)" />
+
+                            <span class="param-unit">m</span>
+
+                        </div>
+
+                    </div>
+
+
+                    @* Vibration Threshold *@
+
+                    <div>
+
+                        <label for="VibrationThreshold" class="param-label">Vibration Threshold</label>
+
+                        <div class="param-input-wrapper">
+
+                            <input type="number"
+                                   step="0.1"
+                                   min="0"
+                                   id="VibrationThreshold"
+                                   name="VibrationThreshold"
+                                   class="form-control param-input has-unit"
+                                   value="@Model.VibrationThreshold.ToString("0.0", inv)" />
+
+                            <span class="param-unit">mm/s</span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        @* =====================================================
+           HOLE PATTERN DATA
+           ===================================================== *@
+
+        <div class="design-card">
+
+            <div class="design-card-header hole-card-header">
+
+                <h3 class="design-card-title">Hole Pattern Data</h3>
+
+                <div class="hole-toolbar">
+
+                    <button type="button" id="addHoleBtn" class="tool-btn">
+                        <i class="bi bi-plus-lg"></i>
+                        Add Hole
+                    </button>
+
+                    <button type="button" id="addTenHolesBtn" class="tool-btn">
+                        <i class="bi bi-copy"></i>
+                        Add 10 Holes
+                    </button>
+
+                    <button type="button" id="deleteSelectedBtn" class="tool-btn tool-btn-danger">
+                        <i class="bi bi-trash"></i>
+                        Delete Selected
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="hole-table-wrapper">
+
+                <table class="hole-table">
+
+                    <thead>
+                        <tr>
+                            <th class="col-select">
+                                <input type="checkbox"
+                                       id="selectAllHoles"
+                                       class="hole-checkbox"
+                                       aria-label="Select all holes" />
+                            </th>
+                            <th class="col-number">#</th>
+                            <th>X (m)</th>
+                            <th>Y (m)</th>
+                            <th>Depth (m)</th>
+                            <th class="col-explosive">Explosive</th>
+                            <th>Charge (m)</th>
+                            <th>Stemming (m)</th>
+                            <th>Delay (ms)</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="holeTableBody">
+
+                        @for (int i = 0; i < Model.Holes.Count; i++)
+                        {
+                            <partial name="_HoleRow"
+                                     model="Model.Holes[i]"
+                                     view-data='new ViewDataDictionary(ViewData) { ["HoleIndex"] = i.ToString() }' />
+                        }
+
+                        <tr id="noHolesRow" style="@(Model.Holes.Any() ? "display: none;" : "")">
+                            <td colspan="9" class="no-holes">
+                                No holes yet. Click <strong>Add Hole</strong> to start the pattern.
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        @* Template used by JavaScript when adding new holes *@
+
+        <template id="holeRowTemplate">
+            <partial name="_HoleRow"
+                     model="new BlastHoleViewModel { Number = 0 }"
+                     view-data='new ViewDataDictionary(ViewData) { ["HoleIndex"] = "__index__" }' />
+        </template>
+
+
+        @* =====================================================
+           FOOTER ACTIONS
+           ===================================================== *@
+
+        <div class="design-footer">
+
+            <button type="submit" class="save-draft-btn">
+                Save Draft Layout
+            </button>
+
+            <button type="submit"
+                    class="calculate-btn"
+                    asp-controller="Projects"
+                    asp-action="CalculatePhysics"
+                    asp-route-id="@Model.ProjectId">
+
+                Calculate Blast Physics
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+@section Scripts {
+    <script src="~/js/pattern-design.js" asp-append-version="true"></script>
+}
