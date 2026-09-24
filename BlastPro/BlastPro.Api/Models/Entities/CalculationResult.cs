@@ -10,7 +10,8 @@ public sealed class CalculationResult
     public decimal TotalDrillingMetres { get; set; }
     public decimal? EstimatedVolumeCubicMetres { get; set; }
     public decimal? EstimatedTonnageTonnes { get; set; }
-    public decimal TotalCost { get; set; }
+    public decimal? TotalCost { get; set; }
+    public string? CurrencyCode { get; set; }
     public decimal MaxChargePerDelayKg { get; set; }
     public decimal? PowderFactorKgPerTonne { get; set; }
     public decimal? PredictedPpvMmPerSecond { get; set; }
