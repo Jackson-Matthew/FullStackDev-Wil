@@ -180,6 +180,11 @@ public class ProjectsController : ControllerBase
         if (!isMainCompanyUser && project.OwnerId != userId)
             return Forbid();
 
+        var oldRockDensity = project.RockDensity;
+        var oldBurden = project.Burden;
+        var oldSpacing = project.Spacing;
+        var oldVibrationThreshold = project.VibrationThreshold;
+
         // Update only supplied fields
         if (!string.IsNullOrWhiteSpace(dto.Name))
         {
@@ -238,6 +243,10 @@ public class ProjectsController : ControllerBase
         }
 
         project.UpdatedAtUtc = DateTime.UtcNow;
+
+        if (oldRockDensity != project.RockDensity || oldBurden != project.Burden ||
+            oldSpacing != project.Spacing || oldVibrationThreshold != project.VibrationThreshold)
+            await InvalidateResults(id);
 
         await _db.SaveChangesAsync();
         return NoContent();
@@ -350,6 +359,21 @@ public class ProjectsController : ControllerBase
         if (validProductCount != productIds.Length)
             return BadRequest(new { message = "Select an active explosive product from your company." });
 
+        var inputsChanged = project.RockDensity != dto.RockDensity ||
+            project.Burden != dto.Burden || project.Spacing != dto.Spacing ||
+            project.VibrationThreshold != dto.VibrationThreshold ||
+            project.Holes.Count != dto.Holes.Count ||
+            dto.Holes.Any(submitted =>
+            {
+                var saved = project.Holes.FirstOrDefault(h => h.Id == submitted.Id);
+                return saved is null || saved.HoleNumber != submitted.Number ||
+                    saved.XCoordinate != submitted.X || saved.YCoordinate != submitted.Y ||
+                    saved.Depth != submitted.Depth || saved.ChargeKg != submitted.Charge ||
+                    saved.StemmingMetres != submitted.Stemming ||
+                    saved.DelayMilliseconds != submitted.Delay ||
+                    saved.ExplosiveProductId != submitted.ExplosiveProductId;
+            });
+
         project.RockType = dto.RockType.Trim();
         project.RockDensity = dto.RockDensity;
         project.Burden = dto.Burden;
@@ -390,6 +414,9 @@ public class ProjectsController : ControllerBase
                 project.Holes.Add(hole);
         }
 
+        if (inputsChanged)
+            await InvalidateResults(id);
+
         try
         {
             await _db.SaveChangesAsync();
@@ -404,6 +431,15 @@ public class ProjectsController : ControllerBase
         }
 
         return Ok(await BuildPatternDesignDto(project));
+    }
+
+    private async Task InvalidateResults(int projectId)
+    {
+        var currentResults = await _db.CalculationResults
+            .Where(result => result.BlastProjectId == projectId && result.IsCurrent)
+            .ToListAsync();
+        foreach (var result in currentResults)
+            result.IsCurrent = false;
     }
 
     private async Task<PatternDesignDto> BuildPatternDesignDto(BlastProject project)
