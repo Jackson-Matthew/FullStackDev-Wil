@@ -360,6 +360,10 @@ namespace BlastPro.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("CurrencyCode")
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
                     b.Property<decimal?>("EstimatedTonnageTonnes")
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
@@ -387,7 +391,7 @@ namespace BlastPro.Api.Data.Migrations
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
 
-                    b.Property<decimal>("TotalCost")
+                    b.Property<decimal?>("TotalCost")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
@@ -408,7 +412,9 @@ namespace BlastPro.Api.Data.Migrations
 
                     b.HasIndex("CalculatedByUserId");
 
-                    b.HasIndex("BlastProjectId", "IsCurrent");
+                    b.HasIndex("BlastProjectId", "IsCurrent")
+                        .IsUnique()
+                        .HasFilter("[IsCurrent] = 1");
 
                     b.ToTable("CalculationResults", t =>
                         {
