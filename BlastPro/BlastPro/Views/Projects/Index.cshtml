@@ -302,15 +302,17 @@
 
         <div class="design-footer">
 
-            <button type="submit" class="save-draft-btn">
+            <button type="submit"
+                    class="save-draft-btn"
+                    formaction="@Url.Action("SaveDraft", "PatternDesign")">
+
                 Save Draft Layout
+
             </button>
 
             <button type="submit"
                     class="calculate-btn"
-                    asp-controller="Projects"
-                    asp-action="CalculatePhysics"
-                    asp-route-id="@Model.ProjectId">
+                    formaction="@Url.Action("CalculatePhysics", "Projects", new { id = Model.ProjectId })">
 
                 Calculate Blast Physics
 

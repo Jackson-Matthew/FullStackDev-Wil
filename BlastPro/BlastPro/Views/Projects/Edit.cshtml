@@ -1,7 +1,7 @@
-@model BlastPro.Mvc.Models.ViewModels.Projects.CreateProjectViewModel
+﻿@model BlastPro.Mvc.Models.ViewModels.Projects.EditProjectViewModel
 
 @{
-    ViewData["Title"] = "Create Project";
+    ViewData["Title"] = "Edit Project";
     Layout = "_Layout";
 }
 
@@ -12,18 +12,18 @@
 
     <div class="create-project-card">
 
-        <form asp-controller="Projects" asp-action="Create" method="post" novalidate>
+        <form asp-controller="Projects" asp-action="Edit" asp-route-id="@Model.Id" method="post" novalidate>
 
-
+            <input type="hidden" asp-for="Id" />
 
             <div class="create-project-header">
 
                 <h2 class="create-project-title">
-                    Create New Project
+                    Edit Project
                 </h2>
 
                 <p class="create-project-subtitle">
-                    Set up a new blasting design project.
+                    Update the project details.
                 </p>
 
             </div>
@@ -39,7 +39,7 @@
 
                     <input asp-for="Name"
                            class="form-control create-input"
-                           placeholder="Enter project name (e.g. North Mine Phase 1)"
+                           placeholder="Enter project name"
                            autofocus />
 
                     <span asp-validation-for="Name" class="create-validation"></span>
@@ -97,7 +97,7 @@
                 </a>
 
                 <button type="submit" class="create-submit-btn">
-                    Create Project
+                    Save Changes
                 </button>
 
             </div>

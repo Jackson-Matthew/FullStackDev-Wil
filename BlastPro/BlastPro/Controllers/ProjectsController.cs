@@ -1,22 +1,31 @@
+using BlastPro.Mvc.Models.Dtos;
 using BlastPro.Mvc.Models.ViewModels.Projects;
+using BlastPro.Mvc.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BlastPro.Mvc.Controllers
 {
+    [Authorize]
     public class ProjectsController : Controller
     {
+        private readonly IApiClient _api;
+        private readonly ILogger<ProjectsController> _logger;
+
+        public ProjectsController(IApiClient api, ILogger<ProjectsController> logger)
+        {
+            _api = api;
+            _logger = logger;
+        }
+
         // =========================================================
         // DASHBOARD REDIRECT
         // =========================================================
 
-        // Where the dashboard lives. Change this if your dashboard
-        // is rendered by a different controller/action.
-        private const string DashboardController = "Home";
+        private const string DashboardController = "Dashboard";
         private const string DashboardAction = "Index";
 
-
         // GET: /Projects
-        // Sends /Projects to the dashboard so Cancel / Back links work.
         [HttpGet]
         public IActionResult Index()
         {
@@ -46,10 +55,86 @@ namespace BlastPro.Mvc.Controllers
                 return View(model);
             }
 
-            // TODO: save the project through your API/service, e.g.
-            // await _projectsApi.CreateAsync(model.Name, model.SiteLocation, model.BlastType);
-            await Task.CompletedTask;
+            var result = await _api.PostAsync<ProjectDetailDto>("api/projects", new
+            {
+                name = model.Name,
+                siteLocation = model.SiteLocation,
+                blastType = model.BlastType
+            });
 
+            if (!result.Success || result.Data is null)
+            {
+                _logger.LogWarning("Create project failed: {Error}", result.Error);
+                ModelState.AddModelError(string.Empty,
+                    result.Error ?? "Could not create the project. Please try again.");
+                return View(model);
+            }
+
+            TempData["Success"] = $"Project '{result.Data.Name}' created.";
+            return RedirectToAction(DashboardAction, DashboardController);
+        }
+
+
+        // =========================================================
+        // EDIT
+        // =========================================================
+
+        // GET: /Projects/Edit/{id}
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            if (id <= 0)
+                return RedirectToAction(DashboardAction, DashboardController);
+
+            var result = await _api.GetAsync<ProjectDetailDto>($"api/projects/{id}");
+
+            if (!result.Success || result.Data is null)
+            {
+                TempData["Error"] = result.Error ?? "Could not load the project.";
+                return RedirectToAction(DashboardAction, DashboardController);
+            }
+
+            var model = new EditProjectViewModel
+            {
+                Id = result.Data.Id,
+                Name = result.Data.Name,
+                SiteLocation = result.Data.SiteLocation,
+                BlastType = result.Data.BlastType
+            };
+
+            return View(model);
+        }
+
+
+        // POST: /Projects/Edit/{id}
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, EditProjectViewModel model)
+        {
+            if (id != model.Id)
+                return BadRequest();
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var result = await _api.PutAsync<object>($"api/projects/{id}", new
+            {
+                name = model.Name,
+                siteLocation = model.SiteLocation,
+                blastType = model.BlastType
+            });
+
+            if (!result.Success)
+            {
+                _logger.LogWarning("Update project failed: {Error}", result.Error);
+                ModelState.AddModelError(string.Empty,
+                    result.Error ?? "Could not save the project. Please try again.");
+                return View(model);
+            }
+
+            TempData["Success"] = $"Project '{model.Name}' updated.";
             return RedirectToAction(DashboardAction, DashboardController);
         }
 
@@ -69,23 +154,52 @@ namespace BlastPro.Mvc.Controllers
         }
 
 
-        // POST: /Projects/SaveDraft/{id}
+        // =========================================================
+        // PATTERN DESIGN SAVE
+        // =========================================================
+
+        // POST: /Projects/SaveDraft
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveDraft(PatternDesignViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                return View("Index", model);
+                await RestoreExplosiveProducts(model);
+                return View("~/Views/Projects/Index.cshtml", model);
             }
 
-            // TODO: save the parameters + hole pattern through your API/service, e.g.
-            // await _projectsApi.SavePatternDesignAsync(model);
-            await Task.CompletedTask;
+            if (model.ProjectId <= 0)
+            {
+                ModelState.AddModelError(string.Empty, "Create a project before saving this pattern design.");
+                await RestoreExplosiveProducts(model);
+                return View("~/Views/Projects/Index.cshtml", model);
+            }
+
+            var result = await _api.PutAsync<PatternDesignViewModel>(
+                $"api/projects/{model.ProjectId}/pattern-design",
+                new
+                {
+                    model.RockType,
+                    model.RockDensity,
+                    model.Burden,
+                    model.Spacing,
+                    model.VibrationThreshold,
+                    model.RowVersion,
+                    model.Holes
+                });
+
+            if (!result.Success || result.Data is null)
+            {
+                _logger.LogWarning("Save pattern design failed: {Error}", result.Error);
+                ModelState.AddModelError(string.Empty,
+                    result.Error ?? "Could not save the pattern design.");
+                await RestoreExplosiveProducts(model);
+                return View("~/Views/Projects/Index.cshtml", model);
+            }
 
             ViewData["Success"] = "Draft layout saved.";
-
-            return View("Index", model);
+            return View("~/Views/Projects/Index.cshtml", result.Data);
         }
 
 
@@ -96,23 +210,42 @@ namespace BlastPro.Mvc.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return View("Index", model);
+                await RestoreExplosiveProducts(model);
+                return View("~/Views/Projects/Index.cshtml", model);
             }
 
             if (model.Holes.Count == 0)
             {
-                ModelState.AddModelError(string.Empty, "Add at least one hole before calculating blast physics.");
-                return View("Index", model);
+                ModelState.AddModelError(string.Empty,
+                    "Add at least one hole before calculating blast physics.");
+                await RestoreExplosiveProducts(model);
+                return View("~/Views/Projects/Index.cshtml", model);
             }
 
-            // TODO: send the design to your API/service for the physics calculation
-            // and redirect to (or return) the results page, e.g.
-            // var results = await _projectsApi.CalculateAsync(model);
-            await Task.CompletedTask;
+            // Save first, then route to Results placeholder
+            var saveResult = await _api.PutAsync<PatternDesignViewModel>(
+                $"api/projects/{model.ProjectId}/pattern-design",
+                new
+                {
+                    model.RockType,
+                    model.RockDensity,
+                    model.Burden,
+                    model.Spacing,
+                    model.VibrationThreshold,
+                    model.RowVersion,
+                    model.Holes
+                });
 
-            ViewData["Success"] = "Design submitted for blast physics calculation.";
+            if (!saveResult.Success)
+            {
+                ModelState.AddModelError(string.Empty,
+                    saveResult.Error ?? "Could not save the pattern before calculation.");
+                await RestoreExplosiveProducts(model);
+                return View("~/Views/Projects/Index.cshtml", model);
+            }
 
-            return View("Index", model);
+            TempData["Success"] = "Design saved. Calculation is not yet wired to the API.";
+            return RedirectToAction("Index", "Results", new { projectId = model.ProjectId });
         }
 
 
@@ -123,13 +256,40 @@ namespace BlastPro.Mvc.Controllers
         // POST: /Projects/Delete/{id}
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(string id)
+        public async Task<IActionResult> Delete(int id)
         {
-            // TODO: delete the project through your API/service, e.g.
-            // await _projectsApi.DeleteAsync(id);
-            await Task.CompletedTask;
+            if (id <= 0)
+                return RedirectToAction(DashboardAction, DashboardController);
+
+            var result = await _api.DeleteAsync($"api/projects/{id}");
+
+            if (!result.Success)
+            {
+                _logger.LogWarning("Delete project failed: {Error}", result.Error);
+                TempData["Error"] = result.Error ?? "Could not delete the project.";
+            }
+            else
+            {
+                TempData["Success"] = "Project deleted.";
+            }
 
             return RedirectToAction(DashboardAction, DashboardController);
+        }
+
+
+        // =========================================================
+        // HELPERS
+        // =========================================================
+
+        private async Task RestoreExplosiveProducts(PatternDesignViewModel model)
+        {
+            if (model.ProjectId <= 0) return;
+
+            var current = await _api.GetAsync<PatternDesignViewModel>(
+                $"api/projects/{model.ProjectId}/pattern-design");
+
+            if (current.Success && current.Data is not null)
+                model.ExplosiveProducts = current.Data.ExplosiveProducts;
         }
     }
 }
