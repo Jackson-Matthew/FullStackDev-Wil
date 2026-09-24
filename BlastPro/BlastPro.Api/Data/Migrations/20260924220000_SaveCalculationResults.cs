@@ -35,6 +35,21 @@ public partial class SaveCalculationResults : Migration
             name: "IX_CalculationResults_BlastProjectId_IsCurrent",
             table: "CalculationResults");
 
+        // Preserve older runs if legacy data contains more than one current row.
+        migrationBuilder.Sql("""
+            WITH Ranked AS (
+                SELECT [Id], ROW_NUMBER() OVER (
+                    PARTITION BY [BlastProjectId]
+                    ORDER BY [CalculatedAtUtc] DESC, [Id] DESC) AS [Position]
+                FROM [CalculationResults]
+                WHERE [IsCurrent] = 1
+            )
+            UPDATE results SET [IsCurrent] = 0
+            FROM [CalculationResults] AS results
+            INNER JOIN Ranked ON Ranked.[Id] = results.[Id]
+            WHERE Ranked.[Position] > 1;
+            """);
+
         migrationBuilder.CreateIndex(
             name: "IX_CalculationResults_BlastProjectId_IsCurrent",
             table: "CalculationResults",
