@@ -28,6 +28,7 @@ public sealed class CalculationResultsTests
         Assert.Contains("CurrencyCode", script);
         Assert.Contains("CREATE UNIQUE INDEX", script);
         Assert.Contains("[IsCurrent] = 1", script);
+        Assert.False(db.Database.HasPendingModelChanges());
     }
 
     [Fact]
