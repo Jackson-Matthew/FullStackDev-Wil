@@ -58,7 +58,7 @@ public class ApiClient(HttpClient http, IHttpContextAccessor contextAccessor) : 
                 return new ApiResult<T> { Success = true, Data = data, StatusCode = response.StatusCode };
             }
             var error = (int)response.StatusCode >= 500 ? Unavailable : "The request could not be completed.";
-            if (response.StatusCode == HttpStatusCode.BadRequest)
+            if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Conflict)
             {
                 using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
                 if (body.RootElement.TryGetProperty("errors", out var errors))

@@ -244,6 +244,211 @@ public class ProjectsController : ControllerBase
     }
 
     // ---------------------------------------------------------------------
+    // GET /api/projects/{id}/pattern-design
+    // Loads the project fields, holes and active company explosive products.
+    // ---------------------------------------------------------------------
+    [HttpGet("{id:int}/pattern-design")]
+    public async Task<ActionResult<PatternDesignDto>> GetPatternDesign(int id)
+    {
+        var userId = User.GetUserId();
+        var companyId = User.GetCompanyId();
+        if (userId is null || companyId is null) return Unauthorized();
+
+        var project = await _db.BlastProjects
+            .Include(p => p.Holes)
+            .FirstOrDefaultAsync(p => p.Id == id && p.CompanyId == companyId);
+
+        if (project is null) return NotFound();
+        if (!User.IsInRole("MainCompanyUser") && project.OwnerId != userId)
+            return NotFound();
+
+        return Ok(await BuildPatternDesignDto(project));
+    }
+
+    // ---------------------------------------------------------------------
+    // PUT /api/projects/{id}/pattern-design
+    // Saves the project parameters and complete hole collection atomically.
+    // ---------------------------------------------------------------------
+    [HttpPut("{id:int}/pattern-design")]
+    public async Task<ActionResult<PatternDesignDto>> SavePatternDesign(
+        int id, [FromBody] SavePatternDesignDto dto)
+    {
+        var userId = User.GetUserId();
+        var companyId = User.GetCompanyId();
+        if (userId is null || companyId is null) return Unauthorized();
+
+        var project = await _db.BlastProjects
+            .Include(p => p.Holes)
+            .FirstOrDefaultAsync(p => p.Id == id && p.CompanyId == companyId);
+
+        if (project is null) return NotFound();
+        if (!User.IsInRole("MainCompanyUser") && project.OwnerId != userId)
+            return NotFound();
+
+        if (string.IsNullOrWhiteSpace(dto.RockType) || dto.RockType.Length > 100)
+            return BadRequest(new { message = "Select a valid rock type." });
+        if (dto.RockDensity <= 0)
+            return BadRequest(new { message = "Rock density must be greater than zero." });
+        if (dto.Burden <= 0)
+            return BadRequest(new { message = "Burden must be greater than zero." });
+        if (dto.Spacing <= 0)
+            return BadRequest(new { message = "Spacing must be greater than zero." });
+        if (dto.VibrationThreshold <= 0)
+            return BadRequest(new { message = "Vibration threshold must be greater than zero." });
+
+        if (!string.IsNullOrWhiteSpace(dto.RowVersion))
+        {
+            byte[] submittedRowVersion;
+            try
+            {
+                submittedRowVersion = Convert.FromBase64String(dto.RowVersion);
+            }
+            catch (FormatException)
+            {
+                return BadRequest(new { message = "The project version is invalid. Reload the page and try again." });
+            }
+
+            if (!project.RowVersion.SequenceEqual(submittedRowVersion))
+                return Conflict(new { message = "This project was changed by someone else. Reload it before saving." });
+
+            _db.Entry(project).Property(p => p.RowVersion).OriginalValue = submittedRowVersion;
+        }
+
+        var holeNumbers = new HashSet<int>();
+        var submittedHoleIds = new HashSet<int>();
+        foreach (var hole in dto.Holes)
+        {
+            if (hole.Number <= 0 || !holeNumbers.Add(hole.Number))
+                return BadRequest(new { message = "Hole numbers must be unique and greater than zero." });
+            if (hole.Depth <= 0)
+                return BadRequest(new { message = $"Hole {hole.Number} depth must be greater than zero." });
+            if (hole.Charge < 0)
+                return BadRequest(new { message = $"Hole {hole.Number} charge cannot be negative." });
+            if (hole.Stemming < 0 || hole.Stemming > hole.Depth)
+                return BadRequest(new { message = $"Hole {hole.Number} stemming must be between zero and its depth." });
+            if (hole.Delay < 0)
+                return BadRequest(new { message = $"Hole {hole.Number} delay cannot be negative." });
+            if (hole.Id is > 0 && !submittedHoleIds.Add(hole.Id.Value))
+                return BadRequest(new { message = "The same saved hole cannot be submitted more than once." });
+        }
+
+        var existingHoleIds = project.Holes.Select(h => h.Id).ToHashSet();
+        if (submittedHoleIds.Any(holeId => !existingHoleIds.Contains(holeId)))
+            return BadRequest(new { message = "One or more holes do not belong to this project." });
+
+        var productIds = dto.Holes
+            .Where(h => h.ExplosiveProductId.HasValue)
+            .Select(h => h.ExplosiveProductId!.Value)
+            .Distinct()
+            .ToArray();
+
+        var validProductCount = await _db.ExplosiveProducts.CountAsync(product =>
+            productIds.Contains(product.Id) &&
+            product.CompanyId == companyId &&
+            product.IsActive);
+
+        if (validProductCount != productIds.Length)
+            return BadRequest(new { message = "Select an active explosive product from your company." });
+
+        project.RockType = dto.RockType.Trim();
+        project.RockDensity = dto.RockDensity;
+        project.Burden = dto.Burden;
+        project.Spacing = dto.Spacing;
+        project.VibrationThreshold = dto.VibrationThreshold;
+        project.Status = ProjectStatus.Draft;
+        project.UpdatedAtUtc = DateTime.UtcNow;
+
+        foreach (var existingHole in project.Holes
+                     .Where(h => !submittedHoleIds.Contains(h.Id))
+                     .ToList())
+        {
+            project.Holes.Remove(existingHole);
+            _db.BlastHoles.Remove(existingHole);
+        }
+
+        foreach (var submittedHole in dto.Holes)
+        {
+            var hole = submittedHole.Id is > 0
+                ? project.Holes.Single(h => h.Id == submittedHole.Id.Value)
+                : new BlastHole
+                {
+                    BlastProjectId = project.Id,
+                    CreatedAtUtc = DateTime.UtcNow
+                };
+
+            hole.HoleNumber = submittedHole.Number;
+            hole.XCoordinate = submittedHole.X;
+            hole.YCoordinate = submittedHole.Y;
+            hole.Depth = submittedHole.Depth;
+            hole.ExplosiveProductId = submittedHole.ExplosiveProductId;
+            hole.ChargeKg = submittedHole.Charge;
+            hole.StemmingMetres = submittedHole.Stemming;
+            hole.DelayMilliseconds = submittedHole.Delay;
+            hole.UpdatedAtUtc = DateTime.UtcNow;
+
+            if (submittedHole.Id is not > 0)
+                project.Holes.Add(hole);
+        }
+
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(new { message = "This project was changed by someone else. Reload it before saving." });
+        }
+        catch (DbUpdateException)
+        {
+            return BadRequest(new { message = "The hole pattern could not be saved. Check the hole numbers and values." });
+        }
+
+        return Ok(await BuildPatternDesignDto(project));
+    }
+
+    private async Task<PatternDesignDto> BuildPatternDesignDto(BlastProject project)
+    {
+        var products = await _db.ExplosiveProducts
+            .Where(product => product.CompanyId == project.CompanyId && product.IsActive)
+            .OrderBy(product => product.Name)
+            .Select(product => new ExplosiveProductOptionDto
+            {
+                Id = product.Id,
+                Name = product.Name
+            })
+            .ToListAsync();
+
+        return new PatternDesignDto
+        {
+            ProjectId = project.Id,
+            ProjectName = project.Name,
+            Status = project.Status.ToString(),
+            RockType = project.RockType ?? string.Empty,
+            RockDensity = project.RockDensity ?? 0,
+            Burden = project.Burden ?? 0,
+            Spacing = project.Spacing ?? 0,
+            VibrationThreshold = project.VibrationThreshold ?? 0,
+            RowVersion = Convert.ToBase64String(project.RowVersion),
+            Holes = project.Holes
+                .OrderBy(hole => hole.HoleNumber)
+                .Select(hole => new PatternHoleDto
+                {
+                    Id = hole.Id,
+                    Number = hole.HoleNumber,
+                    X = hole.XCoordinate,
+                    Y = hole.YCoordinate,
+                    Depth = hole.Depth,
+                    ExplosiveProductId = hole.ExplosiveProductId,
+                    Charge = hole.ChargeKg,
+                    Stemming = hole.StemmingMetres,
+                    Delay = hole.DelayMilliseconds
+                })
+                .ToList(),
+            ExplosiveProducts = products
+        };
+    }
+
+    // ---------------------------------------------------------------------
     // DELETE /api/projects/{id}
     // Soft delete (per the developer guide).
     // ---------------------------------------------------------------------
