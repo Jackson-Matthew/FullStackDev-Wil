@@ -42,7 +42,7 @@ public class AccountPageTests
         var dashboard = await browser.GetAsync("/Dashboard/Index");
         Assert.Equal(HttpStatusCode.OK, dashboard.StatusCode);
         var html = await dashboard.Content.ReadAsStringAsync();
-        Assert.Contains("My Projects", html);
+        Assert.Contains("Current Blast Designs", html);
         Assert.DoesNotContain("Could not load projects", html);
     }
 
