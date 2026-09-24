@@ -1,0 +1,90 @@
+@model BlastPro.Mvc.Models.ViewModels.Projects.ProjectDetailsViewModel
+
+@{
+    ViewData["Title"] = $"{Model.Project.Name} - Project";
+    Layout = "_Layout";
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <a asp-controller="Dashboard" asp-action="Index" class="text-decoration-none">
+                &larr; Back to Dashboard
+            </a>
+            <h2 class="mt-2 mb-0">@Model.Project.Name</h2>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Project.Id" class="btn btn-outline-dark">
+                Edit Project
+            </a>
+            <a asp-controller="PatternDesign"
+               asp-action="Index"
+               asp-route-projectId="@Model.Project.Id"
+               class="btn btn-danger">
+                Pattern Design
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header fw-semibold">Project Details</div>
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Site Location</dt>
+                <dd class="col-sm-9">@Model.Project.SiteLocation</dd>
+
+                <dt class="col-sm-3">Blast Type</dt>
+                <dd class="col-sm-9">@Model.Project.BlastType</dd>
+
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9">@Model.Project.Status</dd>
+
+                <dt class="col-sm-3">Rock Type</dt>
+                <dd class="col-sm-9">@(Model.Project.RockType ?? "Not set")</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header fw-semibold">Hole Pattern</div>
+        <div class="table-responsive">
+            <table class="table table-striped align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>X (m)</th>
+                        <th>Y (m)</th>
+                        <th>Depth (m)</th>
+                        <th>Charge (kg)</th>
+                        <th>Stemming (m)</th>
+                        <th>Delay (ms)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Holes.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-4">No holes have been added yet.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var hole in Model.Holes.OrderBy(h => h.Number))
+                        {
+                            <tr>
+                                <td>@hole.Number</td>
+                                <td>@hole.X</td>
+                                <td>@hole.Y</td>
+                                <td>@hole.Depth</td>
+                                <td>@hole.Charge</td>
+                                <td>@hole.Stemming</td>
+                                <td>@hole.Delay</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

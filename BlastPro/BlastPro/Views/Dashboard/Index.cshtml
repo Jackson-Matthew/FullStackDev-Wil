@@ -76,6 +76,18 @@
                             Draft
                         </option>
 
+                        <option value="active">
+                            Active
+                        </option>
+
+                        <option value="calculated">
+                            Calculated
+                        </option>
+
+                        <option value="archived">
+                            Archived
+                        </option>
+
                     </select>
 
                 </div>
@@ -149,9 +161,12 @@
 
                     @foreach (var p in Model)
                     {
+                        var status = string.IsNullOrWhiteSpace(p.Status) ? "Draft" : p.Status;
+                        var statusKey = status.ToLowerInvariant();
+
                         <div class="project-row project-row-five"
-                             data-project-name="@p.Name.ToLower()"
-                             data-project-status="@p.Status.ToLower()">
+                             data-project-name="@p.Name.ToLowerInvariant()"
+                             data-project-status="@statusKey">
 
 
                             @* Project Name *@
@@ -179,18 +194,9 @@
 
                             <div>
 
-                                @if (p.Status?.ToLower() == "reviewed")
-                                {
-                                    <span class="project-status-badge status-reviewed">
-                                        Reviewed
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="project-status-badge status-draft">
-                                        Draft
-                                    </span>
-                                }
+                                <span class="project-status-badge status-@statusKey">
+                                    @status
+                                </span>
 
                             </div>
 
@@ -202,8 +208,18 @@
                                 <a asp-controller="Projects"
                                    asp-action="Details"
                                    asp-route-id="@p.Id"
+                                   class="project-action-btn view-btn"
+                                   title="View Project">
+
+                                    View
+
+                                </a>
+
+                                <a asp-controller="PatternDesign"
+                                   asp-action="Index"
+                                   asp-route-projectId="@p.Id"
                                    class="project-action-btn pattern-design-btn"
-                                   title="Open Pattern Design">
+                                   title="Edit Hole Pattern">
 
                                     Pattern Design
 

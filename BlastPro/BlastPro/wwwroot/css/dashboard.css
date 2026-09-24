@@ -150,6 +150,24 @@
     border: 1px solid #000000;
 }
 
+.status-active {
+    background-color: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #66bb6a;
+}
+
+.status-calculated {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+    border: 1px solid #64b5f6;
+}
+
+.status-archived {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #9ca3af;
+}
+
 
 .project-actions {
     display: flex;
@@ -236,15 +254,25 @@
     justify-content: flex-end;
 }
 
-.project-action-btn {
+    .project-action-btn {
     font-size: 0.8rem;
     padding: 0.35rem 0.75rem;
     border-radius: 6px;
     text-decoration: none;
     font-weight: 500;
     white-space: nowrap;
-    transition: background 0.15s ease, color 0.15s ease;
-}
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .project-action-btn.view-btn {
+        background: #111827;
+        color: #fff;
+    }
+
+        .project-action-btn.view-btn:hover {
+            background: #374151;
+            color: #fff;
+        }
 
     .project-action-btn.pattern-design-btn {
         background: #dc3545;

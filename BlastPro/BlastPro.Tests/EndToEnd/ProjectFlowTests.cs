@@ -12,6 +12,75 @@ namespace BlastPro.Tests.EndToEnd;
 public sealed class ProjectFlowTests
 {
     [Fact]
+    public async Task Dashboard_and_project_view_show_the_real_status_details_and_holes()
+    {
+        await using var api = new ApiTestHost();
+        var user = await api.AddUserAsync();
+        int projectId;
+
+        using (var scope = api.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var project = new BlastProject
+            {
+                CompanyId = user.CompanyId,
+                OwnerId = user.Id,
+                Name = "Calculated Project",
+                SiteLocation = "North Bench",
+                BlastType = "Production",
+                RockType = "Granite",
+                Status = ProjectStatus.Calculated
+            };
+            db.BlastProjects.Add(project);
+            await db.SaveChangesAsync();
+            db.BlastHoles.Add(new BlastHole
+            {
+                BlastProjectId = project.Id,
+                HoleNumber = 1,
+                XCoordinate = 4,
+                YCoordinate = 5,
+                Depth = 12,
+                ChargeKg = 7,
+                StemmingMetres = 3,
+                DelayMilliseconds = 50
+            });
+            await db.SaveChangesAsync();
+            projectId = project.Id;
+        }
+
+        await using var mvc = new MvcTestHost(api);
+        using var browser = mvc.Browser();
+        await BrowserForms.SubmitAsync(
+            browser,
+            "/Account/Login",
+            "/Account/Login",
+            new Dictionary<string, string>
+            {
+                ["Email"] = user.Email!,
+                ["Password"] = ApiTestHost.Password,
+                ["RememberMe"] = "False"
+            });
+
+        var dashboard = await browser.GetAsync("/Dashboard/Index");
+        var dashboardHtml = await dashboard.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, dashboard.StatusCode);
+        Assert.Contains("Calculated Project", dashboardHtml);
+        Assert.Contains("Calculated", dashboardHtml);
+        Assert.Contains($"/Projects/Details/{projectId}", dashboardHtml);
+        Assert.Contains($"/PatternDesign/Index?projectId={projectId}", dashboardHtml);
+
+        var details = await browser.GetAsync($"/Projects/Details/{projectId}");
+        var detailsHtml = await details.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, details.StatusCode);
+        Assert.Contains("North Bench", detailsHtml);
+        Assert.Contains("Production", detailsHtml);
+        Assert.Contains("Granite", detailsHtml);
+        Assert.Contains("Hole Pattern", detailsHtml);
+        Assert.Contains(">12<", detailsHtml);
+        Assert.Contains(">50<", detailsHtml);
+    }
+
+    [Fact]
     public async Task Pattern_design_navbar_route_renders_the_existing_project_and_hole_ui()
     {
         await using var api = new ApiTestHost();

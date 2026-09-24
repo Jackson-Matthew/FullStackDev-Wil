@@ -145,12 +145,28 @@ namespace BlastPro.Mvc.Controllers
 
         // GET: /Projects/Details/{id}
         [HttpGet]
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
             if (id <= 0)
                 return RedirectToAction(DashboardAction, DashboardController);
 
-            return RedirectToAction("Index", "PatternDesign", new { projectId = id });
+            var projectResult = await _api.GetAsync<ProjectDetailDto>($"api/projects/{id}");
+            var designResult = await _api.GetAsync<PatternDesignViewModel>(
+                $"api/projects/{id}/pattern-design");
+
+            if (!projectResult.Success || projectResult.Data is null ||
+                !designResult.Success || designResult.Data is null)
+            {
+                TempData["Error"] = projectResult.Error ?? designResult.Error ??
+                    "Could not load the project.";
+                return RedirectToAction(DashboardAction, DashboardController);
+            }
+
+            return View(new ProjectDetailsViewModel
+            {
+                Project = projectResult.Data,
+                Holes = designResult.Data.Holes
+            });
         }
 
 
