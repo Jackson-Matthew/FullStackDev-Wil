@@ -103,14 +103,18 @@
                 Current Blast Designs
             </div>
 
-            <div class="project-header">
+            <div class="project-header project-header-five">
 
                 <div>
                     Project Name
                 </div>
 
                 <div>
-                    Date Created
+                    Site Location
+                </div>
+
+                <div>
+                    Blast Type
                 </div>
 
                 <div>
@@ -145,7 +149,7 @@
 
                     @foreach (var p in Model)
                     {
-                        <div class="project-row"
+                        <div class="project-row project-row-five"
                              data-project-name="@p.Name.ToLower()"
                              data-project-status="@p.Status.ToLower()">
 
@@ -153,21 +157,25 @@
                             @* Project Name *@
 
                             <div>
-
-                                <a asp-controller="Projects"
-                                   asp-action="Details"
-                                   asp-route-id="@p.Id"
-                                   class="project-name">
-
-                                    @p.Name
-
-                                </a>
-
+                                <span class="project-name">@p.Name</span>
                             </div>
 
-                            <div class="project-date">
-                                @p.CreatedAtUtc.ToString("yyyy-MM-dd")
+
+                            @* Site Location *@
+
+                            <div class="project-location">
+                                @p.SiteLocation
                             </div>
+
+
+                            @* Blast Type *@
+
+                            <div class="project-blasttype">
+                                @p.BlastType
+                            </div>
+
+
+                            @* Status *@
 
                             <div>
 
@@ -186,15 +194,28 @@
 
                             </div>
 
+
+                            @* Actions *@
+
                             <div class="project-actions">
 
                                 <a asp-controller="Projects"
                                    asp-action="Details"
                                    asp-route-id="@p.Id"
-                                   class="project-action view"
-                                   title="View Project">
+                                   class="project-action-btn pattern-design-btn"
+                                   title="Open Pattern Design">
 
-                                    <i class="bi bi-arrow-right"></i>
+                                    Pattern Design
+
+                                </a>
+
+                                <a asp-controller="Projects"
+                                   asp-action="Edit"
+                                   asp-route-id="@p.Id"
+                                   class="project-action-btn edit-btn"
+                                   title="Edit Project">
+
+                                    Edit
 
                                 </a>
 

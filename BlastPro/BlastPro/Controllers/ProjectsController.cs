@@ -76,6 +76,70 @@ namespace BlastPro.Mvc.Controllers
 
 
         // =========================================================
+        // EDIT
+        // =========================================================
+
+        // GET: /Projects/Edit/{id}
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            if (id <= 0)
+                return RedirectToAction(DashboardAction, DashboardController);
+
+            var result = await _api.GetAsync<ProjectDetailDto>($"api/projects/{id}");
+
+            if (!result.Success || result.Data is null)
+            {
+                TempData["Error"] = result.Error ?? "Could not load the project.";
+                return RedirectToAction(DashboardAction, DashboardController);
+            }
+
+            var model = new EditProjectViewModel
+            {
+                Id = result.Data.Id,
+                Name = result.Data.Name,
+                SiteLocation = result.Data.SiteLocation,
+                BlastType = result.Data.BlastType
+            };
+
+            return View(model);
+        }
+
+
+        // POST: /Projects/Edit/{id}
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, EditProjectViewModel model)
+        {
+            if (id != model.Id)
+                return BadRequest();
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var result = await _api.PutAsync<object>($"api/projects/{id}", new
+            {
+                name = model.Name,
+                siteLocation = model.SiteLocation,
+                blastType = model.BlastType
+            });
+
+            if (!result.Success)
+            {
+                _logger.LogWarning("Update project failed: {Error}", result.Error);
+                ModelState.AddModelError(string.Empty,
+                    result.Error ?? "Could not save the project. Please try again.");
+                return View(model);
+            }
+
+            TempData["Success"] = $"Project '{model.Name}' updated.";
+            return RedirectToAction(DashboardAction, DashboardController);
+        }
+
+
+        // =========================================================
         // DETAILS (PATTERN DESIGN PAGE)
         // =========================================================
 
@@ -90,7 +154,11 @@ namespace BlastPro.Mvc.Controllers
         }
 
 
-        // POST: /Projects/SaveDraft/{id}
+        // =========================================================
+        // PATTERN DESIGN SAVE
+        // =========================================================
+
+        // POST: /Projects/SaveDraft
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveDraft(PatternDesignViewModel model)
@@ -154,8 +222,7 @@ namespace BlastPro.Mvc.Controllers
                 return View("~/Views/Projects/Index.cshtml", model);
             }
 
-            // TODO: hook this up to the calculation endpoint once it exists in the API.
-            // For now, save the design first and take the user to the placeholder Results page.
+            // Save first, then route to Results placeholder
             var saveResult = await _api.PutAsync<PatternDesignViewModel>(
                 $"api/projects/{model.ProjectId}/pattern-design",
                 new
