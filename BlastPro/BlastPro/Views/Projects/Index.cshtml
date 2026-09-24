@@ -296,6 +296,63 @@
         </template>
 
 
+        <div class="design-card">
+            <div class="design-card-header">
+                <h3 class="design-card-title">Calculation Inputs</h3>
+            </div>
+            <div class="design-card-body">
+                <p>Use site-approved values. Only the delay window is required; leave an optional field blank when its value is unavailable.</p>
+                <div class="param-grid">
+                    <div>
+                        <label for="DelayWindowMilliseconds" class="param-label">Delay window (ms)</label>
+                        <input id="DelayWindowMilliseconds" name="Calculation.DelayWindowMilliseconds" type="number" min="1" step="1"
+                               class="form-control param-input" value="@Model.Calculation.DelayWindowMilliseconds" />
+                    </div>
+                    <div>
+                        <label for="SubdrillMetres" class="param-label">Subdrill (m)</label>
+                        <input id="SubdrillMetres" name="Calculation.SubdrillMetres" type="number" min="0" step="any"
+                               class="form-control param-input" value="@Model.Calculation.SubdrillMetres?.ToString("0.####", inv)" />
+                    </div>
+                    <div>
+                        <label for="ReceptorDistanceMetres" class="param-label">Receptor distance (m)</label>
+                        <input id="ReceptorDistanceMetres" name="Calculation.ReceptorDistanceMetres" type="number" min="0" step="any"
+                               class="form-control param-input" value="@Model.Calculation.ReceptorDistanceMetres?.ToString("0.####", inv)" />
+                    </div>
+                    <div>
+                        <label for="PpvSiteCoefficient" class="param-label">PPV site coefficient</label>
+                        <input id="PpvSiteCoefficient" name="Calculation.PpvSiteCoefficient" type="number" min="0" step="any"
+                               class="form-control param-input" value="@Model.Calculation.PpvSiteCoefficient?.ToString("0.####", inv)" />
+                    </div>
+                    <div>
+                        <label for="PpvDecayExponent" class="param-label">PPV decay exponent</label>
+                        <input id="PpvDecayExponent" name="Calculation.PpvDecayExponent" type="number" min="0" step="any"
+                               class="form-control param-input" value="@Model.Calculation.PpvDecayExponent?.ToString("0.####", inv)" />
+                    </div>
+                    <div>
+                        <label for="FlyrockLaunchSpeedMetresPerSecond" class="param-label">Flyrock launch speed (m/s)</label>
+                        <input id="FlyrockLaunchSpeedMetresPerSecond" name="Calculation.FlyrockLaunchSpeedMetresPerSecond" type="number" min="0" step="any"
+                               class="form-control param-input" value="@Model.Calculation.FlyrockLaunchSpeedMetresPerSecond?.ToString("0.####", inv)" />
+                    </div>
+                    <div>
+                        <label for="FlyrockLaunchAngleDegrees" class="param-label">Flyrock launch angle (°)</label>
+                        <input id="FlyrockLaunchAngleDegrees" name="Calculation.FlyrockLaunchAngleDegrees" type="number" min="0" max="90" step="any"
+                               class="form-control param-input" value="@Model.Calculation.FlyrockLaunchAngleDegrees?.ToString("0.####", inv)" />
+                    </div>
+                    <div>
+                        <label for="FlyrockLaunchHeightMetres" class="param-label">Flyrock launch height (m)</label>
+                        <input id="FlyrockLaunchHeightMetres" name="Calculation.FlyrockLaunchHeightMetres" type="number" min="0" step="any"
+                               class="form-control param-input" value="@Model.Calculation.FlyrockLaunchHeightMetres?.ToString("0.####", inv)" />
+                    </div>
+                    <div>
+                        <label for="ExclusionRadiusMetres" class="param-label">Exclusion radius (m)</label>
+                        <input id="ExclusionRadiusMetres" name="Calculation.ExclusionRadiusMetres" type="number" min="0" step="any"
+                               class="form-control param-input" value="@Model.Calculation.ExclusionRadiusMetres?.ToString("0.####", inv)" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
         @* =====================================================
            FOOTER ACTIONS
            ===================================================== *@

@@ -21,6 +21,7 @@ public class PatternDesignViewModel
     public string? RowVersion { get; set; }
     public List<BlastHoleViewModel> Holes { get; set; } = new();
     public List<ExplosiveProductOptionViewModel> ExplosiveProducts { get; set; } = new();
+    public CalculationInputsViewModel Calculation { get; set; } = new();
 
     public static IReadOnlyList<string> RockTypes { get; } =
     [
@@ -31,6 +32,19 @@ public class PatternDesignViewModel
         "Other"
     ];
 
+}
+
+public sealed class CalculationInputsViewModel
+{
+    public int? DelayWindowMilliseconds { get; set; }
+    public decimal? SubdrillMetres { get; set; }
+    public decimal? ReceptorDistanceMetres { get; set; }
+    public decimal? PpvSiteCoefficient { get; set; }
+    public decimal? PpvDecayExponent { get; set; }
+    public decimal? FlyrockLaunchSpeedMetresPerSecond { get; set; }
+    public decimal? FlyrockLaunchAngleDegrees { get; set; }
+    public decimal? FlyrockLaunchHeightMetres { get; set; }
+    public decimal? ExclusionRadiusMetres { get; set; }
 }
 
 public class BlastHoleViewModel
