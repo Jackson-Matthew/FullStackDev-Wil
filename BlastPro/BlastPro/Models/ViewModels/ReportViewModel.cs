@@ -51,6 +51,12 @@ public class ReportViewModel
 
     public string FormatNumber(decimal value, int decimals = 0) =>
         value.ToString(decimals == 0 ? "N0" : "N" + decimals, CultureInfo.InvariantCulture);
+
+    public string FormatCost(decimal? value) =>
+        value is null ? "—" : $"{CurrencyPrefix}{value.Value:N2}";
+
+    public int CriticalWarningCount =>
+        Warnings.Count(w => w.Severity == "Critical");
 }
 
 public class ReportHoleViewModel
@@ -68,6 +74,8 @@ public class ReportHoleViewModel
 public class ReportWarningViewModel
 {
     public string Severity { get; set; } = "Warning";
-
     public string Message { get; set; } = string.Empty;
+
+    public string BadgeClass => Severity == "Critical" ? "bg-danger" : "bg-warning text-dark";
+    public string Icon => Severity == "Critical" ? "!" : "!";
 }
