@@ -34,7 +34,7 @@ namespace BlastPro.Mvc.Controllers
             // }
             // return View(result.Data);
 
-            await Task.CompletedTask;
+            // await Task.CompletedTask;
 
             if (TempData["Info"] is string info)
             {
@@ -43,11 +43,7 @@ namespace BlastPro.Mvc.Controllers
 
             var model = BuildSampleReport(projectId);
 
-            return View(new ReportViewModel
-            {
-                ProjectId = projectId,
-                HasResults = false
-            });
+            return View(model);
         }
 
 

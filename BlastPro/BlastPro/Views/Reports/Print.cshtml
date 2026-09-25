@@ -1,0 +1,134 @@
+﻿@model BlastPro.Mvc.Models.ViewModels.Reports.ReportViewModel
+@{
+    ViewData["Title"] = $"Print — {Model.ProjectName}";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blast Report — @Model.ProjectName</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/report.css" />
+    <style>
+        body { font-size: 11px; margin: 1.5cm; }
+        @@media screen { body { max-width: 900px; margin: 2rem auto; } }
+        @@media print  { .no-print { display: none !important; } }
+    </style>
+</head>
+<body>
+
+    @* Print button (screen only) *@
+    <div class="no-print mb-3">
+        <button onclick="window.print()" class="btn btn-sm btn-primary">🖨️ Print / Save as PDF</button>
+        <button onclick="window.close()" class="btn btn-sm btn-outline-secondary ms-2">✕ Close</button>
+    </div>
+
+    @* Header *@
+    <div class="pb-2 mb-3 border-bottom">
+        <h4 class="mb-0">Blast Report — @Model.ProjectName</h4>
+        <small class="text-muted">
+            @Model.CompanyName &nbsp;·&nbsp;
+            @Model.CalculationsUnit &nbsp;·&nbsp;
+            @Model.ReportDateUtc.ToString("yyyy-MM-dd")
+        </small>
+    </div>
+
+    @* Warnings *@
+    @if (Model.Warnings.Count > 0)
+    {
+        <h6 class="fw-bold mt-3">Warnings</h6>
+        <ul class="list-unstyled">
+            @foreach (var w in Model.Warnings)
+            {
+                <li class="mb-1">
+                    @w.Icon
+                    <span class="badge @w.BadgeClass">@w.Severity</span>
+                    — @w.Message
+                </li>
+            }
+        </ul>
+    }
+
+    @* Summary *@
+    <h6 class="fw-bold mt-3">Summary</h6>
+    <table class="table table-bordered table-sm mb-3" style="width:auto;">
+        <tr>
+            <th>Total Holes</th>
+            <td>@Model.TotalDesignatedHoles</td>
+            <th>Total Explosive</th>
+            <td>@Model.FormatNumber(Model.TotalExplosiveLoadKg) kg</td>
+            <th>Total Drilling</th>
+            <td>@Model.FormatNumber(Model.TotalDrillingLengthMetres) m</td>
+        </tr>
+        <tr>
+            <th>Est. Tonnage</th>
+            <td>@Model.FormatNumber(Model.TotalEstimatedTonnageTonnes ?? 0) t</td>
+            <th>Powder Factor</th>
+            <td>@(Model.PowderFactorKgPerTonne?.ToString("N2") ?? "—") kg/t</td>
+            <th>Est. Material Cost</th>
+            <td><strong>@Model.FormatCost(Model.TotalEstimatedMaterialCost)</strong></td>
+        </tr>
+    </table>
+
+    @* Safety metrics *@
+    <h6 class="fw-bold mt-3">Safety Metrics</h6>
+    <table class="table table-bordered table-sm mb-3" style="width:auto;">
+        <tr>
+            <th>Max Charge / Delay</th>
+            <td>@Model.MaxChargePerDelayKg kg</td>
+            <th>Predicted PPV</th>
+            <td>@(Model.PredictedPpvMmPerSecond?.ToString("N1") ?? "—") mm/s</td>
+            <th>Flyrock Range</th>
+            <td>@(Model.IdealizedFlyrockRangeMetres?.ToString("N0") ?? "—") m</td>
+        </tr>
+    </table>
+
+    @* Holes table *@
+    <h6 class="fw-bold mt-3">Hole Details</h6>
+    <table class="table table-bordered table-sm mb-3">
+        <thead class="table-secondary">
+            <tr>
+                <th>#</th>
+                <th>X (m)</th>
+                <th>Y (m)</th>
+                <th>Depth (m)</th>
+                <th>Explosive</th>
+                <th>Charge (kg)</th>
+                <th>Stemming (m)</th>
+                <th>Delay (ms)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var hole in Model.Holes)
+            {
+                <tr>
+                    <td>@hole.Number</td>
+                    <td>@hole.X.ToString("N2")</td>
+                    <td>@hole.Y.ToString("N2")</td>
+                    <td>@hole.Depth.ToString("N1")</td>
+                    <td>@hole.Explosive</td>
+                    <td>@hole.Charge.ToString("N1")</td>
+                    <td>@hole.Stemming.ToString("N1")</td>
+                    <td>@hole.Delay</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @* Disclaimer *@
+    <p class="text-muted fst-italic small mt-4">
+        This report is computer-generated and must be reviewed by a certified blasting officer
+        before use. All calculations are estimates. BlastPro (Pty) Ltd accepts no liability
+        for decisions made solely on the basis of this report.
+    </p>
+
+    <script>
+        // Auto-trigger print dialog when opened in a new tab
+        window.addEventListener('load', function () {
+            setTimeout(function () { window.print(); }, 400);
+        });
+    </script>
+</body>
+</html>
