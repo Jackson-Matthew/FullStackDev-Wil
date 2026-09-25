@@ -37,13 +37,21 @@ public class PatternDesignViewModel
 public sealed class CalculationInputsViewModel
 {
     public int? DelayWindowMilliseconds { get; set; }
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal? SubdrillMetres { get; set; }
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal? ReceptorDistanceMetres { get; set; }
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal? PpvSiteCoefficient { get; set; }
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal? PpvDecayExponent { get; set; }
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal? FlyrockLaunchSpeedMetresPerSecond { get; set; }
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal? FlyrockLaunchAngleDegrees { get; set; }
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal? FlyrockLaunchHeightMetres { get; set; }
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal? ExclusionRadiusMetres { get; set; }
 }
 
@@ -81,6 +89,13 @@ public sealed class InvariantDecimalModelBinder : IModelBinder
 
         bindingContext.ModelState.SetModelValue(bindingContext.ModelName, valueResult);
         var value = valueResult.FirstValue;
+        if (string.IsNullOrWhiteSpace(value) &&
+            Nullable.GetUnderlyingType(bindingContext.ModelMetadata.ModelType) == typeof(decimal))
+        {
+            bindingContext.Result = ModelBindingResult.Success(null);
+            return Task.CompletedTask;
+        }
+
         if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var parsed))
             bindingContext.Result = ModelBindingResult.Success(parsed);
         else

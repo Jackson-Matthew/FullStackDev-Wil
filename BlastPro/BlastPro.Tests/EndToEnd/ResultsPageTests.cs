@@ -37,12 +37,18 @@ public sealed class ResultsPageTests
         var page = await browser.GetAsync($"/Results/Index?projectId={projectId}");
         var html = await page.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, page.StatusCode);
-        Assert.Contains("108.00", html);
+        Assert.Contains("102.00", html);
+        Assert.Contains("255.00", html);
+        Assert.Contains("0.23 mm/s", html);
+        Assert.Contains("40.79 m", html);
         Assert.Contains("Estimated Volume", html);
         Assert.Contains("Not available", html);
         Assert.Contains("kg/t", html);
         Assert.Contains("Predicted PPV", html);
         Assert.Contains("Idealized Flyrock Range", html);
+        Assert.Contains("Every hole needs a priced explosive product", html);
+        Assert.Contains("Flyrock is an idealized trajectory estimate", html);
+        Assert.Contains("severity-warning", html);
         Assert.DoesNotContain("Test 1 Pro", html);
         Assert.DoesNotContain("Save Results", html);
 
@@ -133,7 +139,14 @@ public sealed class ResultsPageTests
         ["Holes[0].Stemming"] = "2",
         ["Holes[0].Delay"] = "25",
         ["Calculation.DelayWindowMilliseconds"] = "50",
-        ["Calculation.SubdrillMetres"] = "1"
+        ["Calculation.SubdrillMetres"] = "1.5",
+        ["Calculation.ReceptorDistanceMetres"] = "100",
+        ["Calculation.PpvSiteCoefficient"] = "100",
+        ["Calculation.PpvDecayExponent"] = "1.6",
+        ["Calculation.FlyrockLaunchSpeedMetresPerSecond"] = "20",
+        ["Calculation.FlyrockLaunchAngleDegrees"] = "45",
+        ["Calculation.FlyrockLaunchHeightMetres"] = "0",
+        ["Calculation.ExclusionRadiusMetres"] = "50"
     };
 
     private static async Task<(int ProjectId, int HoleId)> SeedProject(ApiTestHost api, ApplicationUser user)

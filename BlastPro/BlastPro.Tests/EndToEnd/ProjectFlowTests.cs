@@ -66,7 +66,7 @@ public sealed class ProjectFlowTests
         Assert.Equal(HttpStatusCode.OK, dashboard.StatusCode);
         Assert.Contains("Calculated Project", dashboardHtml);
         Assert.Contains("Calculated", dashboardHtml);
-        Assert.Contains($"/Projects/Details/{projectId}", dashboardHtml);
+        Assert.Contains($"/Reports/Preview?projectId={projectId}", dashboardHtml);
         Assert.Contains($"/PatternDesign/Index?projectId={projectId}", dashboardHtml);
 
         var details = await browser.GetAsync($"/Projects/Details/{projectId}");
