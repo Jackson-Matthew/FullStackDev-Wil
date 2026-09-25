@@ -196,6 +196,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         entity.Property(result => result.EstimatedVolumeCubicMetres).HasPrecision(18, 4);
         entity.Property(result => result.EstimatedTonnageTonnes).HasPrecision(18, 4);
         entity.Property(result => result.TotalCost).HasPrecision(18, 2);
+        entity.Property(result => result.CurrencyCode).HasMaxLength(3);
         entity.Property(result => result.MaxChargePerDelayKg).HasPrecision(18, 4);
         entity.Property(result => result.PowderFactorKgPerTonne).HasPrecision(18, 6);
         entity.Property(result => result.PredictedPpvMmPerSecond).HasPrecision(18, 4);
@@ -203,7 +204,9 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         entity.Property(result => result.CalculatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
 
         entity.HasQueryFilter(result => !result.BlastProject.IsDeleted);
-        entity.HasIndex(result => new { result.BlastProjectId, result.IsCurrent });
+        entity.HasIndex(result => new { result.BlastProjectId, result.IsCurrent })
+            .IsUnique()
+            .HasFilter("[IsCurrent] = 1");
         entity.HasIndex(result => result.CalculatedAtUtc);
 
         entity.HasOne(result => result.BlastProject)

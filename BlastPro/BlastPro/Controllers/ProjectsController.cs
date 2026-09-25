@@ -215,6 +215,7 @@ namespace BlastPro.Mvc.Controllers
             }
 
             ViewData["Success"] = "Draft layout saved.";
+            result.Data.Calculation = model.Calculation;
             return View("~/Views/Projects/Index.cshtml", result.Data);
         }
 
@@ -238,7 +239,21 @@ namespace BlastPro.Mvc.Controllers
                 return View("~/Views/Projects/Index.cshtml", model);
             }
 
-            // Save first, then route to Results placeholder
+            if (model.ProjectId <= 0)
+            {
+                ModelState.AddModelError(string.Empty, "Create a project before calculating results.");
+                return View("~/Views/Projects/Index.cshtml", model);
+            }
+
+            if (model.Calculation.DelayWindowMilliseconds is null or <= 0)
+            {
+                ModelState.AddModelError("Calculation.DelayWindowMilliseconds",
+                    "Enter the site-approved delay window in milliseconds.");
+                await RestoreExplosiveProducts(model);
+                return View("~/Views/Projects/Index.cshtml", model);
+            }
+
+            // Save the submitted pattern before calculating from database-backed inputs.
             var saveResult = await _api.PutAsync<PatternDesignViewModel>(
                 $"api/projects/{model.ProjectId}/pattern-design",
                 new
@@ -252,7 +267,7 @@ namespace BlastPro.Mvc.Controllers
                     model.Holes
                 });
 
-            if (!saveResult.Success)
+            if (!saveResult.Success || saveResult.Data is null)
             {
                 ModelState.AddModelError(string.Empty,
                     saveResult.Error ?? "Could not save the pattern before calculation.");
@@ -260,7 +275,30 @@ namespace BlastPro.Mvc.Controllers
                 return View("~/Views/Projects/Index.cshtml", model);
             }
 
-            TempData["Success"] = "Design saved. Calculation is not yet wired to the API.";
+            model.RowVersion = saveResult.Data.RowVersion;
+            var calculation = await _api.PostAsync<object>(
+                $"api/projects/{model.ProjectId}/calculations",
+                new
+                {
+                    DelayWindowMilliseconds = model.Calculation.DelayWindowMilliseconds.Value,
+                    model.Calculation.SubdrillMetres,
+                    model.Calculation.ReceptorDistanceMetres,
+                    model.Calculation.PpvSiteCoefficient,
+                    model.Calculation.PpvDecayExponent,
+                    model.Calculation.FlyrockLaunchSpeedMetresPerSecond,
+                    model.Calculation.FlyrockLaunchAngleDegrees,
+                    model.Calculation.FlyrockLaunchHeightMetres,
+                    model.Calculation.ExclusionRadiusMetres
+                });
+            if (!calculation.Success)
+            {
+                ModelState.AddModelError(string.Empty,
+                    calculation.Error ?? "The calculation could not be saved.");
+                await RestoreExplosiveProducts(model);
+                return View("~/Views/Projects/Index.cshtml", model);
+            }
+
+            TempData["Success"] = "Calculation saved.";
             return RedirectToAction("Index", "Results", new { projectId = model.ProjectId });
         }
 

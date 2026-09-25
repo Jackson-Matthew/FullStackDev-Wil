@@ -1,134 +1,101 @@
+using BlastPro.Mvc.Models.Dtos;
 using BlastPro.Mvc.Models.ViewModels.Results;
+using BlastPro.Mvc.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BlastPro.Mvc.Controllers
+namespace BlastPro.Mvc.Controllers;
+
+[Authorize]
+public sealed class ResultsController(IApiClient api, ILogger<ResultsController> logger) : Controller
 {
-    [Authorize]
-    public class ResultsController : Controller
+    [HttpGet]
+    public async Task<IActionResult> Index(int projectId, int? resultId)
     {
-       
+        if (projectId <= 0)
+            return View(new ResultsViewModel());
 
-        [HttpGet]
-        public async Task<IActionResult> Index(int projectId)
+        var response = await api.GetAsync<ProjectResultsDto>($"api/projects/{projectId}/results");
+        if (!response.Success || response.Data is null)
         {
-            if (projectId <= 0)
-            {
-                return View(new ResultsViewModel { ProjectId = 0 });
-            }
-
-            //this is sample data that needs to be replaced later with APIcalc
-            
-            await Task.CompletedTask;
-
-            if (TempData["Success"] is string success)
-            {
-                ViewData["Success"] = success;
-            }
-
-            var model = BuildSampleResults(projectId);
-
-            return View(model);
+            logger.LogWarning("Could not load results for project {ProjectId}: {Error}", projectId, response.Error);
+            TempData["Error"] = "The project results could not be opened.";
+            return RedirectToAction("Index", "Dashboard");
         }
 
-
-        //saving the results
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Save(int projectId)
+        var page = response.Data;
+        var selected = page.Result;
+        if (resultId.HasValue)
         {
-            if (projectId <= 0)
+            var historical = await api.GetAsync<CalculationResultDto>(
+                $"api/projects/{projectId}/results/{resultId.Value}");
+            if (!historical.Success || historical.Data is null)
             {
-                return RedirectToAction(nameof(Index), new { projectId });
+                logger.LogWarning("Could not load result {ResultId} for project {ProjectId}: {Error}",
+                    resultId.Value, projectId, historical.Error);
+                TempData["Error"] = "The saved result could not be opened.";
+                return RedirectToAction("Index", "Dashboard");
             }
-
-            
-            //need to save the calc results through api
-            await Task.CompletedTask;
-
-            TempData["Success"] = "Results saved.";
-
-            return RedirectToAction(nameof(Index), new { projectId });
+            selected = historical.Data;
         }
 
-
-        // this is all sample data !!!!! will remove later should be good for presentation
-
-        private static ResultsViewModel BuildSampleResults(int projectId)
+        var model = new ResultsViewModel
         {
-            var model = new ResultsViewModel
+            ProjectId = page.ProjectId,
+            ProjectName = page.ProjectName,
+            HasResults = page.HasResults,
+            ResultId = selected?.Id,
+            ViewingHistory = resultId.HasValue && selected?.Id != page.Result?.Id,
+            IsOutdated = selected is not null && !selected.IsCurrent,
+            CalculatedAtUtc = selected?.CalculatedAtUtc,
+            CalculatedByName = selected?.CalculatedByName,
+            TotalHoles = selected?.TotalHoles ?? 0,
+            TotalExplosiveKg = selected?.TotalExplosiveKg ?? 0,
+            TotalDrillingMetres = selected?.TotalDrillingMetres ?? 0,
+            TotalCost = selected?.TotalCost,
+            CurrencyCode = selected?.CurrencyCode,
+            MaxChargePerDelayKg = selected?.MaxChargePerDelayKg ?? 0,
+            PowderFactorKgPerTonne = selected?.PowderFactorKgPerTonne,
+            EstimatedVolumeCubicMetres = selected?.EstimatedVolumeCubicMetres,
+            EstimatedTonnageTonnes = selected?.EstimatedTonnageTonnes,
+            PredictedPpvMmPerSecond = selected?.PredictedPpvMmPerSecond,
+            PredictedFlyrockMetres = selected?.PredictedFlyrockMetres,
+            Warnings = selected?.Warnings.Select(w => new ResultWarningViewModel
             {
-                ProjectId = projectId,
-                ProjectName = "Test 1 Pro",
-                HasResults = true,
-                IsOutdated = false,
-                CalculatedAtUtc = DateTime.UtcNow.AddHours(-2),
-                CalculatedByName = "Matthew Pickle",
+                Code = w.Code,
+                Severity = w.Severity,
+                Message = w.Message
+            }).ToList() ?? new()
+        };
 
-                TotalHoles = 24,
-                TotalExplosiveKg = 1300m,
-                TotalDrillingMetres = 300m,
-                TotalCost = 25676m,
-                CurrencyCode = "ZAR",
-
-                MaxChargePerDelayKg = 85m,
-                MaxChargeSafetyIndexPercent = 80,
-                MaxChargeSeverityLabel = "High",
-
-                PowderFactorKgPerTonne = 0.4m,
-                PowderFactorScaleMin = 0.1m,
-                PowderFactorScaleMax = 0.6m,
-                PowderFactorTargetMin = 0.4m,
-                PowderFactorTargetMax = 0.4m,
-
-                EstimatedVolumeCubicMetres = 750m,
-                EstimatedTonnageTonnes = 2000m,
-                PredictedPpvMmPerSecond = 12.5m,
-                IdealizedFlyrockRangeMetres = 150m
-            };
-
-            model.Warnings.Add(new ResultWarningViewModel
+        var history = page.History.ToList();
+        if (model.ViewingHistory && page.Result is { } latest)
+            history.Add(new CalculationHistoryDto
             {
-                Code = "PPV_LIMIT_EXCEEDED",
-                Severity = "Critical",
-                Message = "exceeds threshold (12.5 > 10 mm/s) - vibration damage to building is a possability."
+                Id = latest.Id,
+                CalculatedAtUtc = latest.CalculatedAtUtc,
+                CalculatedByName = latest.CalculatedByName,
+                TotalCost = latest.TotalCost,
+                CurrencyCode = latest.CurrencyCode,
+                PowderFactorKgPerTonne = latest.PowderFactorKgPerTonne,
+                WarningCount = latest.Warnings.Count
             });
-
-            model.Warnings.Add(new ResultWarningViewModel
+        model.PreviousResults = history.Where(r => r.Id != selected?.Id)
+            .OrderByDescending(r => r.CalculatedAtUtc)
+            .ThenByDescending(r => r.Id)
+            .Select(r => new PreviousResultViewModel
             {
-                Code = "POWDER_FACTOR_HIGH",
-                Severity = "Warning",
-                Message = "Powder factor is high (0.46 kg/tonne) - A high risk of fly rockk."
-            });
+                Id = r.Id,
+                CalculatedAtUtc = r.CalculatedAtUtc,
+                CalculatedByName = r.CalculatedByName,
+                TotalCost = r.TotalCost,
+                CurrencyCode = r.CurrencyCode,
+                PowderFactorKgPerTonne = r.PowderFactorKgPerTonne,
+                WarningCount = r.WarningCount
+            }).ToList();
 
-            model.Warnings.Add(new ResultWarningViewModel
-            {
-                Code = "HOLE_STEMMING_LOW",
-                Severity = "Warning",
-                Message = "Hole 8 missing stemming - Stemming height is below the threshold."
-            });
-
-            model.PreviousResults.Add(new PreviousResultViewModel
-            {
-                Id = 1002,
-                CalculatedAtUtc = DateTime.UtcNow.AddDays(-1),
-                CalculatedByName = "Matthew Pickle",
-                TotalCost = 23950m,
-                PowderFactorKgPerTonne = 0.40m,
-                WarningCount = 2
-            });
-
-            model.PreviousResults.Add(new PreviousResultViewModel
-            {
-                Id = 1001,
-                CalculatedAtUtc = DateTime.UtcNow.AddDays(-3),
-                CalculatedByName = "Matthew Pickle",
-                TotalCost = 22100m,
-                PowderFactorKgPerTonne = 0.38m,
-                WarningCount = 1
-            });
-
-            return model;
-        }
+        if (TempData["Success"] is string success)
+            ViewData["Success"] = success;
+        return View(model);
     }
 }

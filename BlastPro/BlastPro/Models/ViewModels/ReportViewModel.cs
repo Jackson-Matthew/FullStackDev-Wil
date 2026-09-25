@@ -2,7 +2,6 @@ using System.Globalization;
 
 namespace BlastPro.Mvc.Models.ViewModels.Reports;
 
-//Sample
 public class ReportViewModel
 {
     public int ProjectId { get; set; }

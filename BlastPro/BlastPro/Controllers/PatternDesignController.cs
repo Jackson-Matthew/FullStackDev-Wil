@@ -82,6 +82,7 @@ public sealed class PatternDesignController : Controller
         }
 
         ViewData["Success"] = "Draft layout saved.";
+        result.Data.Calculation = model.Calculation;
         return View(PatternView, result.Data);
     }
 
