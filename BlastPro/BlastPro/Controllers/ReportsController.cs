@@ -25,6 +25,7 @@ namespace BlastPro.Mvc.Controllers
             }
 
             // WHEN THE ENDPOINT IS READY, REPLACE WITH REAL API CALL
+
             // var result = await _api.GetAsync<ReportViewModel>($"api/projects/{projectId}/report");
             // if (!result.Success || result.Data is null)
             // {
@@ -108,7 +109,7 @@ namespace BlastPro.Mvc.Controllers
                 IdealizedFlyrockRangeMetres = 145m
             };
 
-            // Same 4-across grid pattern used on Pattern Design's sample layout
+            // 4-across grid pattern 
             for (int i = 0; i < model.TotalDesignatedHoles; i++)
             {
                 int rowIndex = i / 4;

@@ -1,341 +1,203 @@
 @model BlastPro.Mvc.Models.ViewModels.Reports.ReportViewModel
-@using System.Globalization
-
 @{
-    ViewData["Title"] = Model.ProjectId > 0 ? $"{Model.ProjectName} — Report" : "Reports";
-    Layout = "_Layout";
-
-    var inv = CultureInfo.InvariantCulture;
+    ViewData["Title"] = $"Blast Report — {Model.ProjectName}";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<link rel="stylesheet" href="~/css/report.css" asp-append-version="true" />
+@section Styles {
+    <link rel="stylesheet" href="~/css/report.css" asp-append-version="true" />
+}
 
+<div class="report-page">
 
-<div class="container report-page">
-
-    @*no project selected *@
-
-    @if (Model.ProjectId <= 0)
+    @* Info / Error banners *@
+    @if (ViewData["Info"] is string info)
     {
-        <div class="report-empty-state">
-
-            <i class="bi bi-file-earmark-text report-empty-icon"></i>
-
-            <h3 class="report-empty-title">No project selected</h3>
-
-            <p class="report-empty-text">
-                Pick a project from the dashboard to generate its report.
-            </p>
-
-            <a asp-controller="Dashboard" asp-action="Index" class="report-empty-btn">
-                Go to Dashboard
-            </a>
-
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            @info
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
-    else if (!Model.HasResults)
+    @if (TempData["Error"] is string err)
     {
-
-
-        <div class="report-empty-state">
-
-            <i class="bi bi-exclamation-diamond report-empty-icon"></i>
-
-            <h3 class="report-empty-title">No results to report on</h3>
-
-            <p class="report-empty-text">
-                Report data has not been connected yet. Return to Results for this project in the meantime.
-            </p>
-
-            <a asp-controller="Results"
-               asp-action="Index"
-               asp-route-projectId="@Model.ProjectId"
-               class="report-empty-btn">
-
-                Go to Results
-
-            </a>
-
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @err
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
+    }
 
+    @* No results state *@
+    @if (!Model.HasResults)
+    {
+        <div class="report-empty">
+            <p>No results available for this project yet.</p>
+            <a asp-action="Index" asp-controller="Dashboard" class="btn btn-outline-secondary">
+                ← Back to Dashboard
+            </a>
+        </div>
     }
     else
     {
-
-        <div class="report-layout">
-
-
-
-            <div class="report-sidebar">
-
-                <a asp-controller="Dashboard"
-                   asp-action="Index"
-                   class="report-action-btn report-back-btn">
-
-                    <i class="bi bi-arrow-left"></i>
-                    Back to Dashboard
-
-                </a>
-
-                <a asp-controller="Reports"
-                   asp-action="DownloadPdf"
-                   asp-route-projectId="@Model.ProjectId"
-                   class="report-action-btn report-download-btn">
-
-                    <i class="bi bi-download"></i>
-                    Download PDF
-
-                </a>
-
-                <button type="button"
-                        id="printReportBtn"
-                        class="report-action-btn report-print-btn">
-
-                    <i class="bi bi-printer"></i>
-                    Print
-
-                </button>
-
-                @if (ViewData["Info"] is string info)
+        @* Page header *@
+        <div class="report-header">
+            <div class="report-header__left">
+                <h1 class="report-title">Blast Report — @Model.ProjectName</h1>
+                <p class="report-meta">
+                    <span>@Model.CompanyName</span>
+                    <span class="report-meta__sep">·</span>
+                    <span>@Model.CalculationsUnit</span>
+                    <span class="report-meta__sep">·</span>
+                    <span>@Model.ReportDateUtc.ToString("yyyy-MM-dd")</span>
+                </p>
+            </div>
+            <div class="report-header__badges">
+                @if (Model.CriticalWarningCount > 0)
                 {
-                    <div class="report-info-note" role="status">@info</div>
+                    <span class="badge bg-danger"> @Model.CriticalWarningCount Critical</span>
                 }
-
+                @if ((Model.Warnings.Count - Model.CriticalWarningCount) > 0)
+                {
+                    <span class="badge bg-warning text-dark">
+                         @(Model.Warnings.Count - Model.CriticalWarningCount) Warning
+                    </span>
+                }
             </div>
-
-
-            @*report doc*@
-
-            <div class="report-document" id="reportDocument">
-
-
-                <div class="report-letterhead">
-
-                    <div>
-                        <h1 class="report-doc-title">Blast Design Report</h1>
-                        <div class="report-doc-subtitle">Official Technical Record</div>
-                    </div>
-
-                    <div class="report-brand">
-                        <div class="report-brand-name">BlastPro Software</div>
-                        <div class="report-brand-est">est 2026</div>
-                    </div>
-
-                </div>
-
-                <hr class="report-divider" />
-
-
-
-                <div class="report-meta-grid">
-
-                    <div>
-
-                        <div class="report-meta-heading">Project Details</div>
-
-                        <div class="report-meta-row">
-                            <span class="meta-label">Project Name:</span>
-                            <span class="meta-value">@Model.ProjectName</span>
-                        </div>
-
-                        <div class="report-meta-row">
-                            <span class="meta-label">Date:</span>
-                            <span class="meta-value">@Model.ReportDateUtc.ToString("dd MMM yyyy", inv)</span>
-                        </div>
-
-                    </div>
-
-                    <div>
-
-                        <div class="report-meta-heading">Operator Details</div>
-
-                        <div class="report-meta-row">
-                            <span class="meta-label">Company:</span>
-                            <span class="meta-value">@Model.CompanyName</span>
-                        </div>
-
-                        <div class="report-meta-row">
-                            <span class="meta-label">Calculations Unit:</span>
-                            <span class="meta-value">@Model.CalculationsUnit</span>
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                @* HOLE PATTERN DATA*@
-
-                <h2 class="report-section-title">Section 1 — Hole Pattern Data</h2>
-
-                <div class="report-table-wrapper">
-
-                    <table class="report-table">
-
-                        <thead>
-                            <tr>
-                                <th class="col-number">#</th>
-                                <th>X (m)</th>
-                                <th>Y (m)</th>
-                                <th>Depth (m)</th>
-                                <th>Explosive</th>
-                                <th>Charge (kg)</th>
-                                <th>Stemming (m)</th>
-                                <th>Delay (ms)</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                            @foreach (var hole in Model.Holes)
-                            {
-                                <tr>
-                                    <td class="col-number">@hole.Number</td>
-                                    <td>@hole.X.ToString("0.00", inv)</td>
-                                    <td>@hole.Y.ToString("0.00", inv)</td>
-                                    <td>@hole.Depth.ToString("0.0", inv)</td>
-                                    <td>@hole.Explosive</td>
-                                    <td>@hole.Charge.ToString("0.0", inv)</td>
-                                    <td>@hole.Stemming.ToString("0.0", inv)</td>
-                                    <td class="report-delay-cell">@hole.Delay</td>
-                                </tr>
-                            }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-
-                @* DESIGN PARAMETERS & YIELD *@
-
-                <h2 class="report-section-title">Section 2 — Design Parameters &amp; Yield</h2>
-
-                <div class="report-yield-box">
-
-                    <div class="report-yield-col">
-
-                        <div class="report-yield-row">
-                            <span class="yield-label">Total Designated Holes</span>
-                            <span class="yield-value">@Model.TotalDesignatedHoles</span>
-                        </div>
-
-                        <div class="report-yield-row">
-                            <span class="yield-label">Total Explosive Load</span>
-                            <span class="yield-value">@Model.TotalExplosiveLoadKg.ToString("N0", inv) kg</span>
-                        </div>
-
-                        <div class="report-yield-row">
-                            <span class="yield-label">Total Drilling Length</span>
-                            <span class="yield-value">@Model.TotalDrillingLengthMetres.ToString("N0", inv) m</span>
-                        </div>
-
-                    </div>
-
-                    <div class="report-yield-col">
-
-                        <div class="report-yield-row">
-                            <span class="yield-label">Total Estimated Tonnage</span>
-                            <span class="yield-value">
-                                @(Model.TotalEstimatedTonnageTonnes is not null
-                                    ? Model.TotalEstimatedTonnageTonnes.Value.ToString("N0", inv) + " t"
-                                    : "Unavailable")
-                            </span>
-                        </div>
-
-                        <div class="report-yield-row">
-                            <span class="yield-label">Powder Factor Metric</span>
-                            <span class="yield-value">
-                                @(Model.PowderFactorKgPerTonne is not null
-                                    ? Model.PowderFactorKgPerTonne.Value.ToString("0.00", inv) + " kg/tonne"
-                                    : "Unavailable")
-                            </span>
-                        </div>
-
-                        <div class="report-yield-row">
-                            <span class="yield-label">Total Estimated Material Cost</span>
-                            <span class="yield-value">
-                                @(Model.TotalEstimatedMaterialCost is not null
-                                    ? Model.CurrencyPrefix + Model.TotalEstimatedMaterialCost.Value.ToString("N0", inv)
-                                    : "Unavailable")
-                            </span>
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                @*  preditted blast effect *@
-
-                <h2 class="report-section-title">Section 3 — Predicted Blast Effects</h2>
-
-                <div class="report-effects-grid">
-
-                    <div class="report-effect-card">
-                        <div class="effect-label">Max Charge Per Delay</div>
-                        <div class="effect-value">@Model.MaxChargePerDelayKg.ToString("N0", inv) kg</div>
-                    </div>
-
-                    <div class="report-effect-card">
-                        <div class="effect-label">Predicted PPV</div>
-                        <div class="effect-value">
-                            @(Model.PredictedPpvMmPerSecond is not null
-                                ? Model.PredictedPpvMmPerSecond.Value.ToString("0.0", inv) + " mm/s"
-                                : "Unavailable")
-                        </div>
-                    </div>
-
-                    <div class="report-effect-card">
-                        <div class="effect-label">Predicted Flyrock</div>
-                        <div class="effect-value">
-                            @(Model.IdealizedFlyrockRangeMetres is not null
-                                ? Model.IdealizedFlyrockRangeMetres.Value.ToString("N0", inv) + " m"
-                                : "Unavailable")
-                        </div>
-                    </div>
-
-                </div>
-
-
-                @*safety alerts*@
-
-                <h2 class="report-section-title">Section 4 — Safety Alerts &amp; Design Notes</h2>
-
-                <div class="report-notes-box">
-
-                    @if (!Model.Warnings.Any())
-                    {
-                        <div class="report-note-row report-note-clear">
-                            No safety or compliance alerts for this design.
-                        </div>
-                    }
-                    else
-                    {
-                        foreach (var warning in Model.Warnings)
-                        {
-                            var isCritical = warning.Severity == "Critical";
-
-                            <div class="report-note-row">
-                                <span class="report-note-tag @(isCritical ? "tag-critical" : "tag-warning")">
-                                    [@warning.Severity.ToUpperInvariant()]
-                                </span>
-                                @warning.Message
-                            </div>
-                        }
-                    }
-
-                </div>
-
-            </div>
-
         </div>
 
+        @* Action buttons *@
+        <div class="report-actions no-print mb-3">
+            <a asp-action="DownloadPdf" asp-controller="Reports"
+               asp-route-projectId="@Model.ProjectId"
+               class="btn btn-primary">
+                📄 Download PDF
+            </a>
+            <a asp-action="Print" asp-controller="Reports"
+               asp-route-projectId="@Model.ProjectId"
+               class="btn btn-outline-secondary ms-2" target="_blank">
+                🖨️ Print
+            </a>
+            <a asp-action="Index" asp-controller="Results"
+               asp-route-projectId="@Model.ProjectId"
+               class="btn btn-outline-secondary ms-2">
+                ← Back to Results
+            </a>
+        </div>
+
+        @* Warnings *@
+        @if (Model.Warnings.Count > 0)
+        {
+            <section class="report-section">
+                <h2 class="report-section__title">Warnings</h2>
+                <ul class="report-warnings list-unstyled">
+                    @foreach (var w in Model.Warnings)
+                    {
+                        <li class="report-warning @(w.Severity == "Critical" ? "report-warning--critical" : "report-warning--warning")">
+                            <span class="report-warning__icon">@w.Icon</span>
+                            <div class="report-warning__body">
+                                <span class="badge @w.BadgeClass me-2">@w.Severity</span>
+                                <span>@w.Message</span>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+
+        @* Summary cards *@
+        <section class="report-section">
+            <h2 class="report-section__title">Summary</h2>
+            <div class="report-cards">
+                <div class="report-card">
+                    <span class="report-card__label">Total Holes</span>
+                    <span class="report-card__value">@Model.TotalDesignatedHoles</span>
+                </div>
+                <div class="report-card">
+                    <span class="report-card__label">Total Explosive</span>
+                    <span class="report-card__value">@Model.FormatNumber(Model.TotalExplosiveLoadKg) kg</span>
+                </div>
+                <div class="report-card">
+                    <span class="report-card__label">Total Drilling</span>
+                    <span class="report-card__value">@Model.FormatNumber(Model.TotalDrillingLengthMetres) m</span>
+                </div>
+                <div class="report-card">
+                    <span class="report-card__label">Est. Tonnage</span>
+                    <span class="report-card__value">@Model.FormatNumber(Model.TotalEstimatedTonnageTonnes ?? 0) t</span>
+                </div>
+                <div class="report-card report-card--highlight">
+                    <span class="report-card__label">Est. Material Cost</span>
+                    <span class="report-card__value">@Model.FormatCost(Model.TotalEstimatedMaterialCost)</span>
+                </div>
+            </div>
+        </section>
+
+        @* Safety metrics *@
+        <section class="report-section">
+            <h2 class="report-section__title">Safety Metrics</h2>
+            <div class="report-cards">
+                <div class="report-card">
+                    <span class="report-card__label">Max Charge / Delay</span>
+                    <span class="report-card__value">@Model.MaxChargePerDelayKg kg</span>
+                </div>
+                <div class="report-card">
+                    <span class="report-card__label">Powder Factor</span>
+                    <span class="report-card__value">@(Model.PowderFactorKgPerTonne?.ToString("N2") ?? "—") kg/t</span>
+                </div>
+                <div class="report-card">
+                    <span class="report-card__label">Predicted PPV</span>
+                    <span class="report-card__value">@(Model.PredictedPpvMmPerSecond?.ToString("N1") ?? "—") mm/s</span>
+                </div>
+                <div class="report-card">
+                    <span class="report-card__label">Flyrock Range</span>
+                    <span class="report-card__value">@(Model.IdealizedFlyrockRangeMetres?.ToString("N0") ?? "—") m</span>
+                </div>
+            </div>
+        </section>
+
+        @* Holes table *@
+        <section class="report-section">
+            <h2 class="report-section__title">Hole Details</h2>
+            <div class="table-responsive">
+                <table class="table table-sm report-table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>X (m)</th>
+                            <th>Y (m)</th>
+                            <th>Depth (m)</th>
+                            <th>Explosive</th>
+                            <th>Charge (kg)</th>
+                            <th>Stemming (m)</th>
+                            <th>Delay (ms)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var hole in Model.Holes)
+                        {
+                            <tr>
+                                <td>@hole.Number</td>
+                                <td>@hole.X.ToString("N2")</td>
+                                <td>@hole.Y.ToString("N2")</td>
+                                <td>@hole.Depth.ToString("N1")</td>
+                                <td>@hole.Explosive</td>
+                                <td>@hole.Charge.ToString("N1")</td>
+                                <td>@hole.Stemming.ToString("N1")</td>
+                                <td>@hole.Delay</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        @* Disclaimer  *@
+        <p class="report-disclaimer text-muted fst-italic small mt-4">
+            This report is computer-generated and must be reviewed by a certified blasting officer
+            before use. All calculations are estimates. BlastPro (Pty) Ltd accepts no liability
+            for decisions made solely on the basis of this report.
+        </p>
     }
 
 </div>
-
 
 @section Scripts {
     <script src="~/js/reports.js" asp-append-version="true"></script>
