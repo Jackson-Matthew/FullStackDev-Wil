@@ -3,6 +3,7 @@ using BlastPro.Api.Extensions;
 using BlastPro.Api.Models.Dtos;
 using BlastPro.Api.Models.Entities;
 using BlastPro.Api.Models.Enums;
+using BlastPro.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -240,6 +241,7 @@ public class ProjectsController : ControllerBase
             if (dto.VibrationThreshold.Value <= 0)
                 return BadRequest(new { message = "Vibration threshold must be greater than zero." });
             project.VibrationThreshold = dto.VibrationThreshold;
+            project.VibrationThresholdMode = "Manual";
         }
 
         project.UpdatedAtUtc = DateTime.UtcNow;
@@ -296,14 +298,64 @@ public class ProjectsController : ControllerBase
 
         if (string.IsNullOrWhiteSpace(dto.RockType) || dto.RockType.Length > 100)
             return BadRequest(new { message = "Select a valid rock type." });
-        if (dto.RockDensity <= 0)
-            return BadRequest(new { message = "Rock density must be greater than zero." });
-        if (dto.Burden <= 0)
-            return BadRequest(new { message = "Burden must be greater than zero." });
-        if (dto.Spacing <= 0)
-            return BadRequest(new { message = "Spacing must be greater than zero." });
-        if (dto.VibrationThreshold <= 0)
-            return BadRequest(new { message = "Vibration threshold must be greater than zero." });
+        if (dto.RockDensity < 0)
+            return BadRequest(new { message = "Rock density cannot be negative." });
+        if (dto.Burden < 0 || dto.Burden is > 0 and < 0.0001m)
+            return BadRequest(new { message = "Burden must be zero while pending or at least 0.0001 m." });
+        if (dto.Spacing < 0 || dto.Spacing is > 0 and < 0.0001m)
+            return BadRequest(new { message = "Spacing must be zero while pending or at least 0.0001 m." });
+        if (dto.BenchLengthMetres is <= 0 or > 10000 || dto.BenchWidthMetres is <= 0 or > 10000)
+            return BadRequest(new { message = "Bench dimensions must be greater than zero and no more than 10,000 metres." });
+        if (dto.LayoutRows is <= 0 or > 500 || dto.LayoutColumns is <= 0 or > 500 ||
+            (dto.LayoutRows.HasValue && dto.LayoutColumns.HasValue &&
+                (long)dto.LayoutRows.Value * dto.LayoutColumns.Value > 500))
+            return BadRequest(new { message = "Row and column counts must be whole numbers from 1 to 500 and total at most 500 holes." });
+        if (dto.TimingOrder is not ("Sequential" or "Rows" or "Columns" or "Serpentine" or "Chevron" or "Echelon" or "HalfRowOverlap" or "RowGroups" or "ColumnGroups") ||
+            dto.TimingIntervalMilliseconds is <= 0 ||
+            (dto.TimingIntervalMilliseconds.HasValue &&
+                (long)Math.Max(0, dto.Holes.Count - 1) * dto.TimingIntervalMilliseconds.Value > int.MaxValue))
+            return BadRequest(new { message = "Select a supported timing order and a valid site interval." });
+        if (dto.PatternType is not ("Rectangular" or "Staggered"))
+            return BadRequest(new { message = "Select a supported pattern type." });
+        if (dto.ReferenceExplosiveFamily is not ("" or "S100" or "PowergelEco" or "PowergelX2" or "S300" or "S300Supreme" or "S300Volcano"))
+            return BadRequest(new { message = "Select a supported product reference family." });
+        if (!string.IsNullOrEmpty(dto.DefaultAeciProductCode) &&
+            AeciSurfaceProductCatalog.Find(dto.DefaultAeciProductCode) is null)
+            return BadRequest(new { message = "Select an AECI product from the catalogue." });
+        if (dto.LoadingDensityGramsPerCc is <= 0 or > 5)
+            return BadRequest(new { message = "Enter a positive actual in-hole density no greater than 5 g/cm³." });
+        var calculation = dto.Calculation;
+        if (calculation?.DelayWindowMilliseconds is <= 0)
+            return BadRequest(new { message = "Delay window must be positive." });
+        if (calculation?.SubdrillMetres is < 0)
+            return BadRequest(new { message = "Subdrill cannot be negative." });
+        if (calculation?.ReceptorDistanceMetres is <= 0)
+            return BadRequest(new { message = "Receptor distance must be positive." });
+        if (calculation?.PpvSiteCoefficient is <= 0 || calculation?.PpvDecayExponent is <= 0)
+            return BadRequest(new { message = "PPV site coefficient and decay exponent must be positive." });
+        if (calculation?.FlyrockLaunchSpeedMetresPerSecond is <= 0 ||
+            calculation?.FlyrockLaunchAngleDegrees is < 0 or > 90 ||
+            calculation?.FlyrockLaunchHeightMetres is < 0)
+            return BadRequest(new { message = "Check flyrock launch speed, angle and height." });
+        if (calculation?.ExclusionRadiusMetres is <= 0)
+            return BadRequest(new { message = "Exclusion radius must be positive." });
+        if (dto.ReceptorStructureType is not ("Unspecified" or "ResidentialPlaster" or "ResidentialDrywall" or "Other") ||
+            dto.VibrationThresholdMode is not ("Manual" or "Automatic") ||
+            dto.DominantFrequencyHz is <= 0 or > 100)
+            return BadRequest(new { message = "Check the receptor type, vibration mode and frequency (0–100 Hz)." });
+        var vibrationThreshold = dto.VibrationThresholdMode == "Automatic"
+            ? UsbMResidentialVibrationGuidance.SuggestedLimitMmPerSecond(
+                dto.ReceptorStructureType, dto.DominantFrequencyHz)
+            : dto.VibrationThreshold;
+        if (dto.VibrationThresholdMode == "Automatic" && vibrationThreshold is null or <= 0)
+            return BadRequest(new { message = "Choose a supported house type and measured frequency for USBM guidance." });
+        if (dto.VibrationThresholdMode == "Manual" && dto.VibrationThreshold < 0)
+            return BadRequest(new { message = "Vibration limit cannot be negative." });
+
+        var rockDensity = dto.RockDensity > 0 ? dto.RockDensity : (decimal?)null;
+        var burden = dto.Burden > 0 ? dto.Burden : (decimal?)null;
+        var spacing = dto.Spacing > 0 ? dto.Spacing : (decimal?)null;
+        var storedLimit = vibrationThreshold > 0 ? vibrationThreshold : null;
 
         if (!string.IsNullOrWhiteSpace(dto.RowVersion))
         {
@@ -331,6 +383,15 @@ public class ProjectsController : ControllerBase
                 return BadRequest(new { message = "Hole numbers must be unique and greater than zero." });
             if (hole.Depth <= 0)
                 return BadRequest(new { message = $"Hole {hole.Number} depth must be greater than zero." });
+            if (hole.DiameterMillimetres is <= 0 or > 1000)
+                return BadRequest(new { message = $"Hole {hole.Number} diameter must be between 0 and 1,000 mm." });
+            if (!string.IsNullOrEmpty(hole.AeciProductCode) &&
+                AeciSurfaceProductCatalog.Find(hole.AeciProductCode) is null)
+                return BadRequest(new { message = $"Hole {hole.Number} has an unknown AECI product." });
+            if (hole.ProductDensityGramsPerCc is <= 0 or > 5)
+                return BadRequest(new { message = $"Hole {hole.Number} product density must be positive and at most 5 g/cm³." });
+            if (hole.SubdrillMetres is < 0 || hole.SubdrillMetres >= hole.Depth)
+                return BadRequest(new { message = $"Hole {hole.Number} subdrill must be non-negative and less than its depth." });
             if (hole.Charge < 0)
                 return BadRequest(new { message = $"Hole {hole.Number} charge cannot be negative." });
             if (hole.Stemming < 0 || hole.Stemming > hole.Depth)
@@ -346,7 +407,7 @@ public class ProjectsController : ControllerBase
             return BadRequest(new { message = "One or more holes do not belong to this project." });
 
         var productIds = dto.Holes
-            .Where(h => h.ExplosiveProductId.HasValue)
+            .Where(h => string.IsNullOrEmpty(h.AeciProductCode) && h.ExplosiveProductId.HasValue)
             .Select(h => h.ExplosiveProductId!.Value)
             .Distinct()
             .ToArray();
@@ -359,9 +420,30 @@ public class ProjectsController : ControllerBase
         if (validProductCount != productIds.Length)
             return BadRequest(new { message = "Select an active explosive product from your company." });
 
-        var inputsChanged = project.RockDensity != dto.RockDensity ||
-            project.Burden != dto.Burden || project.Spacing != dto.Spacing ||
-            project.VibrationThreshold != dto.VibrationThreshold ||
+        var inputsChanged = project.RockDensity != rockDensity ||
+            project.Burden != burden || project.Spacing != spacing ||
+            project.BenchLengthMetres != dto.BenchLengthMetres ||
+            project.BenchWidthMetres != dto.BenchWidthMetres ||
+            project.LayoutRows != dto.LayoutRows || project.LayoutColumns != dto.LayoutColumns ||
+            project.TimingOrder != dto.TimingOrder ||
+            project.TimingIntervalMilliseconds != dto.TimingIntervalMilliseconds ||
+            project.PatternType != dto.PatternType ||
+            project.ReferenceExplosiveFamily != dto.ReferenceExplosiveFamily ||
+            project.DefaultAeciProductCode != dto.DefaultAeciProductCode ||
+            project.LoadingDensityGramsPerCc != dto.LoadingDensityGramsPerCc ||
+            (calculation is not null && (project.DelayWindowMilliseconds != calculation.DelayWindowMilliseconds ||
+                project.SubdrillMetres != calculation.SubdrillMetres ||
+                project.ReceptorDistanceMetres != calculation.ReceptorDistanceMetres ||
+                project.PpvSiteCoefficient != calculation.PpvSiteCoefficient ||
+                project.PpvDecayExponent != calculation.PpvDecayExponent ||
+                project.FlyrockLaunchSpeedMetresPerSecond != calculation.FlyrockLaunchSpeedMetresPerSecond ||
+                project.FlyrockLaunchAngleDegrees != calculation.FlyrockLaunchAngleDegrees ||
+                project.FlyrockLaunchHeightMetres != calculation.FlyrockLaunchHeightMetres ||
+                project.ExclusionRadiusMetres != calculation.ExclusionRadiusMetres)) ||
+            project.VibrationThreshold != storedLimit ||
+            project.ReceptorStructureType != dto.ReceptorStructureType ||
+            project.DominantFrequencyHz != dto.DominantFrequencyHz ||
+            project.VibrationThresholdMode != dto.VibrationThresholdMode ||
             project.Holes.Count != dto.Holes.Count ||
             dto.Holes.Any(submitted =>
             {
@@ -369,17 +451,48 @@ public class ProjectsController : ControllerBase
                 return saved is null || saved.HoleNumber != submitted.Number ||
                     saved.XCoordinate != submitted.X || saved.YCoordinate != submitted.Y ||
                     saved.Depth != submitted.Depth || saved.ChargeKg != submitted.Charge ||
+                    saved.DiameterMillimetres != submitted.DiameterMillimetres ||
+                    saved.AeciProductCode != submitted.AeciProductCode ||
+                    saved.ProductDensityGramsPerCc != submitted.ProductDensityGramsPerCc ||
+                    saved.SubdrillMetres != submitted.SubdrillMetres ||
                     saved.StemmingMetres != submitted.Stemming ||
                     saved.DelayMilliseconds != submitted.Delay ||
-                    saved.ExplosiveProductId != submitted.ExplosiveProductId;
+                    saved.ExplosiveProductId != (string.IsNullOrEmpty(submitted.AeciProductCode)
+                        ? submitted.ExplosiveProductId : null);
             });
 
         project.RockType = dto.RockType.Trim();
-        project.RockDensity = dto.RockDensity;
-        project.Burden = dto.Burden;
-        project.Spacing = dto.Spacing;
-        project.VibrationThreshold = dto.VibrationThreshold;
-        project.Status = ProjectStatus.Draft;
+        project.RockDensity = rockDensity;
+        project.Burden = burden;
+        project.Spacing = spacing;
+        project.BenchLengthMetres = dto.BenchLengthMetres;
+        project.BenchWidthMetres = dto.BenchWidthMetres;
+        project.LayoutRows = dto.LayoutRows;
+        project.LayoutColumns = dto.LayoutColumns;
+        project.TimingOrder = dto.TimingOrder;
+        project.TimingIntervalMilliseconds = dto.TimingIntervalMilliseconds;
+        project.PatternType = dto.PatternType;
+        project.ReferenceExplosiveFamily = dto.ReferenceExplosiveFamily;
+        project.DefaultAeciProductCode = dto.DefaultAeciProductCode;
+        project.LoadingDensityGramsPerCc = dto.LoadingDensityGramsPerCc;
+        if (calculation is not null)
+        {
+            project.DelayWindowMilliseconds = calculation.DelayWindowMilliseconds;
+            project.SubdrillMetres = calculation.SubdrillMetres;
+            project.ReceptorDistanceMetres = calculation.ReceptorDistanceMetres;
+            project.PpvSiteCoefficient = calculation.PpvSiteCoefficient;
+            project.PpvDecayExponent = calculation.PpvDecayExponent;
+            project.FlyrockLaunchSpeedMetresPerSecond = calculation.FlyrockLaunchSpeedMetresPerSecond;
+            project.FlyrockLaunchAngleDegrees = calculation.FlyrockLaunchAngleDegrees;
+            project.FlyrockLaunchHeightMetres = calculation.FlyrockLaunchHeightMetres;
+            project.ExclusionRadiusMetres = calculation.ExclusionRadiusMetres;
+        }
+        project.VibrationThreshold = storedLimit;
+        project.ReceptorStructureType = dto.ReceptorStructureType;
+        project.DominantFrequencyHz = dto.DominantFrequencyHz;
+        project.VibrationThresholdMode = dto.VibrationThresholdMode;
+        if (inputsChanged)
+            project.Status = ProjectStatus.Draft;
         project.UpdatedAtUtc = DateTime.UtcNow;
 
         foreach (var existingHole in project.Holes
@@ -404,7 +517,12 @@ public class ProjectsController : ControllerBase
             hole.XCoordinate = submittedHole.X;
             hole.YCoordinate = submittedHole.Y;
             hole.Depth = submittedHole.Depth;
-            hole.ExplosiveProductId = submittedHole.ExplosiveProductId;
+            hole.DiameterMillimetres = submittedHole.DiameterMillimetres;
+            hole.AeciProductCode = submittedHole.AeciProductCode;
+            hole.ProductDensityGramsPerCc = submittedHole.ProductDensityGramsPerCc;
+            hole.SubdrillMetres = submittedHole.SubdrillMetres;
+            hole.ExplosiveProductId = string.IsNullOrEmpty(submittedHole.AeciProductCode)
+                ? submittedHole.ExplosiveProductId : null;
             hole.ChargeKg = submittedHole.Charge;
             hole.StemmingMetres = submittedHole.Stemming;
             hole.DelayMilliseconds = submittedHole.Delay;
@@ -463,7 +581,32 @@ public class ProjectsController : ControllerBase
             RockDensity = project.RockDensity ?? 0,
             Burden = project.Burden ?? 0,
             Spacing = project.Spacing ?? 0,
+            BenchLengthMetres = project.BenchLengthMetres,
+            BenchWidthMetres = project.BenchWidthMetres,
+            LayoutRows = project.LayoutRows,
+            LayoutColumns = project.LayoutColumns,
+            TimingOrder = project.TimingOrder,
+            TimingIntervalMilliseconds = project.TimingIntervalMilliseconds,
+            PatternType = project.PatternType,
+            ReferenceExplosiveFamily = project.ReferenceExplosiveFamily,
+            DefaultAeciProductCode = project.DefaultAeciProductCode,
+            LoadingDensityGramsPerCc = project.LoadingDensityGramsPerCc,
+            Calculation = new PatternCalculationInputsDto
+            {
+                DelayWindowMilliseconds = project.DelayWindowMilliseconds,
+                SubdrillMetres = project.SubdrillMetres,
+                ReceptorDistanceMetres = project.ReceptorDistanceMetres,
+                PpvSiteCoefficient = project.PpvSiteCoefficient,
+                PpvDecayExponent = project.PpvDecayExponent,
+                FlyrockLaunchSpeedMetresPerSecond = project.FlyrockLaunchSpeedMetresPerSecond,
+                FlyrockLaunchAngleDegrees = project.FlyrockLaunchAngleDegrees,
+                FlyrockLaunchHeightMetres = project.FlyrockLaunchHeightMetres,
+                ExclusionRadiusMetres = project.ExclusionRadiusMetres
+            },
             VibrationThreshold = project.VibrationThreshold ?? 0,
+            ReceptorStructureType = project.ReceptorStructureType,
+            DominantFrequencyHz = project.DominantFrequencyHz,
+            VibrationThresholdMode = project.VibrationThresholdMode,
             RowVersion = Convert.ToBase64String(project.RowVersion),
             Holes = project.Holes
                 .OrderBy(hole => hole.HoleNumber)
@@ -474,13 +617,18 @@ public class ProjectsController : ControllerBase
                     X = hole.XCoordinate,
                     Y = hole.YCoordinate,
                     Depth = hole.Depth,
+                    DiameterMillimetres = hole.DiameterMillimetres,
+                    AeciProductCode = hole.AeciProductCode,
+                    ProductDensityGramsPerCc = hole.ProductDensityGramsPerCc,
+                    SubdrillMetres = hole.SubdrillMetres,
                     ExplosiveProductId = hole.ExplosiveProductId,
                     Charge = hole.ChargeKg,
                     Stemming = hole.StemmingMetres,
                     Delay = hole.DelayMilliseconds
                 })
                 .ToList(),
-            ExplosiveProducts = products
+            ExplosiveProducts = products,
+            AeciProducts = AeciSurfaceProductCatalog.Products
         };
     }
 

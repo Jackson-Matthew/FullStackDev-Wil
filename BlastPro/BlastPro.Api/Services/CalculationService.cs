@@ -38,6 +38,18 @@ public static class CalculationService
         var warnings = new List<CalculationWarning>();
         if (holeList.Length == 0)
             warnings.Add(new("NO_HOLES", WarningSeverity.Critical, "Add at least one hole before using these results."));
+        if (project.BenchLengthMetres is > 0 && project.BenchWidthMetres is > 0)
+        {
+            var benchArea = project.BenchLengthMetres.Value * project.BenchWidthMetres.Value;
+            if (holeList.Any(hole => hole.XCoordinate < 0 || hole.XCoordinate > project.BenchLengthMetres ||
+                                     hole.YCoordinate < 0 || hole.YCoordinate > project.BenchWidthMetres))
+                warnings.Add(new("HOLE_OUTSIDE_BENCH", WarningSeverity.Warning,
+                    "One or more hole coordinates fall outside the rectangular planning boundary; review the surveyed bench shape."));
+            if (project.Burden is > 0 && project.Spacing is > 0 &&
+                holeList.Length * project.Burden.Value * project.Spacing.Value > benchArea)
+                warnings.Add(new("COVERAGE_EXCEEDS_BENCH", WarningSeverity.Warning,
+                    "Hole-based volume may overstate material because nominal hole coverage exceeds the entered bench area."));
+        }
 
         var totalExplosiveKg = CalculateTotalExplosiveKg(holeList);
         var maxChargeKg = CalculateMaxChargePerDelayKg(holeList, settings.DelayWindowMilliseconds);
@@ -57,9 +69,6 @@ public static class CalculationService
                 "Powder factor needs a positive estimated tonnage."));
 
         var cost = CalculateTotalCost(project, holeList, productList);
-        if (cost.Amount is null)
-            warnings.Add(new("COST_UNAVAILABLE", WarningSeverity.Warning,
-                "Every hole needs a priced explosive product, and all prices must use one currency."));
 
         var ppv = CalculatePpvMmPerSecond(maxChargeKg, settings);
         if (ppv is null)
@@ -162,7 +171,7 @@ public static class CalculationService
 
     /// <summary>
     /// Burden x spacing x bench height per hole, where bench height is drilled depth
-    /// minus the caller-supplied subdrill. Returns null rather than assuming zero subdrill.
+    /// minus its subdrill (or the legacy common subdrill). Returns null when unavailable.
     /// Source: https://www.osmre.gov/sites/default/files/inline-files/Module3_0.pdf
     /// </summary>
     public static decimal? CalculateVolumeCubicMetres(
@@ -172,7 +181,7 @@ public static class CalculationService
         ArgumentNullException.ThrowIfNull(holes);
         if (subdrillMetres is < 0)
             throw new ArgumentOutOfRangeException(nameof(subdrillMetres));
-        if (project.Burden is null || project.Spacing is null || subdrillMetres is null)
+        if (project.Burden is null || project.Spacing is null)
             return null;
         if (project.Burden <= 0 || project.Spacing <= 0)
             throw new ArgumentOutOfRangeException(nameof(project), "Burden and spacing must be positive metres.");
@@ -182,7 +191,9 @@ public static class CalculationService
         {
             if (hole.Depth <= 0)
                 throw new ArgumentException("Hole depth must be positive.", nameof(holes));
-            var benchHeight = hole.Depth - subdrillMetres.Value;
+            var holeSubdrill = hole.SubdrillMetres ?? subdrillMetres;
+            if (holeSubdrill is null) return null;
+            var benchHeight = hole.Depth - holeSubdrill.Value;
             if (benchHeight <= 0)
                 throw new ArgumentOutOfRangeException(nameof(subdrillMetres),
                     "Subdrill must be less than every hole's drilled depth.");
@@ -220,6 +231,10 @@ public static class CalculationService
         {
             if (hole.ChargeKg < 0)
                 throw new ArgumentException("Hole charge must be non-negative.", nameof(holes));
+            // Catalogue entries have no price. Never price an AECI choice with a
+            // legacy project-level company product left on an older draft.
+            if (!string.IsNullOrEmpty(hole.AeciProductCode))
+                return new(null, null);
             var productId = hole.ExplosiveProductId ?? project.ExplosiveProductId;
             if (productId is null || !priceById.TryGetValue(productId.Value, out var product))
                 return new(null, null);
@@ -297,7 +312,8 @@ public static class CalculationService
         foreach (var hole in holes)
         {
             if (hole.Depth <= 0 || hole.ChargeKg < 0 || hole.StemmingMetres < 0 ||
-                hole.StemmingMetres > hole.Depth || hole.DelayMilliseconds < 0 ||
+                hole.StemmingMetres > hole.Depth || hole.SubdrillMetres is < 0 ||
+                hole.SubdrillMetres >= hole.Depth || hole.DelayMilliseconds < 0 ||
                 hole.HoleNumber <= 0 || !holeNumbers.Add(hole.HoleNumber))
                 throw new ArgumentException("Holes must have unique positive numbers, valid lengths, charges and delays.", nameof(holes));
             if (project.Id > 0 && hole.BlastProjectId > 0 && hole.BlastProjectId != project.Id)
@@ -320,7 +336,7 @@ public sealed class CalculationSettings
 {
     /// <summary>Site-approved window used to group charges by delay, in milliseconds.</summary>
     public int DelayWindowMilliseconds { get; init; }
-    /// <summary>Common subdrill for these holes, in metres; required for volume.</summary>
+    /// <summary>Legacy common subdrill fallback when a hole has no individual value.</summary>
     public decimal? SubdrillMetres { get; init; }
     /// <summary>Distance from blast to receptor, in metres.</summary>
     public decimal? ReceptorDistanceMetres { get; init; }

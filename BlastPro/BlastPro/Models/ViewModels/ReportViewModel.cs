@@ -5,8 +5,21 @@ namespace BlastPro.Mvc.Models.ViewModels.Reports;
 public class ReportViewModel
 {
     public int ProjectId { get; set; }
+    public int? ResultId { get; set; }
     public string ProjectName { get; set; } = string.Empty;
     public DateTime ReportDateUtc { get; set; }
+    public string CalculatedByName { get; set; } = string.Empty;
+    public bool IsOutdated { get; set; }
+    public bool HolesMatchResult { get; set; }
+    public bool HasPatternSnapshot { get; set; }
+    public decimal? BenchLengthMetres { get; set; }
+    public decimal? BenchWidthMetres { get; set; }
+    public string SiteLocation { get; set; } = string.Empty;
+    public string BlastType { get; set; } = string.Empty;
+    public string RockType { get; set; } = string.Empty;
+    public decimal? BurdenMetres { get; set; }
+    public decimal? SpacingMetres { get; set; }
+    public decimal? VibrationThresholdMmPerSecond { get; set; }
 
 
     public string CompanyName { get; set; } = string.Empty;
@@ -24,6 +37,7 @@ public class ReportViewModel
     public int TotalDesignatedHoles { get; set; }
     public decimal TotalExplosiveLoadKg { get; set; }
     public decimal TotalDrillingLengthMetres { get; set; }
+    public decimal? EstimatedVolumeCubicMetres { get; set; }
     public decimal? TotalEstimatedTonnageTonnes { get; set; }
     public decimal? PowderFactorKgPerTonne { get; set; }
     public decimal? TotalEstimatedMaterialCost { get; set; }
@@ -65,7 +79,10 @@ public class ReportHoleViewModel
     public decimal X { get; set; }
     public decimal Y { get; set; }
     public decimal Depth { get; set; }
+    public decimal? DiameterMillimetres { get; set; }
+    public decimal? SubdrillMetres { get; set; }
     public string Explosive { get; set; } = string.Empty;
+    public decimal? ProductDensityGramsPerCc { get; set; }
     public decimal Charge { get; set; }
     public decimal Stemming { get; set; }
     public int Delay { get; set; }

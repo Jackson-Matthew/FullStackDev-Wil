@@ -1,0 +1,54 @@
+@model BlastPro.Mvc.Models.ViewModels.Reports.ReportViewModel
+@using System.Globalization
+@{
+    var inv = CultureInfo.InvariantCulture;
+    var holes = Model.Holes;
+    var hasBench = Model.BenchLengthMetres is > 0 && Model.BenchWidthMetres is > 0;
+    var minX = Math.Min(0m, holes.Min(hole => hole.X));
+    var minY = Math.Min(0m, holes.Min(hole => hole.Y));
+    var maxX = Math.Max(Model.BenchLengthMetres ?? 0m, holes.Max(hole => hole.X));
+    var maxY = Math.Max(Model.BenchWidthMetres ?? 0m, holes.Max(hole => hole.Y));
+    var rangeX = Math.Max(1m, maxX - minX);
+    var rangeY = Math.Max(1m, maxY - minY);
+    var scale = Math.Min(900d / (double)rangeX, 430d / (double)rangeY);
+    var left = (1000d - (double)rangeX * scale) / 2d;
+    var top = (510d - (double)rangeY * scale) / 2d;
+    double PlotX(decimal x) => left + (double)(x - minX) * scale;
+    double PlotY(decimal y) => top + (double)(maxY - y) * scale;
+    string F(double value) => value.ToString("0.##", inv);
+    var labelHoles = holes.Count <= 45;
+    var xAxisLabel = hasBench ? "X / length: " + Model.BenchLengthMetres!.Value.ToString("0.##", inv) + " m" : "X / length (m)";
+    var yAxisLabel = hasBench ? "Y / width: " + Model.BenchWidthMetres!.Value.ToString("0.##", inv) + " m" : "Y / width (m)";
+}
+<div class="report-plan-wrap">
+    <svg class="report-hole-plan" viewBox="0 0 1000 560" role="img" aria-label="Saved hole positions and numbers on the bench plan">
+        @if (hasBench)
+        {
+            <rect class="report-plan-boundary" x="@F(PlotX(0))" y="@F(PlotY(Model.BenchWidthMetres!.Value))"
+                  width="@F((double)Model.BenchLengthMetres!.Value * scale)" height="@F((double)Model.BenchWidthMetres.Value * scale)" />
+            @for (var i = 1; i < 10; i++)
+            {
+                <line class="report-plan-grid" x1="@F(PlotX(Model.BenchLengthMetres!.Value * i / 10))" y1="@F(PlotY(Model.BenchWidthMetres!.Value))"
+                      x2="@F(PlotX(Model.BenchLengthMetres.Value * i / 10))" y2="@F(PlotY(0))" />
+                <line class="report-plan-grid" x1="@F(PlotX(0))" y1="@F(PlotY(Model.BenchWidthMetres.Value * i / 10))"
+                      x2="@F(PlotX(Model.BenchLengthMetres.Value))" y2="@F(PlotY(Model.BenchWidthMetres.Value * i / 10))" />
+            }
+        }
+        @foreach (var hole in holes)
+        {
+            var outside = hasBench && (hole.X < 0 || hole.Y < 0 ||
+                hole.X > Model.BenchLengthMetres || hole.Y > Model.BenchWidthMetres);
+            <g>
+                <circle class="@(outside ? "report-plan-outside" : "report-plan-hole")"
+                        cx="@F(PlotX(hole.X))" cy="@F(PlotY(hole.Y))" r="@(labelHoles ? "13" : "8")" />
+                @if (labelHoles)
+                {
+                    @Html.Raw($"<text class=\"report-plan-number\" x=\"{F(PlotX(hole.X))}\" y=\"{F(PlotY(hole.Y) + 5)}\" text-anchor=\"middle\">{hole.Number}</text>")
+                }
+                <title>Hole @hole.Number: X @hole.X.ToString("0.##", inv) m, Y @hole.Y.ToString("0.##", inv) m, delay @hole.Delay ms</title>
+            </g>
+        }
+        @Html.Raw($"<text class=\"report-plan-axis\" x=\"500\" y=\"548\" text-anchor=\"middle\">{xAxisLabel}</text>")
+        @Html.Raw($"<text class=\"report-plan-axis\" x=\"12\" y=\"24\">{yAxisLabel}</text>")
+    </svg>
+</div>

@@ -131,7 +131,7 @@ public sealed class CalculationResultsTests
         Assert.NotNull(result);
         Assert.Null(result.TotalCost);
         Assert.Null(result.CurrencyCode);
-        Assert.Contains(result.Warnings, w => w.Code == "COST_UNAVAILABLE");
+        Assert.DoesNotContain(result.Warnings, w => w.Code == "COST_UNAVAILABLE");
 
         using var scope = host.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

@@ -7,6 +7,62 @@
     padding-bottom: 40px;
 }
 
+.design-workflow {
+    background: #fff7e9;
+    border: 1px solid #ddb46b;
+    border-radius: 8px;
+    color: #302414;
+    line-height: 1.5;
+    margin-bottom: 18px;
+    padding: 14px 18px;
+}
+
+.design-readiness {
+    background: #fff;
+    border-left: 4px solid #ef8c00;
+    border-radius: 4px;
+    color: #26323b;
+    font-size: .88rem;
+    margin-bottom: 18px;
+    padding: 10px 14px;
+}
+
+.design-readiness.is-ready { border-left-color: #198754; }
+
+.input-required, .input-calculated {
+    border-radius: 3px;
+    display: inline-block;
+    font-size: .67rem;
+    font-weight: 700;
+    letter-spacing: normal;
+    margin-left: 4px;
+    padding: 2px 5px;
+    text-transform: none;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.input-required { background: #fff0d8; color: #744400; }
+.input-calculated { background: #e6f3ed; color: #1c6044; }
+
+.layout-derived {
+    background: #f5f9f7;
+    border: 1px solid #d5e6dc;
+    border-radius: 6px;
+    display: grid;
+    gap: 15px;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    margin: 18px 0 12px;
+    padding: 15px;
+}
+
+.hole-card-help {
+    color: #505866;
+    font-size: .85rem;
+    margin: 0;
+    padding: 0 20px 14px;
+}
+
 
 /* =========================================================
        BACK BUTTON
@@ -126,7 +182,70 @@
 
 .design-card-body {
     padding: 0 20px 20px 20px;
+    color: #17212b;
 }
+
+.design-help {
+    color: #505866;
+    font-size: .85rem;
+    margin: 0 0 14px;
+}
+
+.layout-action {
+    display: flex;
+    align-items: end;
+}
+
+.pattern-notice {
+    color: #5b4400;
+    font-size: .85rem;
+    margin-top: 12px;
+    min-height: 1.3em;
+}
+
+.pattern-replace {
+    align-items: center;
+    background: #fff6e8;
+    border: 1px solid #e9ba6d;
+    border-radius: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 10px;
+}
+
+.pattern-replace[hidden] { display: none; }
+#generatePatternBtn[hidden] { display: none; }
+#applyTimingBtn[hidden] { display: none; }
+
+.bench-plan-wrap {
+    border: 1px solid #d8dce1;
+    border-radius: 8px;
+    margin-top: 15px;
+    padding: 8px;
+}
+
+.bench-plan {
+    background: #fbfcfe;
+    display: block;
+    height: auto;
+    max-height: 470px;
+    width: 100%;
+}
+
+.plan-boundary { fill: #f4f8fd; stroke: #2c445d; stroke-width: 2; }
+.plan-grid { stroke: #dce4ed; stroke-width: 1; }
+.plan-proposed { fill: #b8c6d6; opacity: .8; }
+.plan-saved { fill: #ec7900; stroke: #783b00; stroke-width: 1.5; }
+.plan-outside { fill: #d21c1c; stroke: #741010; stroke-width: 1.5; }
+.plan-axis, .plan-empty { fill: #33465b; font-size: 17px; }
+.bench-plan-legend { display: flex; flex-wrap: wrap; gap: 20px; font-size: .8rem; padding: 5px 10px; }
+.bench-plan-legend span::before { content: ""; display: inline-block; height: 10px; width: 10px; border-radius: 50%; margin-right: 6px; }
+.legend-proposed::before { background: #b8c6d6; }
+.legend-saved::before { background: #ec7900; }
+.live-design-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.live-design-summary span { background: #f5f7f9; border: 1px solid #e0e5e9; border-radius: 5px; padding: 10px; font-size: .85rem; }
 
 
 /* =========================================================
@@ -378,7 +497,7 @@ select.param-input {
 }
 
 .save-draft-btn,
-.calculate-btn {
+.review-results-btn {
     min-height: 40px;
     padding: 0 18px;
     border-radius: 5px;
@@ -399,15 +518,18 @@ select.param-input {
         border-color: #333333;
     }
 
-.calculate-btn {
-    background-color: #FF0000;
-    border: 1px solid #FF0000;
-    color: #FFFFFF;
+.review-results-btn {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    background-color: #FFFFFF;
+    border: 1px solid #334155;
+    color: #182334;
 }
 
-    .calculate-btn:hover {
-        background-color: #CC0000;
-        border-color: #CC0000;
+    .review-results-btn:hover {
+        background-color: #f1f5f9;
+        color: #182334;
     }
 
 
@@ -420,6 +542,7 @@ select.param-input {
     .param-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+    .layout-derived { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 576px) {
@@ -427,8 +550,103 @@ select.param-input {
     .param-grid {
         grid-template-columns: 1fr;
     }
+    .layout-derived { grid-template-columns: 1fr; }
 
     .design-footer button {
         width: 100%;
     }
+}
+
+/* Design workspace */
+body:has(.design-page) { background: #f4f6f8 !important; }
+.design-page { max-width: 1500px; }
+.design-main-grid { display: grid; grid-template-columns: minmax(0, 1.07fr) minmax(0, .93fr); gap: 22px; align-items: start; }
+.design-input-column, .design-preview-column { min-width: 0; }
+.design-preview-column { position: sticky; top: 22px; }
+.design-card { border: 1px solid #d9dee4; border-radius: 12px; box-shadow: 0 2px 10px rgba(20, 31, 44, .035); }
+.design-card-header { padding: 20px 22px 11px; }
+.design-card-body { padding: 0 22px 22px; }
+.design-card-title { color: #18232f; font-size: 1rem; letter-spacing: -.01em; }
+.design-help { color: #596574; line-height: 1.45; }
+.design-workflow { background: #fff; border: 1px solid #d9dee4; border-left: 4px solid #e46d19; border-radius: 9px; color: #293747; }
+.design-readiness { border: 1px solid #d9dee4; border-left: 4px solid #e46d19; border-radius: 8px; }
+.design-readiness.is-ready { border-left-color: #198754; }
+.param-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px 18px; }
+.param-label { color: #425063; font-size: .72rem; font-weight: 700; line-height: 1.35; text-transform: none; }
+.param-input { font-family: inherit; font-size: .9rem; font-variant-numeric: tabular-nums; }
+.layout-derived { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.layout-derived .layout-action { grid-column: 1 / -1; }
+.site-values-block { margin-top: 18px; padding: 18px 0 5px; border-top: 1px solid #e4e8ed; }
+.design-subtitle { font-size: .9rem; font-weight: 700; color: #263444; }
+.calculation-explainer { margin-top: 11px; padding: 10px 12px; border-radius: 6px; background: #eef5fa; color: #2b5067; font-size: .78rem; line-height: 1.5; }
+.plan-card-header { display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.plan-card-header .design-help { margin: 5px 0 0; }
+.plan-view-control { display: inline-flex; padding: 3px; background: #f1f4f7; border: 1px solid #dce3e9; border-radius: 7px; }
+.plan-view-btn { border: 0; background: transparent; border-radius: 5px; color: #4a5b6c; cursor: pointer; font-size: .76rem; font-weight: 700; padding: 6px 10px; }
+.plan-view-btn.is-active { background: #fff; color: #b34115; box-shadow: 0 1px 3px rgba(0,0,0,.11); }
+.bench-plan-wrap { margin-top: 0; padding: 4px; }
+.bench-plan { max-height: 390px; }
+.plan-toolbar { display: flex; align-items: center; gap: 7px; margin: 0 0 9px; }
+.plan-toolbar .tool-btn { min-height: 31px; padding: 0 10px; }
+.plan-toolbar #planExpand { margin-left: auto; }
+#planZoomLabel { min-width: 45px; text-align: center; color: #415267; font-size: .78rem; font-variant-numeric: tabular-nums; }
+.plan-workspace { min-width: 0; }
+.bench-plan { touch-action: none; cursor: grab; }
+.bench-plan:active { cursor: grabbing; }
+.plan-proposed { pointer-events: none; }
+.plan-hole { cursor: pointer; }
+.plan-hole:focus-visible { outline: none; }
+.plan-hole:focus-visible .plan-saved, .plan-hole:focus-visible .plan-outside,
+.plan-hole.is-active .plan-saved, .plan-hole.is-active .plan-outside,
+.plan-hole.is-active .plan-timing-halo { stroke: #183c74; stroke-width: 5px; }
+.plan-hit { fill: transparent; stroke: none; pointer-events: all; }
+.plan-hole-editor[hidden] { display: none; }
+.plan-hole-editor { margin-top: 12px; padding: 15px; border: 1px solid #cbd9e6; border-radius: 9px; background: #f8fbfe; }
+.plan-editor-heading { display: flex; justify-content: space-between; align-items: center; }
+.plan-editor-heading h4 { margin: 0; color: #20334a; font-size: .95rem; font-weight: 750; }
+.plan-editor-close { border: 0; background: transparent; color: #526477; font-size: 1.5rem; line-height: 1; cursor: pointer; }
+.plan-editor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.plan-editor-grid label { display: flex; flex-direction: column; gap: 4px; color: #43536a; font-size: .73rem; font-weight: 700; }
+.plan-editor-grid input, .plan-editor-grid select { width: 100%; min-width: 0; height: 33px; padding: 4px 7px; border: 1px solid #cbd5e0; border-radius: 5px; background: #fff; color: #182a3e; font-size: .83rem; font-weight: 500; }
+.plan-editor-actions { display: flex; justify-content: flex-end; margin-top: 14px; padding-top: 12px; border-top: 1px solid #dce5ed; }
+body.plan-expanded { overflow: hidden; }
+.design-plan-card.is-expanded { position: fixed; inset: 14px; z-index: 1100; display: flex; flex-direction: column; margin: 0; overflow: auto; background: #fff; box-shadow: 0 18px 80px rgba(17, 30, 47, .34); }
+.design-plan-card.is-expanded .design-card-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.design-plan-card.is-expanded .plan-workspace { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 15px; min-height: 0; }
+.design-plan-card.is-expanded .plan-workspace:has(.plan-hole-editor:not([hidden])) { grid-template-columns: minmax(0, 1fr) minmax(290px, 350px); }
+.design-plan-card.is-expanded .bench-plan-wrap { display: flex; align-items: center; min-height: 0; }
+.design-plan-card.is-expanded .bench-plan { max-height: calc(100vh - 210px); }
+.design-plan-card.is-expanded .plan-hole-editor { overflow-y: auto; margin-top: 0; }
+.plan-detail { min-height: 24px; margin: 9px 2px 0; color: #465768; font-size: .78rem; }
+.bench-plan-legend { gap: 12px; padding: 7px 2px 0; color: #536273; }
+.legend-outside::before { background: #d21c1c; }
+.plan-timing-label { fill: #602900; font-size: 18px; font-weight: 700; pointer-events: none; paint-order: stroke; stroke: #fff; stroke-width: 4px; }
+.plan-timing-halo { fill: #fff3e4; stroke: #e6771d; stroke-width: 2px; }
+.live-design-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.live-design-summary .metric { display: flex; flex-direction: column; gap: 3px; min-height: 88px; padding: 11px 12px; border: 1px solid #e0e6ec; border-radius: 7px; background: #f8fafc; }
+.live-design-summary .metric span { background: transparent; border: 0; border-radius: 0; padding: 0; }
+.metric-label { font-size: .72rem; color: #536273; font-weight: 600; }
+.metric-value { font-size: 1.12rem; color: #192c3b; font-weight: 750; font-variant-numeric: tabular-nums; }
+.metric-detail { font-size: .68rem; line-height: 1.3; color: #697888; }
+.metric.is-waiting .metric-value { color: #8c99a6; font-size: .86rem; }
+.metric.is-warning { border-color: #df9d97; background: #fff6f5; }
+.hole-card-header { align-items: start; }
+.hole-table thead th { background: #f0f3f6; color: #364657; }
+.cell-input { min-width: 62px; border-color: #e2e7ec; background: #fff; }
+.delay-input { color: #b34115; }
+@media (max-width: 1050px) {
+    .design-main-grid { display: flex; flex-direction: column; }
+    .design-input-column, .design-preview-column { display: contents; }
+    .design-main-grid > div > .design-card, .design-main-grid > aside > .design-card { width: 100%; margin-bottom: 0; }
+    .design-input-column > .design-card:nth-of-type(1) { order: 1; }
+    .design-plan-card { order: 2; }
+    .design-input-column > .design-card:nth-of-type(2) { order: 3; }
+    .design-input-column > .design-card:nth-of-type(3) { order: 4; }
+    .design-input-column > .design-card:nth-of-type(4) { order: 5; }
+    .design-preview-column > .design-card:nth-of-type(2) { order: 6; }
+}
+@media (max-width: 600px) { .param-grid, .layout-derived, .live-design-summary { grid-template-columns: 1fr; } }
+@media (max-width: 850px) {
+    .design-plan-card.is-expanded .plan-workspace:has(.plan-hole-editor:not([hidden])) { grid-template-columns: 1fr; }
+    .design-plan-card.is-expanded .bench-plan { max-height: 55vh; }
 }

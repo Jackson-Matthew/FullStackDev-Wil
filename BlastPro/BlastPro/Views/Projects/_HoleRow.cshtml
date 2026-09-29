@@ -6,8 +6,8 @@
     var index = ViewData["HoleIndex"]?.ToString() ?? "0";
     var prefix = $"Holes[{index}]";
     var inv = CultureInfo.InvariantCulture;
-    var explosiveProducts = ViewData["ExplosiveProducts"] as IReadOnlyList<ExplosiveProductOptionViewModel>
-        ?? Array.Empty<ExplosiveProductOptionViewModel>();
+    var aeciProducts = ViewData["AeciProducts"] as IReadOnlyList<AeciProductOptionViewModel>
+        ?? Array.Empty<AeciProductOptionViewModel>();
 }
 
 <tr class="hole-row">
@@ -58,21 +58,52 @@
                value="@Model.Depth.ToString("0.0", inv)" />
     </td>
 
-    @* Explosive *@
+    @* Hole diameter *@
+    <td>
+        <input type="number" step="0.1" min="0.1" max="1000"
+               class="cell-input"
+               data-field="DiameterMillimetres"
+               name="@(prefix).DiameterMillimetres"
+               value="@Model.DiameterMillimetres?.ToString("0.#", inv)" />
+    </td>
+
+    @* Subdrill *@
+    <td>
+        <input type="number" step="0.01" min="0"
+               class="cell-input"
+               data-field="SubdrillMetres"
+               name="@(prefix).SubdrillMetres"
+               value="@Model.SubdrillMetres?.ToString("0.##", inv)" />
+    </td>
+
+    @* Selected AECI explosive; retain a legacy company-product id until replaced. *@
     <td class="col-explosive">
+        <input type="hidden" data-field="ExplosiveProductId"
+               name="@(prefix).ExplosiveProductId" value="@Model.ExplosiveProductId" />
         <select class="form-select form-select-sm cell-select"
-                data-field="ExplosiveProductId"
-                name="@(prefix).ExplosiveProductId">
-
-            <option value="">Select product</option>
-
-            @foreach (var product in explosiveProducts)
+                data-field="AeciProductCode"
+                name="@(prefix).AeciProductCode">
+            <option value="">Select AECI product</option>
+            @foreach (var group in aeciProducts.GroupBy(product => product.Series))
             {
-                <option value="@product.Id" selected="@(product.Id == Model.ExplosiveProductId)">@product.Name</option>
+                <optgroup label="@group.Key">
+                    @foreach (var product in group)
+                    {
+                        <option value="@product.Code" selected="@(product.Code == Model.AeciProductCode)"
+                                data-density-min="@product.DensityMinGramsPerCc?.ToString("0.###", inv)"
+                                data-density-max="@product.DensityMaxGramsPerCc?.ToString("0.###", inv)"
+                                data-energy-min="@product.EnergyMinMjPerKg.ToString("0.###", inv)"
+                                data-energy-max="@product.EnergyMaxMjPerKg.ToString("0.###", inv)"
+                                data-min-diameter="@product.MinimumDiameterMillimetres">@product.Name</option>
+                    }
+                </optgroup>
             }
-
         </select>
     </td>
+    <td><input type="number" step="0.001" min="0.01" max="5"
+               class="cell-input" data-field="ProductDensityGramsPerCc"
+               name="@(prefix).ProductDensityGramsPerCc"
+               value="@Model.ProductDensityGramsPerCc?.ToString("0.###", inv)" /></td>
 
     @* Charge *@
     <td>

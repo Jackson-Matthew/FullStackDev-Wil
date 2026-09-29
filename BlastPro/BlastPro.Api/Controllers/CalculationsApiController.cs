@@ -2,10 +2,12 @@ using BlastPro.Api.Data;
 using BlastPro.Api.Extensions;
 using BlastPro.Api.Models.Dtos;
 using BlastPro.Api.Models.Entities;
+using BlastPro.Api.Models.Enums;
 using BlastPro.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace BlastPro.Api.Controllers;
 
@@ -60,6 +62,36 @@ public sealed class CalculationsApiController(
             };
             var summary = CalculationService.CalculateAll(project, project.Holes, products, settings);
             var now = DateTime.UtcNow;
+            var legacyProductNames = products.ToDictionary(product => product.Id, product => product.Name);
+            var patternSnapshot = new CalculationPatternSnapshotDto
+            {
+                SiteLocation = project.SiteLocation,
+                BlastType = project.BlastType,
+                RockType = project.RockType ?? "",
+                BenchLengthMetres = project.BenchLengthMetres,
+                BenchWidthMetres = project.BenchWidthMetres,
+                BurdenMetres = project.Burden,
+                SpacingMetres = project.Spacing,
+                VibrationThresholdMmPerSecond = project.VibrationThreshold,
+                Holes = project.Holes.OrderBy(hole => hole.HoleNumber).Select(hole =>
+                    new CalculationHoleSnapshotDto
+                    {
+                        Number = hole.HoleNumber,
+                        X = hole.XCoordinate,
+                        Y = hole.YCoordinate,
+                        Depth = hole.Depth,
+                        DiameterMillimetres = hole.DiameterMillimetres,
+                        SubdrillMetres = hole.SubdrillMetres,
+                        ProductName = AeciSurfaceProductCatalog.Find(hole.AeciProductCode)?.Name ??
+                            ((hole.ExplosiveProductId ?? project.ExplosiveProductId) is int productId &&
+                             legacyProductNames.TryGetValue(productId, out var legacyName)
+                                ? legacyName : "Not assigned"),
+                        ProductDensityGramsPerCc = hole.ProductDensityGramsPerCc,
+                        Charge = hole.ChargeKg,
+                        Stemming = hole.StemmingMetres,
+                        Delay = hole.DelayMilliseconds
+                    }).ToList()
+            };
 
             // SQL Server keeps replacement and insert in one transaction.
             // The in-memory test provider does not support transactions.
@@ -96,6 +128,7 @@ public sealed class CalculationsApiController(
                 PowderFactorKgPerTonne = summary.PowderFactorKgPerTonne,
                 PredictedPpvMmPerSecond = summary.PredictedPpvMmPerSecond,
                 PredictedFlyrockMetres = summary.IdealizedFlyrockRangeMetres,
+                PatternSnapshotJson = JsonSerializer.Serialize(patternSnapshot),
                 IsCurrent = true,
                 CalculatedAtUtc = now,
                 Warnings = summary.Warnings.Select(w => new BlastWarning
@@ -107,6 +140,8 @@ public sealed class CalculationsApiController(
                 }).ToList()
             };
             db.CalculationResults.Add(result);
+            project.Status = ProjectStatus.Calculated;
+            project.UpdatedAtUtc = now;
             await db.SaveChangesAsync();
             if (transaction is not null) await transaction.CommitAsync();
 
@@ -220,6 +255,8 @@ public sealed class CalculationsApiController(
         PowderFactorKgPerTonne = result.PowderFactorKgPerTonne,
         PredictedPpvMmPerSecond = result.PredictedPpvMmPerSecond,
         PredictedFlyrockMetres = result.PredictedFlyrockMetres,
+        PatternSnapshot = result.PatternSnapshotJson is null ? null :
+            JsonSerializer.Deserialize<CalculationPatternSnapshotDto>(result.PatternSnapshotJson),
         Warnings = result.Warnings.Select(w => new CalculationWarningDto
         {
             Code = w.Code,

@@ -1,0 +1,143 @@
+@model BlastPro.Mvc.Models.ViewModels.Reports.ReportViewModel
+@using System.Globalization
+@{
+    var inv = CultureInfo.InvariantCulture;
+    string Number(decimal? value, string format = "0.##") => value?.ToString(format, inv) ?? "Not available";
+    string Measure(decimal? value, string unit, string format = "0.##") =>
+        value.HasValue ? value.Value.ToString(format, inv) + " " + unit : "Not available";
+}
+<article class="report-document">
+    <header class="report-hero">
+        <div>
+            <span class="report-eyebrow">BlastPro · saved calculation</span>
+            <h1>@Model.ProjectName</h1>
+            <p>Calculation report #@Model.ResultId · @Model.ReportDateUtc.ToString("dd MMM yyyy, HH:mm", inv) UTC</p>
+        </div>
+        <span class="report-state @(Model.IsOutdated ? "report-state-old" : "")">
+            @(Model.IsOutdated ? "Outdated result" : "Current result")
+        </span>
+    </header>
+
+    @if (Model.IsOutdated)
+    {
+        <div class="report-callout report-callout-warning" role="note">
+            @if (Model.HasPatternSnapshot)
+            {
+                <text>The draft changed after this calculation. The plan and hole schedule below are the saved design for this result.</text>
+            }
+            else
+            {
+                <text>The draft changed after this calculation. This older result has no saved hole snapshot, so its plan and hole schedule are unavailable.</text>
+            }
+        </div>
+    }
+
+    <section class="report-section">
+        <h2>Project and calculation</h2>
+        <dl class="report-facts">
+            <div><dt>Calculated by</dt><dd>@(string.IsNullOrWhiteSpace(Model.CalculatedByName) ? "Not recorded" : Model.CalculatedByName)</dd></div>
+            @if (Model.IsOutdated && !Model.HasPatternSnapshot)
+            {
+                <div><dt>Design inputs</dt><dd>Not stored with this historical result</dd></div>
+            }
+            else
+            {
+                <div><dt>Site</dt><dd>@(string.IsNullOrWhiteSpace(Model.SiteLocation) ? "Not recorded" : Model.SiteLocation)</dd></div>
+                <div><dt>Blast type</dt><dd>@(string.IsNullOrWhiteSpace(Model.BlastType) ? "Not recorded" : Model.BlastType)</dd></div>
+                <div><dt>Rock type</dt><dd>@(string.IsNullOrWhiteSpace(Model.RockType) ? "Not recorded" : Model.RockType)</dd></div>
+                <div><dt>Burden</dt><dd>@Number(Model.BurdenMetres) m</dd></div>
+                <div><dt>Spacing</dt><dd>@Number(Model.SpacingMetres) m</dd></div>
+            }
+        </dl>
+    </section>
+
+    <section class="report-section">
+        <h2>Calculated quantities</h2>
+        <div class="report-metrics">
+            <div><span>Holes</span><strong>@Model.TotalDesignatedHoles</strong></div>
+            <div><span>Total drilling</span><strong>@Model.FormatNumber(Model.TotalDrillingLengthMetres, 1) m</strong></div>
+            <div><span>Total charge</span><strong>@Model.FormatNumber(Model.TotalExplosiveLoadKg, 1) kg</strong></div>
+            <div><span>Estimated volume</span><strong>@Measure(Model.EstimatedVolumeCubicMetres, "m³", "0.0")</strong></div>
+            <div><span>Estimated tonnage</span><strong>@Measure(Model.TotalEstimatedTonnageTonnes, "t", "0.0")</strong></div>
+            <div><span>Powder factor</span><strong>@Measure(Model.PowderFactorKgPerTonne, "kg/t", "0.###")</strong></div>
+        </div>
+    </section>
+
+    <section class="report-section">
+        <h2>Screening results</h2>
+        <div class="report-metrics">
+            <div><span>Maximum charge in delay window</span><strong>@Model.FormatNumber(Model.MaxChargePerDelayKg, 1) kg</strong></div>
+            <div><span>Predicted PPV</span><strong>@Measure(Model.PredictedPpvMmPerSecond, "mm/s")</strong></div>
+            @if (!Model.IsOutdated || Model.HasPatternSnapshot)
+            {
+                <div><span>Entered vibration limit</span><strong>@Measure(Model.VibrationThresholdMmPerSecond, "mm/s")</strong></div>
+            }
+            <div><span>Idealized flyrock trajectory</span><strong>@Measure(Model.IdealizedFlyrockRangeMetres, "m", "0.0")</strong></div>
+        </div>
+        <p class="report-note">The trajectory estimate is not an exclusion radius. Review site measurements, limits and the approved blast plan.</p>
+    </section>
+
+    <section class="report-section">
+        <h2>Checks and warnings <span class="report-count">@Model.Warnings.Count</span></h2>
+        @if (Model.Warnings.Count == 0)
+        {
+            <p class="report-note">No calculation warnings were recorded.</p>
+        }
+        else
+        {
+            <ul class="report-warning-list">
+                @foreach (var warning in Model.Warnings)
+                {
+                    <li class="@(warning.Severity == "Critical" ? "is-critical" : "")">
+                        <strong>@warning.Severity</strong><span>@warning.Message</span>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+
+    <section class="report-section">
+        <h2>Saved hole plan and schedule</h2>
+        @if (!Model.HolesMatchResult || Model.Holes.Count == 0)
+        {
+            <p class="report-note">Hole details are unavailable for this saved result. Open the current Pattern Design to inspect the latest hole schedule.</p>
+        }
+        else
+        {
+            <partial name="_HolePlan" model="Model" />
+            <div class="report-table-wrap">
+                <table class="report-table">
+                    <thead><tr>
+                        <th>#</th><th>X (m)</th><th>Y (m)</th><th>Depth (m)</th>
+                        <th>Diameter (mm)</th><th>Subdrill (m)</th><th>Product</th><th>Density (g/cm³)</th>
+                        <th>Charge (kg)</th><th>Stemming (m)</th><th>Delay (ms)</th>
+                    </tr></thead>
+                    <tbody>
+                    @foreach (var hole in Model.Holes)
+                    {
+                        <tr>
+                            <td>@hole.Number</td>
+                            <td>@hole.X.ToString("0.##", inv)</td>
+                            <td>@hole.Y.ToString("0.##", inv)</td>
+                            <td>@hole.Depth.ToString("0.##", inv)</td>
+                            <td>@Number(hole.DiameterMillimetres, "0.#")</td>
+                            <td>@Number(hole.SubdrillMetres)</td>
+                            <td>@hole.Explosive</td>
+                            <td>@Number(hole.ProductDensityGramsPerCc, "0.###")</td>
+                            <td>@hole.Charge.ToString("0.##", inv)</td>
+                            <td>@hole.Stemming.ToString("0.##", inv)</td>
+                            <td>@hole.Delay</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <footer class="report-footnote">
+        <strong>Review required.</strong> This report records planning calculations and warnings.
+        A qualified blasting professional must verify site inputs, hole loading, initiation timing,
+        vibration and flyrock controls before operational use.
+    </footer>
+</article>

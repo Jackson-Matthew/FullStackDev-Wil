@@ -16,7 +16,29 @@ public sealed class BlastProject
     public decimal? RockDensity { get; set; }
     public decimal? Burden { get; set; }
     public decimal? Spacing { get; set; }
+    public decimal? BenchLengthMetres { get; set; }
+    public decimal? BenchWidthMetres { get; set; }
+    public int? LayoutRows { get; set; }
+    public int? LayoutColumns { get; set; }
+    public string TimingOrder { get; set; } = "Rows";
+    public int? TimingIntervalMilliseconds { get; set; }
+    public string PatternType { get; set; } = "Rectangular";
+    public string ReferenceExplosiveFamily { get; set; } = "";
+    public string DefaultAeciProductCode { get; set; } = "";
+    public decimal? LoadingDensityGramsPerCc { get; set; }
+    public int? DelayWindowMilliseconds { get; set; }
+    public decimal? SubdrillMetres { get; set; }
+    public decimal? ReceptorDistanceMetres { get; set; }
+    public decimal? PpvSiteCoefficient { get; set; }
+    public decimal? PpvDecayExponent { get; set; }
+    public decimal? FlyrockLaunchSpeedMetresPerSecond { get; set; }
+    public decimal? FlyrockLaunchAngleDegrees { get; set; }
+    public decimal? FlyrockLaunchHeightMetres { get; set; }
+    public decimal? ExclusionRadiusMetres { get; set; }
     public decimal? VibrationThreshold { get; set; }
+    public string ReceptorStructureType { get; set; } = "Unspecified";
+    public decimal? DominantFrequencyHz { get; set; }
+    public string VibrationThresholdMode { get; set; } = "Manual";
     public ProjectStatus Status { get; set; } = ProjectStatus.Draft;
     public bool IsDeleted { get; set; }
     public DateTime CreatedAtUtc { get; set; }

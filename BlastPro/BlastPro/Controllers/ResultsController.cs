@@ -96,6 +96,8 @@ public sealed class ResultsController(IApiClient api, ILogger<ResultsController>
 
         if (TempData["Success"] is string success)
             ViewData["Success"] = success;
+        if (TempData["Error"] is string error)
+            ViewData["Error"] = error;
         return View(model);
     }
 }

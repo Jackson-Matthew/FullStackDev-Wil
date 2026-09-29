@@ -1,0 +1,45 @@
+@model List<BlastPro.Mvc.Models.Dtos.ProjectSummaryDto>
+@{
+    ViewData["Title"] = "Reports";
+    Layout = "_Layout";
+}
+<link rel="stylesheet" href="~/css/report.css" asp-append-version="true" />
+<main class="report-page report-list-page">
+    <header class="report-list-header">
+        <div>
+            <span class="report-eyebrow">Saved work</span>
+            <h1>Calculation reports</h1>
+            <p>Open a project's latest saved calculation or continue its draft.</p>
+        </div>
+        <a asp-controller="Dashboard" asp-action="Index" class="report-button">Dashboard</a>
+    </header>
+    @if (Model.Count == 0)
+    {
+        <div class="report-empty">
+            <h2>No projects yet</h2>
+            <p>Create a project and save a pattern draft to begin.</p>
+            <a asp-controller="Projects" asp-action="Create" class="report-button report-button-primary">Create Project</a>
+        </div>
+    }
+    else
+    {
+        <div class="report-project-list">
+            @foreach (var project in Model)
+            {
+                <article class="report-project">
+                    <div>
+                        <span class="report-project-status">@project.Status</span>
+                        <h2>@project.Name</h2>
+                        <p>@project.SiteLocation · @project.BlastType</p>
+                    </div>
+                    <div class="report-actions">
+                        <a asp-controller="PatternDesign" asp-action="Index" asp-route-projectId="@project.Id"
+                           class="report-button">Pattern Design</a>
+                        <a asp-controller="Reports" asp-action="Preview" asp-route-projectId="@project.Id"
+                           class="report-button report-button-primary">Open Report</a>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</main>

@@ -16,6 +16,7 @@ public sealed class CalculationResult
     public decimal? PowderFactorKgPerTonne { get; set; }
     public decimal? PredictedPpvMmPerSecond { get; set; }
     public decimal? PredictedFlyrockMetres { get; set; }
+    public string? PatternSnapshotJson { get; set; }
     public bool IsCurrent { get; set; } = true;
     public DateTime CalculatedAtUtc { get; set; }
 

@@ -27,6 +27,60 @@ public sealed class ProjectAccessTests
         Assert.Equal(data.ProjectId, design.ProjectId);
         Assert.Equal(2, design.Holes.Count);
         Assert.Single(design.ExplosiveProducts);
+        Assert.Contains(design.AeciProducts, product => product.Code == "S300-VOLCANO" &&
+            product.Name == "S300 Volcano" && product.EnergyMinMjPerKg == 2.00m &&
+            product.Application.Contains("Geothermal"));
+    }
+
+    [Fact]
+    public async Task Incomplete_pattern_can_be_saved_and_reopened_as_a_draft()
+    {
+        await using var db = CreateDatabase();
+        var data = await SeedPatternDesign(db);
+        var controller = CreateController(db, data.UserId, data.CompanyId);
+
+        var response = await controller.SavePatternDesign(data.ProjectId, new SavePatternDesignDto
+        {
+            RockType = "Granite",
+            BenchLengthMetres = 24m,
+            LayoutRows = 3,
+            TimingOrder = "Sequential"
+        });
+
+        var saved = Assert.IsType<PatternDesignDto>(Assert.IsType<OkObjectResult>(response.Result).Value);
+        Assert.Equal(24m, saved.BenchLengthMetres);
+        Assert.Null(saved.BenchWidthMetres);
+        Assert.Equal(0m, saved.RockDensity);
+        Assert.Equal(0m, saved.VibrationThreshold);
+        Assert.Empty(saved.Holes);
+        var reopened = Assert.IsType<PatternDesignDto>(Assert.IsType<OkObjectResult>(
+            (await controller.GetPatternDesign(data.ProjectId)).Result).Value);
+        Assert.Equal(24m, reopened.BenchLengthMetres);
+        Assert.Equal("Sequential", reopened.TimingOrder);
+    }
+
+    [Theory]
+    [InlineData("Chevron")]
+    [InlineData("Echelon")]
+    [InlineData("HalfRowOverlap")]
+    public async Task New_timing_sequences_can_be_saved_and_reopened(string timingOrder)
+    {
+        await using var db = CreateDatabase();
+        var data = await SeedPatternDesign(db);
+        var controller = CreateController(db, data.UserId, data.CompanyId);
+
+        var response = await controller.SavePatternDesign(data.ProjectId, new SavePatternDesignDto
+        {
+            RockType = "Granite",
+            TimingOrder = timingOrder,
+            TimingIntervalMilliseconds = 25
+        });
+
+        Assert.IsType<OkObjectResult>(response.Result);
+        var reopened = Assert.IsType<PatternDesignDto>(Assert.IsType<OkObjectResult>(
+            (await controller.GetPatternDesign(data.ProjectId)).Result).Value);
+        Assert.Equal(timingOrder, reopened.TimingOrder);
+        Assert.Equal(25, reopened.TimingIntervalMilliseconds);
     }
 
     [Fact]
@@ -42,6 +96,10 @@ public sealed class ProjectAccessTests
             RockDensity = 2.7m,
             Burden = 3.2m,
             Spacing = 3.8m,
+            BenchLengthMetres = 18m,
+            BenchWidthMetres = 12m,
+            PatternType = "Staggered",
+            ReferenceExplosiveFamily = "S100",
             VibrationThreshold = 9m,
             Holes =
             [
@@ -52,6 +110,8 @@ public sealed class ProjectAccessTests
                     X = 1,
                     Y = 2,
                     Depth = 13,
+                    DiameterMillimetres = 115m,
+                    SubdrillMetres = 1.15m,
                     ExplosiveProductId = data.ProductId,
                     Charge = 8,
                     Stemming = 3,
@@ -77,6 +137,65 @@ public sealed class ProjectAccessTests
         Assert.Equal(13, design.Holes.Single(h => h.Number == 1).Depth);
         Assert.DoesNotContain(design.Holes, h => h.Id == data.SecondHoleId);
         Assert.Equal(2.7m, design.RockDensity);
+        Assert.Equal(18m, design.BenchLengthMetres);
+        Assert.Equal(12m, design.BenchWidthMetres);
+        Assert.Equal("Staggered", design.PatternType);
+        Assert.Equal("S100", design.ReferenceExplosiveFamily);
+        Assert.Equal(115m, design.Holes.Single(h => h.Number == 1).DiameterMillimetres);
+        Assert.Equal(1.15m, design.Holes.Single(h => h.Number == 1).SubdrillMetres);
+    }
+
+    [Fact]
+    public async Task Selected_aeci_products_and_individual_loading_densities_survive_reopening()
+    {
+        await using var db = CreateDatabase();
+        var data = await SeedPatternDesign(db);
+        var controller = CreateController(db, data.UserId, data.CompanyId);
+
+        var response = await controller.SavePatternDesign(data.ProjectId, new SavePatternDesignDto
+        {
+            RockType = "Granite", DefaultAeciProductCode = "S100",
+            Holes =
+            [
+                new PatternHoleDto { Number = 1, Depth = 10, Stemming = 2,
+                    AeciProductCode = "S100", ProductDensityGramsPerCc = 1.12m, Charge = 75 },
+                new PatternHoleDto { Number = 2, Depth = 11, Stemming = 2.5m,
+                    AeciProductCode = "S300-VOLCANO", ProductDensityGramsPerCc = 1.18m, Charge = 80 }
+            ]
+        });
+
+        Assert.IsType<OkObjectResult>(response.Result);
+        var reopened = Assert.IsType<PatternDesignDto>(Assert.IsType<OkObjectResult>(
+            (await controller.GetPatternDesign(data.ProjectId)).Result).Value);
+        Assert.Equal("S100", reopened.DefaultAeciProductCode);
+        Assert.Equal("S100", reopened.Holes.Single(h => h.Number == 1).AeciProductCode);
+        Assert.Equal(1.12m, reopened.Holes.Single(h => h.Number == 1).ProductDensityGramsPerCc);
+        Assert.Equal("S300-VOLCANO", reopened.Holes.Single(h => h.Number == 2).AeciProductCode);
+        Assert.Equal(1.18m, reopened.Holes.Single(h => h.Number == 2).ProductDensityGramsPerCc);
+    }
+
+    [Fact]
+    public async Task Automatic_residential_limit_is_recomputed_on_the_server()
+    {
+        await using var db = CreateDatabase();
+        var data = await SeedPatternDesign(db);
+        var controller = CreateController(db, data.UserId, data.CompanyId);
+
+        var saved = await controller.SavePatternDesign(data.ProjectId, new SavePatternDesignDto
+        {
+            RockType = "Granite",
+            RockDensity = 2.7m,
+            Burden = 3m,
+            Spacing = 4m,
+            VibrationThreshold = 1m,
+            ReceptorStructureType = "ResidentialDrywall",
+            DominantFrequencyHz = 10m,
+            VibrationThresholdMode = "Automatic"
+        });
+
+        var result = Assert.IsType<PatternDesignDto>(Assert.IsType<OkObjectResult>(saved.Result).Value);
+        Assert.Equal(19.05m, result.VibrationThreshold);
+        Assert.Equal("Automatic", result.VibrationThresholdMode);
     }
 
     [Fact]

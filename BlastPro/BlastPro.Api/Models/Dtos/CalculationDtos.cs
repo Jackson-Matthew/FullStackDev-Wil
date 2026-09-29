@@ -20,6 +20,34 @@ public sealed class CalculationWarningDto
     public string Message { get; init; } = string.Empty;
 }
 
+public sealed class CalculationPatternSnapshotDto
+{
+    public string SiteLocation { get; init; } = "";
+    public string BlastType { get; init; } = "";
+    public string RockType { get; init; } = "";
+    public decimal? BenchLengthMetres { get; init; }
+    public decimal? BenchWidthMetres { get; init; }
+    public decimal? BurdenMetres { get; init; }
+    public decimal? SpacingMetres { get; init; }
+    public decimal? VibrationThresholdMmPerSecond { get; init; }
+    public List<CalculationHoleSnapshotDto> Holes { get; init; } = new();
+}
+
+public sealed class CalculationHoleSnapshotDto
+{
+    public int Number { get; init; }
+    public decimal X { get; init; }
+    public decimal Y { get; init; }
+    public decimal Depth { get; init; }
+    public decimal? DiameterMillimetres { get; init; }
+    public decimal? SubdrillMetres { get; init; }
+    public string ProductName { get; init; } = "";
+    public decimal? ProductDensityGramsPerCc { get; init; }
+    public decimal Charge { get; init; }
+    public decimal Stemming { get; init; }
+    public int Delay { get; init; }
+}
+
 public sealed class CalculationResultDto
 {
     public int Id { get; init; }
@@ -40,6 +68,7 @@ public sealed class CalculationResultDto
     public decimal? PowderFactorKgPerTonne { get; init; }
     public decimal? PredictedPpvMmPerSecond { get; init; }
     public decimal? PredictedFlyrockMetres { get; init; }
+    public CalculationPatternSnapshotDto? PatternSnapshot { get; init; }
     public List<CalculationWarningDto> Warnings { get; init; } = new();
 }
 

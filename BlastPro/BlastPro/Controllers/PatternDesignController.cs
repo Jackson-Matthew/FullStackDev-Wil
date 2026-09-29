@@ -25,12 +25,10 @@ public sealed class PatternDesignController : Controller
             var projects = await _api.GetAsync<List<ProjectSummaryDto>>("api/projects");
             if (projects.Success && projects.Data is { Count: > 0 })
                 return RedirectToAction(nameof(Index), new { projectId = projects.Data[0].Id });
-
-            var blank = CreateBlankDesign();
-            ViewData[projects.Success ? "Info" : "Error"] = projects.Success
-                ? "No saved project is available yet. You can test the layout, but saving requires a project."
-                : projects.Error ?? "Could not load projects.";
-            return View(PatternView, blank);
+            if (projects.Success)
+                return RedirectToAction("Create", "Projects");
+            TempData["Error"] = projects.Error ?? "Could not load projects.";
+            return RedirectToAction("Index", "Dashboard");
         }
 
         var result = await _api.GetAsync<PatternDesignViewModel>(
@@ -38,16 +36,17 @@ public sealed class PatternDesignController : Controller
 
         if (!result.Success || result.Data is null)
         {
-            ViewData["Error"] = result.Error ?? "Could not load the pattern design.";
-            return View(PatternView, CreateBlankDesign());
+            TempData["Error"] = result.Error ?? "Could not load the pattern design.";
+            return RedirectToAction("Index", "Dashboard");
         }
 
+        if (TempData["Success"] is string success) ViewData["Success"] = success;
         return View(PatternView, result.Data);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SaveDraft(PatternDesignViewModel model)
+    public async Task<IActionResult> SaveDraft(PatternDesignViewModel model, bool continueToResults = false)
     {
         if (!ModelState.IsValid)
         {
@@ -69,7 +68,21 @@ public sealed class PatternDesignController : Controller
                 model.RockDensity,
                 model.Burden,
                 model.Spacing,
+                model.BenchLengthMetres,
+                model.BenchWidthMetres,
+                model.LayoutRows,
+                model.LayoutColumns,
+                model.TimingOrder,
+                model.TimingIntervalMilliseconds,
+                model.PatternType,
+                model.ReferenceExplosiveFamily,
+                model.DefaultAeciProductCode,
+                model.LoadingDensityGramsPerCc,
+                model.Calculation,
                 model.VibrationThreshold,
+                model.ReceptorStructureType,
+                model.DominantFrequencyHz,
+                model.VibrationThresholdMode,
                 model.RowVersion,
                 model.Holes
             });
@@ -81,9 +94,10 @@ public sealed class PatternDesignController : Controller
             return View(PatternView, model);
         }
 
-        ViewData["Success"] = "Draft layout saved.";
-        result.Data.Calculation = model.Calculation;
-        return View(PatternView, result.Data);
+        TempData["Success"] = "Pattern draft saved.";
+        if (continueToResults)
+            return RedirectToAction("Index", "Results", new { projectId = model.ProjectId });
+        return RedirectToAction(nameof(Index), new { projectId = model.ProjectId });
     }
 
     private async Task RestoreExplosiveProducts(PatternDesignViewModel model)
@@ -91,16 +105,10 @@ public sealed class PatternDesignController : Controller
         var current = await _api.GetAsync<PatternDesignViewModel>(
             $"api/projects/{model.ProjectId}/pattern-design");
         if (current.Success && current.Data is not null)
+        {
             model.ExplosiveProducts = current.Data.ExplosiveProducts;
+            model.AeciProducts = current.Data.AeciProducts;
+        }
     }
 
-    private static PatternDesignViewModel CreateBlankDesign()
-    {
-        return new PatternDesignViewModel
-        {
-            ProjectName = "Pattern Design",
-            Status = "Draft",
-            RockType = "Granite"
-        };
-    }
 }
