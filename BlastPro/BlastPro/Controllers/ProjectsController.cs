@@ -70,8 +70,8 @@ namespace BlastPro.Mvc.Controllers
                 return View(model);
             }
 
-            TempData["Success"] = $"Project '{result.Data.Name}' created.";
-            return RedirectToAction(DashboardAction, DashboardController);
+            TempData["Success"] = $"Project '{result.Data.Name}' created. Start with bench dimensions and hole counts.";
+            return RedirectToAction("Index", "PatternDesign", new { projectId = result.Data.Id });
         }
 
 
@@ -170,117 +170,43 @@ namespace BlastPro.Mvc.Controllers
         }
 
 
-        // =========================================================
-        // PATTERN DESIGN SAVE
-        // =========================================================
-
-        // POST: /Projects/SaveDraft
+        // Calculate the saved draft from the Results page.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveDraft(PatternDesignViewModel model)
+        public async Task<IActionResult> CalculatePhysics(int projectId)
         {
-            if (!ModelState.IsValid)
+            if (projectId <= 0) return RedirectToAction(DashboardAction, DashboardController);
+            var saved = await _api.GetAsync<PatternDesignViewModel>(
+                $"api/projects/{projectId}/pattern-design");
+            if (!saved.Success || saved.Data is null)
             {
-                await RestoreExplosiveProducts(model);
-                return View("~/Views/Projects/Index.cshtml", model);
+                TempData["Error"] = saved.Error ?? "Could not load the saved pattern.";
+                return RedirectToAction(DashboardAction, DashboardController);
             }
 
-            if (model.ProjectId <= 0)
-            {
-                ModelState.AddModelError(string.Empty, "Create a project before saving this pattern design.");
-                await RestoreExplosiveProducts(model);
-                return View("~/Views/Projects/Index.cshtml", model);
-            }
-
-            var result = await _api.PutAsync<PatternDesignViewModel>(
-                $"api/projects/{model.ProjectId}/pattern-design",
-                new
-                {
-                    model.RockType,
-                    model.RockDensity,
-                    model.Burden,
-                    model.Spacing,
-                    model.VibrationThreshold,
-                    model.RowVersion,
-                    model.Holes
-                });
-
-            if (!result.Success || result.Data is null)
-            {
-                _logger.LogWarning("Save pattern design failed: {Error}", result.Error);
-                ModelState.AddModelError(string.Empty,
-                    result.Error ?? "Could not save the pattern design.");
-                await RestoreExplosiveProducts(model);
-                return View("~/Views/Projects/Index.cshtml", model);
-            }
-
-            ViewData["Success"] = "Draft layout saved.";
-            result.Data.Calculation = model.Calculation;
-            return View("~/Views/Projects/Index.cshtml", result.Data);
-        }
-
-
-        // POST: /Projects/CalculatePhysics/{id}
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CalculatePhysics(PatternDesignViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                await RestoreExplosiveProducts(model);
-                return View("~/Views/Projects/Index.cshtml", model);
-            }
-
-            if (model.Holes.Count == 0)
-            {
-                ModelState.AddModelError(string.Empty,
-                    "Add at least one hole before calculating blast physics.");
-                await RestoreExplosiveProducts(model);
-                return View("~/Views/Projects/Index.cshtml", model);
-            }
-
-            if (model.ProjectId <= 0)
-            {
-                ModelState.AddModelError(string.Empty, "Create a project before calculating results.");
-                return View("~/Views/Projects/Index.cshtml", model);
-            }
-
+            var model = saved.Data;
+            var missing = new List<string>();
+            if (model.Holes.Count == 0) missing.Add("at least one hole");
+            if (model.Holes.Any(hole => hole.Charge <= 0 || hole.Stemming <= 0))
+                missing.Add("positive charge and stemming for every hole");
             if (model.Calculation.DelayWindowMilliseconds is null or <= 0)
+                missing.Add("a site charge grouping window");
+            if (model.RockDensity <= 0 || model.Burden <= 0 || model.Spacing <= 0)
+                missing.Add("rock density, burden and spacing");
+            if (model.VibrationThreshold <= 0 || model.Calculation.ExclusionRadiusMetres is null or <= 0)
+                missing.Add("vibration and exclusion limits");
+            if (missing.Count > 0)
             {
-                ModelState.AddModelError("Calculation.DelayWindowMilliseconds",
-                    "Enter the site-approved delay window in milliseconds.");
-                await RestoreExplosiveProducts(model);
-                return View("~/Views/Projects/Index.cshtml", model);
+                TempData["Error"] = "Complete the saved draft before calculating: " +
+                    string.Join("; ", missing) + ".";
+                return RedirectToAction("Index", "Results", new { projectId });
             }
 
-            // Save the submitted pattern before calculating from database-backed inputs.
-            var saveResult = await _api.PutAsync<PatternDesignViewModel>(
-                $"api/projects/{model.ProjectId}/pattern-design",
-                new
-                {
-                    model.RockType,
-                    model.RockDensity,
-                    model.Burden,
-                    model.Spacing,
-                    model.VibrationThreshold,
-                    model.RowVersion,
-                    model.Holes
-                });
-
-            if (!saveResult.Success || saveResult.Data is null)
-            {
-                ModelState.AddModelError(string.Empty,
-                    saveResult.Error ?? "Could not save the pattern before calculation.");
-                await RestoreExplosiveProducts(model);
-                return View("~/Views/Projects/Index.cshtml", model);
-            }
-
-            model.RowVersion = saveResult.Data.RowVersion;
             var calculation = await _api.PostAsync<object>(
-                $"api/projects/{model.ProjectId}/calculations",
+                $"api/projects/{projectId}/calculations",
                 new
                 {
-                    DelayWindowMilliseconds = model.Calculation.DelayWindowMilliseconds.Value,
+                    DelayWindowMilliseconds = model.Calculation.DelayWindowMilliseconds.GetValueOrDefault(),
                     model.Calculation.SubdrillMetres,
                     model.Calculation.ReceptorDistanceMetres,
                     model.Calculation.PpvSiteCoefficient,
@@ -292,14 +218,12 @@ namespace BlastPro.Mvc.Controllers
                 });
             if (!calculation.Success)
             {
-                ModelState.AddModelError(string.Empty,
-                    calculation.Error ?? "The calculation could not be saved.");
-                await RestoreExplosiveProducts(model);
-                return View("~/Views/Projects/Index.cshtml", model);
+                TempData["Error"] = calculation.Error ?? "The calculation could not be saved.";
+                return RedirectToAction("Index", "Results", new { projectId });
             }
 
             TempData["Success"] = "Calculation saved.";
-            return RedirectToAction("Index", "Results", new { projectId = model.ProjectId });
+            return RedirectToAction("Index", "Results", new { projectId });
         }
 
 
@@ -331,19 +255,5 @@ namespace BlastPro.Mvc.Controllers
         }
 
 
-        // =========================================================
-        // HELPERS
-        // =========================================================
-
-        private async Task RestoreExplosiveProducts(PatternDesignViewModel model)
-        {
-            if (model.ProjectId <= 0) return;
-
-            var current = await _api.GetAsync<PatternDesignViewModel>(
-                $"api/projects/{model.ProjectId}/pattern-design");
-
-            if (current.Success && current.Data is not null)
-                model.ExplosiveProducts = current.Data.ExplosiveProducts;
-        }
     }
 }

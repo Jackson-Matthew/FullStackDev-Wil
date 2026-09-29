@@ -77,7 +77,7 @@
                 <h3 class="results-empty-title">No results yet</h3>
 
                 <p class="results-empty-text">
-                    Calculate blast physics from Pattern Design to see results here.
+                    Save the pattern draft, then calculate its results here. Any missing site values will be listed before calculation.
                 </p>
 
                 <a asp-controller="PatternDesign"
@@ -88,6 +88,11 @@
                     Go to Pattern Design
 
                 </a>
+
+                <form asp-controller="Projects" asp-action="CalculatePhysics" method="post" class="mt-3">
+                    <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                    <button type="submit" class="results-empty-btn">Calculate Saved Draft</button>
+                </form>
 
             </div>
 
@@ -119,13 +124,7 @@
                         and are no longer current. Recalculate to see results for the saved pattern.
                     </span>
 
-                    <a asp-controller="PatternDesign"
-                       asp-action="Index"
-                       asp-route-projectId="@Model.ProjectId">
-
-                        Recalculate
-
-                    </a>
+                    <span>Use “Recalculate Saved Draft” below after reviewing the changes.</span>
 
                 </div>
             }
@@ -341,12 +340,18 @@
 
             <div class="results-footer">
 
+                <form asp-controller="Projects" asp-action="CalculatePhysics" method="post">
+                    <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                    <button type="submit" class="generate-report-btn">Recalculate Saved Draft</button>
+                </form>
+
                 <a asp-controller="Reports"
                    asp-action="Preview"
                    asp-route-projectId="@Model.ProjectId"
+                   asp-route-resultId="@Model.ResultId"
                    class="generate-report-btn">
 
-                    Generate Report
+                    View Report
 
                 </a>
 

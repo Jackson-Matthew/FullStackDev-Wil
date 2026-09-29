@@ -4,6 +4,7 @@ using BlastPro.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BlastPro.Api.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260928163643_AeciSurfaceProductSelection")]
+    partial class AeciSurfaceProductSelection
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -503,9 +506,6 @@ namespace BlastPro.Api.Data.Migrations
                     b.Property<decimal>("MaxChargePerDelayKg")
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
-
-                    b.Property<string>("PatternSnapshotJson")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("PowderFactorKgPerTonne")
                         .HasPrecision(18, 6)

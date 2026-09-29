@@ -1,204 +1,40 @@
 @model BlastPro.Mvc.Models.ViewModels.Reports.ReportViewModel
 @{
-    ViewData["Title"] = $"Blast Report — {Model.ProjectName}";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = Model.HasResults ? $"{Model.ProjectName} — Calculation Report" : "Reports";
+    Layout = "_Layout";
 }
+<link rel="stylesheet" href="~/css/report.css" asp-append-version="true" />
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/report.css" asp-append-version="true" />
-}
-
-<div class="report-page">
-
-    @* Info / Error banners *@
-    @if (ViewData["Info"] is string info)
-    {
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
-            @info
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-    @if (TempData["Error"] is string err)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @err
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
-    @* No results state *@
+<main class="report-page">
     @if (!Model.HasResults)
     {
         <div class="report-empty">
-            <p>No results available for this project yet.</p>
-            <a asp-action="Index" asp-controller="Dashboard" class="btn btn-outline-secondary">
-                ← Back to Dashboard
-            </a>
+            <span class="report-eyebrow">Reports</span>
+            <h1>@(Model.ProjectId > 0 ? Model.ProjectName : "Select a project")</h1>
+            <p>@(Model.ProjectId > 0
+                ? "This project has no saved calculation yet. Save its pattern draft, then calculate from Results."
+                : "Choose a project on the dashboard to view its report.")</p>
+            <div class="report-actions">
+                @if (Model.ProjectId > 0)
+                {
+                    <a asp-controller="Results" asp-action="Index" asp-route-projectId="@Model.ProjectId"
+                       class="report-button report-button-primary">Open Results</a>
+                }
+                <a asp-controller="Dashboard" asp-action="Index" class="report-button">Dashboard</a>
+            </div>
         </div>
     }
     else
     {
-        @* Page header *@
-        <div class="report-header">
-            <div class="report-header__left">
-                <h1 class="report-title">Blast Report — @Model.ProjectName</h1>
-                <p class="report-meta">
-                    <span>@Model.CompanyName</span>
-                    <span class="report-meta__sep">·</span>
-                    <span>@Model.CalculationsUnit</span>
-                    <span class="report-meta__sep">·</span>
-                    <span>@Model.ReportDateUtc.ToString("yyyy-MM-dd")</span>
-                </p>
-            </div>
-            <div class="report-header__badges">
-                @if (Model.CriticalWarningCount > 0)
-                {
-                    <span class="badge bg-danger"> @Model.CriticalWarningCount Critical</span>
-                }
-                @if ((Model.Warnings.Count - Model.CriticalWarningCount) > 0)
-                {
-                    <span class="badge bg-warning text-dark">
-                         @(Model.Warnings.Count - Model.CriticalWarningCount) Warning
-                    </span>
-                }
-            </div>
-        </div>
-
-        @* Action buttons *@
-        <div class="report-actions no-print mb-3">
-            <a asp-action="DownloadPdf" asp-controller="Reports"
-               asp-route-projectId="@Model.ProjectId"
-               class="btn btn-primary">
-                📄 Download PDF
-            </a>
-            <a asp-action="Print" asp-controller="Reports"
-               asp-route-projectId="@Model.ProjectId"
-               class="btn btn-outline-secondary ms-2" target="_blank">
-                🖨️ Print
-            </a>
-            <a asp-action="Index" asp-controller="Results"
-               asp-route-projectId="@Model.ProjectId"
-               class="btn btn-outline-secondary ms-2">
-                ← Back to Results
-            </a>
-        </div>
-
-        @* Warnings *@
-        @if (Model.Warnings.Count > 0)
-        {
-            <section class="report-section">
-                <h2 class="report-section__title">Warnings</h2>
-                <ul class="report-warnings list-unstyled">
-                    @foreach (var w in Model.Warnings)
-                    {
-                        <li class="report-warning @(w.Severity == "Critical" ? "report-warning--critical" : "report-warning--warning")">
-                            <span class="report-warning__icon">@w.Icon</span>
-                            <div class="report-warning__body">
-                                <span class="badge @w.BadgeClass me-2">@w.Severity</span>
-                                <span>@w.Message</span>
-                            </div>
-                        </li>
-                    }
-                </ul>
-            </section>
-        }
-
-        @* Summary cards *@
-        <section class="report-section">
-            <h2 class="report-section__title">Summary</h2>
-            <div class="report-cards">
-                <div class="report-card">
-                    <span class="report-card__label">Total Holes</span>
-                    <span class="report-card__value">@Model.TotalDesignatedHoles</span>
-                </div>
-                <div class="report-card">
-                    <span class="report-card__label">Total Explosive</span>
-                    <span class="report-card__value">@Model.FormatNumber(Model.TotalExplosiveLoadKg) kg</span>
-                </div>
-                <div class="report-card">
-                    <span class="report-card__label">Total Drilling</span>
-                    <span class="report-card__value">@Model.FormatNumber(Model.TotalDrillingLengthMetres) m</span>
-                </div>
-                <div class="report-card">
-                    <span class="report-card__label">Est. Tonnage</span>
-                    <span class="report-card__value">@Model.FormatNumber(Model.TotalEstimatedTonnageTonnes ?? 0) t</span>
-                </div>
-                <div class="report-card report-card--highlight">
-                    <span class="report-card__label">Est. Material Cost</span>
-                    <span class="report-card__value">@Model.FormatCost(Model.TotalEstimatedMaterialCost)</span>
-                </div>
-            </div>
-        </section>
-
-        @* Safety metrics *@
-        <section class="report-section">
-            <h2 class="report-section__title">Safety Metrics</h2>
-            <div class="report-cards">
-                <div class="report-card">
-                    <span class="report-card__label">Max Charge / Delay</span>
-                    <span class="report-card__value">@Model.MaxChargePerDelayKg kg</span>
-                </div>
-                <div class="report-card">
-                    <span class="report-card__label">Powder Factor</span>
-                    <span class="report-card__value">@(Model.PowderFactorKgPerTonne?.ToString("N2") ?? "—") kg/t</span>
-                </div>
-                <div class="report-card">
-                    <span class="report-card__label">Predicted PPV</span>
-                    <span class="report-card__value">@(Model.PredictedPpvMmPerSecond?.ToString("N1") ?? "—") mm/s</span>
-                </div>
-                <div class="report-card">
-                    <span class="report-card__label">Flyrock Range</span>
-                    <span class="report-card__value">@(Model.IdealizedFlyrockRangeMetres?.ToString("N0") ?? "—") m</span>
-                </div>
-            </div>
-        </section>
-
-        @* Holes table *@
-        <section class="report-section">
-            <h2 class="report-section__title">Hole Details</h2>
-            <div class="table-responsive">
-                <table class="table table-sm report-table">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>#</th>
-                            <th>X (m)</th>
-                            <th>Y (m)</th>
-                            <th>Depth (m)</th>
-                            <th>Explosive</th>
-                            <th>Charge (kg)</th>
-                            <th>Stemming (m)</th>
-                            <th>Delay (ms)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var hole in Model.Holes)
-                        {
-                            <tr>
-                                <td>@hole.Number</td>
-                                <td>@hole.X.ToString("N2")</td>
-                                <td>@hole.Y.ToString("N2")</td>
-                                <td>@hole.Depth.ToString("N1")</td>
-                                <td>@hole.Explosive</td>
-                                <td>@hole.Charge.ToString("N1")</td>
-                                <td>@hole.Stemming.ToString("N1")</td>
-                                <td>@hole.Delay</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        @* Disclaimer  *@
-        <p class="report-disclaimer text-muted fst-italic small mt-4">
-            This report is computer-generated and must be reviewed by a certified blasting officer
-            before use. All calculations are estimates. BlastPro (Pty) Ltd accepts no liability
-            for decisions made solely on the basis of this report.
-        </p>
+        <nav class="report-actions no-print" aria-label="Report actions">
+            <a asp-controller="Results" asp-action="Index" asp-route-projectId="@Model.ProjectId"
+               asp-route-resultId="@Model.ResultId" class="report-button">← Results</a>
+            <a asp-controller="PatternDesign" asp-action="Index" asp-route-projectId="@Model.ProjectId"
+               class="report-button">Pattern Design</a>
+            <a asp-controller="Reports" asp-action="Print" asp-route-projectId="@Model.ProjectId"
+               asp-route-resultId="@Model.ResultId" target="_blank" rel="noopener"
+               class="report-button report-button-primary">Print / Save PDF</a>
+        </nav>
+        <partial name="_ReportBody" model="Model" />
     }
-
-</div>
-
-@section Scripts {
-    <script src="~/js/reports.js" asp-append-version="true"></script>
-}
+</main>

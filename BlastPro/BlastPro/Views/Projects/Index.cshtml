@@ -1,4 +1,4 @@
-﻿@model BlastPro.Mvc.Models.ViewModels.Projects.PatternDesignViewModel
+@model BlastPro.Mvc.Models.ViewModels.Projects.PatternDesignViewModel
 @using System.Globalization
 @using BlastPro.Mvc.Models.ViewModels.Projects
 
@@ -7,7 +7,8 @@
     Layout = "_Layout";
 
     var inv = CultureInfo.InvariantCulture;
-    bool isReviewed = Model.Status?.ToLower() == "reviewed";
+    bool isCalculated = string.Equals(Model.Status, "Calculated", StringComparison.OrdinalIgnoreCase);
+    bool isReviewed = string.Equals(Model.Status, "Reviewed", StringComparison.OrdinalIgnoreCase);
 }
 
 <link rel="stylesheet" href="~/css/pattern-design.css" asp-append-version="true" />
@@ -34,8 +35,8 @@
             @Model.ProjectName — Pattern Design
         </h2>
 
-        <span class="design-status-badge @(isReviewed ? "status-reviewed" : "status-draft")">
-            @(isReviewed ? "Reviewed" : "Draft")
+        <span class="design-status-badge @(isCalculated || isReviewed ? "status-reviewed" : "status-draft")">
+            @(isReviewed ? "Reviewed" : isCalculated ? "Calculated" : "Draft")
         </span>
 
     </div>
@@ -75,6 +76,69 @@
         <div asp-validation-summary="All" class="design-validation-summary mb-3"></div>
 
 
+        <div class="design-workflow" role="note">
+            <strong>Build the draft from left to right.</strong> Enter bench dimensions, hole counts and depth. The plan and editable hole estimates update as you type; enter measured site data where indicated.
+        </div>
+        <div id="designReadiness" class="design-readiness" role="status" aria-live="polite"></div>
+
+        <div class="design-main-grid">
+            <div class="design-input-column">
+        <div class="design-card">
+            <div class="design-card-header"><h3 class="design-card-title">1. Bench and hole layout</h3></div>
+            <div class="design-card-body">
+                <p class="design-help">Required to draw holes: bench length, width, rows, holes per row and drilled depth.</p>
+                <div class="param-grid">
+                    <div>
+                        <label for="BenchLengthMetres" class="param-label">Bench length / X <span class="input-required">Site input</span></label>
+                        <input id="BenchLengthMetres" name="BenchLengthMetres" type="number" min="0.01" max="10000" step="0.01" class="form-control param-input" placeholder="Metres" value="@Model.BenchLengthMetres?.ToString("0.##", inv)" />
+                    </div>
+                    <div>
+                        <label for="BenchWidthMetres" class="param-label">Bench width / Y <span class="input-required">Site input</span></label>
+                        <input id="BenchWidthMetres" name="BenchWidthMetres" type="number" min="0.01" max="10000" step="0.01" class="form-control param-input" placeholder="Metres" value="@Model.BenchWidthMetres?.ToString("0.##", inv)" />
+                    </div>
+                    <div>
+                        <label for="LayoutRows" class="param-label">Rows across width <span class="input-required">Site input</span></label>
+                        <input id="LayoutRows" name="LayoutRows" type="number" min="1" max="500" step="1" class="form-control param-input" placeholder="Row count" value="@Model.LayoutRows" />
+                    </div>
+                    <div>
+                        <label for="LayoutColumns" class="param-label">Holes per row <span class="input-required">Site input</span></label>
+                        <input id="LayoutColumns" name="LayoutColumns" type="number" min="1" max="500" step="1" class="form-control param-input" placeholder="Column count" value="@Model.LayoutColumns" />
+                    </div>
+                    <div>
+                        <label for="PatternType" class="param-label">Pattern arrangement <span class="input-required">Selection</span></label>
+                        <select id="PatternType" name="PatternType" class="form-select param-input">
+                            <option value="Rectangular" selected="@(Model.PatternType == "Rectangular")">Rectangular</option>
+                            <option value="Staggered" selected="@(Model.PatternType == "Staggered")">Staggered</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="NewHoleDepth" class="param-label">Drilled hole depth <span class="input-required">Site input</span></label>
+                        <input id="NewHoleDepth" type="number" min="0.01" step="0.01" class="form-control param-input" placeholder="Metres" value="@(Model.Holes.Count > 0 && Model.Holes.All(h => h.Depth == Model.Holes[0].Depth) ? Model.Holes[0].Depth.ToString("0.##", inv) : "")" />
+                    </div>
+                </div>
+                <div class="layout-derived">
+                    <div>
+                        <label for="Burden" class="param-label">Geometric burden / row pitch <span class="input-calculated">Calculated, editable</span></label>
+                        <div class="param-input-wrapper"><input id="Burden" name="Burden" type="number" min="0.0001" step="any" class="form-control param-input has-unit" value="@(Model.Burden > 0 ? Model.Burden.ToString("0.####", inv) : "")" /><span class="param-unit">m</span></div>
+                    </div>
+                    <div>
+                        <label for="Spacing" class="param-label">Geometric spacing / column pitch <span class="input-calculated">Calculated, editable</span></label>
+                        <div class="param-input-wrapper"><input id="Spacing" name="Spacing" type="number" min="0.0001" step="any" class="form-control param-input has-unit" value="@(Model.Spacing > 0 ? Model.Spacing.ToString("0.####", inv) : "")" /><span class="param-unit">m</span></div>
+                    </div>
+                    <div class="layout-action"><button type="button" id="resetGeometryBtn" class="tool-btn">Use bench geometry</button></div>
+                </div>
+                <p id="geometryStatus" class="design-help" aria-live="polite">Geometric pitch divides the bench width by rows and length by holes per row.</p>
+                <div id="patternNotice" class="pattern-notice" role="status" aria-live="polite"></div>
+                <button type="button" id="generatePatternBtn" class="tool-btn">Apply current layout to holes</button>
+                <div id="replacePatternPrompt" class="pattern-replace" hidden>
+                    <span>Replace the current holes with this layout? Existing hole edits will be lost.</span>
+                    <button type="button" id="confirmPatternBtn" class="tool-btn">Replace holes</button>
+                    <button type="button" id="cancelPatternBtn" class="tool-btn">Keep edits</button>
+                </div>
+            </div>
+        </div>
+
+
         @* =====================================================
            PROJECT PARAMETERS
            ===================================================== *@
@@ -82,11 +146,11 @@
         <div class="design-card">
 
             <div class="design-card-header">
-                <h3 class="design-card-title">Project Parameters</h3>
+                <h3 class="design-card-title">2. Rock and site details</h3>
             </div>
 
             <div class="design-card-body">
-
+                <p class="design-help">Choose the rock and the AECI product to use across the bench. Enter measured rock density and site vibration details. The residential USBM suggestion updates from the structure and measured frequency; you can edit the limit.</p>
                 <div class="param-grid">
 
 
@@ -110,11 +174,36 @@
                     </div>
 
 
-                    @* Rock Density *@
+                    @* Product selected from the supplied AECI catalogue *@
 
                     <div>
+                        <label for="DefaultAeciProductCode" class="param-label">AECI explosive product <span class="input-required">Select product</span></label>
+                        <select id="DefaultAeciProductCode" name="DefaultAeciProductCode" class="form-select param-input">
+                            <option value="">Choose an AECI surface product</option>
+                            @foreach (var group in Model.AeciProducts.GroupBy(product => product.Series))
+                            {
+                                <optgroup label="@group.Key">
+                                    @foreach (var product in group)
+                                    {
+                                        <option value="@product.Code" selected="@(Model.DefaultAeciProductCode == product.Code)"
+                                                data-density-min="@product.DensityMinGramsPerCc?.ToString("0.###", inv)"
+                                                data-density-max="@product.DensityMaxGramsPerCc?.ToString("0.###", inv)"
+                                                data-energy-min="@product.EnergyMinMjPerKg.ToString("0.###", inv)"
+                                                data-energy-max="@product.EnergyMaxMjPerKg.ToString("0.###", inv)"
+                                                data-application="@product.Application"
+                                                data-min-diameter="@product.MinimumDiameterMillimetres">@product.Name</option>
+                                    }
+                                </optgroup>
+                            }
+                        </select>
+                        <input type="hidden" name="ReferenceExplosiveFamily" value="@Model.ReferenceExplosiveFamily" />
+                        <input type="hidden" id="LegacyLoadingDensityGramsPerCc" name="LoadingDensityGramsPerCc" value="@Model.LoadingDensityGramsPerCc?.ToString("0.###", inv)" />
+                    </div>
 
-                        <label for="RockDensity" class="param-label">Rock Density</label>
+                    @* Rock Density *@
+                    <div>
+
+                        <label for="RockDensity" class="param-label">Rock density <span class="input-required">Site input</span></label>
 
                         <div class="param-input-wrapper">
 
@@ -124,55 +213,10 @@
                                    id="RockDensity"
                                    name="RockDensity"
                                    class="form-control param-input has-unit"
-                                   value="@Model.RockDensity.ToString("0.00", inv)" />
+                                   placeholder="Measured"
+                                   value="@(Model.RockDensity > 0 ? Model.RockDensity.ToString("0.00", inv) : "")" />
 
                             <span class="param-unit">t/m³</span>
-
-                        </div>
-
-                    </div>
-
-
-                    @* Burden *@
-
-                    <div>
-
-                        <label for="Burden" class="param-label">Burden</label>
-
-                        <div class="param-input-wrapper">
-
-                            <input type="number"
-                                   step="0.01"
-                                   min="0"
-                                   id="Burden"
-                                   name="Burden"
-                                   class="form-control param-input has-unit"
-                                   value="@Model.Burden.ToString("0.00", inv)" />
-
-                            <span class="param-unit">m</span>
-
-                        </div>
-
-                    </div>
-
-
-                    @* Spacing *@
-
-                    <div>
-
-                        <label for="Spacing" class="param-label">Spacing</label>
-
-                        <div class="param-input-wrapper">
-
-                            <input type="number"
-                                   step="0.01"
-                                   min="0"
-                                   id="Spacing"
-                                   name="Spacing"
-                                   class="form-control param-input has-unit"
-                                   value="@Model.Spacing.ToString("0.00", inv)" />
-
-                            <span class="param-unit">m</span>
 
                         </div>
 
@@ -183,7 +227,7 @@
 
                     <div>
 
-                        <label for="VibrationThreshold" class="param-label">Vibration Threshold</label>
+                        <label for="VibrationThreshold" class="param-label">Vibration limit <span class="input-calculated">Suggested, editable</span></label>
 
                         <div class="param-input-wrapper">
 
@@ -193,20 +237,203 @@
                                    id="VibrationThreshold"
                                    name="VibrationThreshold"
                                    class="form-control param-input has-unit"
-                                   value="@Model.VibrationThreshold.ToString("0.0", inv)" />
+                                   placeholder="Site limit"
+                                   value="@(Model.VibrationThreshold > 0 ? Model.VibrationThreshold.ToString("0.0", inv) : "")" />
 
                             <span class="param-unit">mm/s</span>
 
                         </div>
 
+                        <input type="hidden" id="VibrationThresholdMode" name="VibrationThresholdMode" value="@Model.VibrationThresholdMode" />
+                        <small id="vibrationModeStatus" class="design-help"></small>
+
+                    </div>
+
+                    <div>
+                        <label for="ReceptorStructureType" class="param-label">Nearby structure</label>
+                        <select id="ReceptorStructureType" name="ReceptorStructureType" class="form-select param-input">
+                            <option value="Unspecified" selected="@(Model.ReceptorStructureType == "Unspecified")">Not specified</option>
+                            <option value="ResidentialPlaster" selected="@(Model.ReceptorStructureType == "ResidentialPlaster")">House: plaster on lath</option>
+                            <option value="ResidentialDrywall" selected="@(Model.ReceptorStructureType == "ResidentialDrywall")">House: drywall</option>
+                            <option value="Other" selected="@(Model.ReceptorStructureType == "Other")">Other structure</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="DominantFrequencyHz" class="param-label">Measured frequency (Hz)</label>
+                        <input id="DominantFrequencyHz" name="DominantFrequencyHz" type="number" min="0.01" max="100" step="0.01"
+                               class="form-control param-input" value="@Model.DominantFrequencyHz?.ToString("0.##", inv)" />
+                    </div>
+                    <div class="layout-action">
+                        <button type="button" id="useUsbMLimitBtn" class="tool-btn">Use USBM suggestion</button>
                     </div>
 
                 </div>
+                <div class="site-values-block">
+                    <h4 class="design-subtitle">Product and loading</h4>
+                    <p class="design-help">The AECI product selected above fills each new hole. Each row shows its catalogue density as an editable starting value; the charge estimate updates from that hole's density, diameter and loaded length.</p>
+                    <div id="chargeFormulaStatus" class="calculation-explainer" aria-live="polite"></div>
+                </div>
+                <p id="productReferenceInfo" class="design-help mt-3" aria-live="polite"></p>
+                <p class="design-help mt-3">USBM RI 8507 Appendix B is US residential guidance and needs a measured frequency. Other structures and local requirements need a site-approved manual limit. <a href="https://stacks.cdc.gov/view/cdc/201726/cdc_201726_DS1.pdf" target="_blank" rel="noopener noreferrer">Read the source</a>.</p>
 
             </div>
 
         </div>
 
+        <div class="design-card">
+            <div class="design-card-header"><h3 class="design-card-title">3. Timing plan</h3></div>
+            <div class="design-card-body">
+                <p class="design-help">Choose how initiation moves across the bench. A preliminary interval appears from the burden; edit it or any hole delay in place to match the site initiation plan.</p>
+                <div class="param-grid">
+                    <div>
+                        <label for="TimingOrder" class="param-label">Sequence order</label>
+                        <select id="TimingOrder" name="TimingOrder" class="form-select param-input">
+                            <option value="Sequential" selected="@(Model.TimingOrder == "Sequential")">Sequential by hole number</option>
+                            <option value="Rows" selected="@(Model.TimingOrder == "Rows")">Sequential across rows</option>
+                            <option value="Columns" selected="@(Model.TimingOrder == "Columns")">Sequential down columns</option>
+                            <option value="Serpentine" selected="@(Model.TimingOrder == "Serpentine")">Serpentine across rows</option>
+                            <option value="Chevron" selected="@(Model.TimingOrder == "Chevron")">Chevron (V from centre)</option>
+                            <option value="Echelon" selected="@(Model.TimingOrder == "Echelon")">Echelon (diagonal from right)</option>
+                            <option value="HalfRowOverlap" selected="@(Model.TimingOrder == "HalfRowOverlap")">Interleaved rows (half-row start)</option>
+                            <option value="RowGroups" selected="@(Model.TimingOrder == "RowGroups")">One time per row</option>
+                            <option value="ColumnGroups" selected="@(Model.TimingOrder == "ColumnGroups")">One time per column</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="TimingStepMs" class="param-label">Interval (ms) <span class="input-required">Editable estimate</span></label>
+                        <input id="TimingStepMs" name="TimingIntervalMilliseconds" type="number" min="1" step="1" class="form-control param-input" placeholder="Calculated from burden" value="@Model.TimingIntervalMilliseconds" />
+                    </div>
+                    <div class="layout-action"><button type="button" id="applyTimingBtn" class="tool-btn">Apply sequence to edited delays</button></div>
+                </div>
+                <div id="timingNotice" class="pattern-notice" role="status" aria-live="polite"></div>
+                <div id="timingExplanation" class="calculation-explainer"></div>
+                <div id="timingPrompt" class="pattern-replace" hidden>
+                    <span>Replace the manually entered delays with this sequence?</span>
+                    <button type="button" id="confirmTimingBtn" class="tool-btn">Replace delays</button>
+                    <button type="button" id="cancelTimingBtn" class="tool-btn">Keep delays</button>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="design-card">
+            <div class="design-card-header">
+                <h3 class="design-card-title">4. Site calibration and limits</h3>
+            </div>
+            <div class="design-card-body">
+                <p class="design-help">Enter measured site calibration and approved limits. The editable trajectory angle and height are screening assumptions; launch speed and an exclusion radius require site evidence.</p>
+                <div class="param-grid">
+                    <div>
+                        <label for="DelayWindowMilliseconds" class="param-label">Charge grouping window <span class="input-required">Site input</span></label>
+                        <input id="DelayWindowMilliseconds" name="Calculation.DelayWindowMilliseconds" type="number" min="1" step="1"
+                               class="form-control param-input" value="@Model.Calculation.DelayWindowMilliseconds" />
+                    </div>
+                    <div>
+                        <label for="ReceptorDistanceMetres" class="param-label">Distance to receptor <span class="input-required">Site input</span></label>
+                        <input id="ReceptorDistanceMetres" name="Calculation.ReceptorDistanceMetres" type="number" min="0" step="any"
+                               class="form-control param-input" value="@Model.Calculation.ReceptorDistanceMetres?.ToString("0.####", inv)" />
+                    </div>
+                    <div>
+                        <label for="PpvSiteCoefficient" class="param-label">PPV site coefficient <span class="input-required">Site input</span></label>
+                        <input id="PpvSiteCoefficient" name="Calculation.PpvSiteCoefficient" type="number" min="0" step="any"
+                               class="form-control param-input" value="@Model.Calculation.PpvSiteCoefficient?.ToString("0.####", inv)" />
+                    </div>
+                    <div>
+                        <label for="PpvDecayExponent" class="param-label">PPV decay exponent <span class="input-required">Site input</span></label>
+                        <input id="PpvDecayExponent" name="Calculation.PpvDecayExponent" type="number" min="0" step="any"
+                               class="form-control param-input" value="@Model.Calculation.PpvDecayExponent?.ToString("0.####", inv)" />
+                    </div>
+                    <div>
+                        <label for="FlyrockLaunchSpeedMetresPerSecond" class="param-label">Flyrock launch speed (m/s) <span class="input-required">Site estimate</span></label>
+                        <input id="FlyrockLaunchSpeedMetresPerSecond" name="Calculation.FlyrockLaunchSpeedMetresPerSecond" type="number" min="0" step="any"
+                               class="form-control param-input" value="@Model.Calculation.FlyrockLaunchSpeedMetresPerSecond?.ToString("0.####", inv)" />
+                    </div>
+                    <div>
+                        <label for="FlyrockLaunchAngleDegrees" class="param-label">Trajectory angle (°) <span class="input-required">Editable assumption</span></label>
+                        <input id="FlyrockLaunchAngleDegrees" name="Calculation.FlyrockLaunchAngleDegrees" type="number" min="0" max="90" step="any"
+                               class="form-control param-input" value="@Model.Calculation.FlyrockLaunchAngleDegrees?.ToString("0.####", inv)" />
+                    </div>
+                    <div>
+                        <label for="FlyrockLaunchHeightMetres" class="param-label">Trajectory height (m) <span class="input-required">Editable estimate</span></label>
+                        <input id="FlyrockLaunchHeightMetres" name="Calculation.FlyrockLaunchHeightMetres" type="number" min="0" step="any"
+                               class="form-control param-input" value="@Model.Calculation.FlyrockLaunchHeightMetres?.ToString("0.####", inv)" />
+                    </div>
+                    <div>
+                        <label for="ExclusionRadiusMetres" class="param-label">Approved exclusion radius (m) <span class="input-required">Site input</span></label>
+                        <input id="ExclusionRadiusMetres" name="Calculation.ExclusionRadiusMetres" type="number" min="0" step="any"
+                               class="form-control param-input" value="@Model.Calculation.ExclusionRadiusMetres?.ToString("0.####", inv)" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            </div>
+            <aside class="design-preview-column" aria-label="Live design preview">
+        <div class="design-card design-plan-card">
+            <div class="design-card-header plan-card-header">
+                <div><h3 class="design-card-title">Live bench plan</h3><p class="design-help">Zoom in and select a hole to edit it on the plan.</p></div>
+                <div class="plan-view-control" role="group" aria-label="Plan display">
+                    <button type="button" class="plan-view-btn is-active" data-plan-view="holes" aria-pressed="true">Holes</button>
+                    <button type="button" class="plan-view-btn" data-plan-view="timing" aria-pressed="false">Timing</button>
+                </div>
+            </div>
+            <div class="design-card-body">
+                <div class="plan-toolbar" role="group" aria-label="Bench plan controls">
+                    <button type="button" id="planZoomOut" class="tool-btn" aria-label="Zoom out">−</button>
+                    <span id="planZoomLabel" aria-live="polite">100%</span>
+                    <button type="button" id="planZoomIn" class="tool-btn" aria-label="Zoom in">+</button>
+                    <button type="button" id="planFit" class="tool-btn">Fit</button>
+                    <button type="button" id="planExpand" class="tool-btn" aria-expanded="false">Expand plan</button>
+                </div>
+                <div class="plan-workspace">
+                    <div class="bench-plan-wrap"><svg id="benchPlan" class="bench-plan" role="group" aria-label="Interactive bench plan. Select a hole to edit it; drag to pan and use the zoom controls to inspect it."></svg></div>
+                    <section id="planHoleEditor" class="plan-hole-editor" aria-label="Selected hole editor" hidden>
+                        <div class="plan-editor-heading"><h4 id="planHoleTitle">Hole</h4><button type="button" id="planCloseEditor" class="plan-editor-close" aria-label="Close hole editor">×</button></div>
+                        <p class="design-help">Edits here update the hole table and live calculations.</p>
+                        <div class="plan-editor-grid">
+                            <label>X (m)<input type="number" step="0.01" data-plan-field="X" /></label>
+                            <label>Y (m)<input type="number" step="0.01" data-plan-field="Y" /></label>
+                            <label>Depth (m)<input type="number" step="0.1" min="0.01" data-plan-field="Depth" /></label>
+                            <label>Diameter (mm)<input type="number" step="0.1" min="0.1" max="1000" data-plan-field="DiameterMillimetres" /></label>
+                            <label>Subdrill (m)<input type="number" step="0.01" min="0" data-plan-field="SubdrillMetres" /></label>
+                            <label>Stemming (m)<input type="number" step="0.01" min="0" data-plan-field="Stemming" /></label>
+                            <label>Product<select data-plan-field="AeciProductCode">
+                                <option value="">Select AECI product</option>
+                                @foreach (var group in Model.AeciProducts.GroupBy(product => product.Series))
+                                {
+                                    <optgroup label="@group.Key">
+                                        @foreach (var product in group)
+                                        {
+                                            <option value="@product.Code">@product.Name</option>
+                                        }
+                                    </optgroup>
+                                }
+                            </select></label>
+                            <label>Density (g/cm³)<input type="number" step="0.001" min="0.01" max="5" data-plan-field="ProductDensityGramsPerCc" /></label>
+                            <label>Charge (kg)<input type="number" step="0.01" min="0" data-plan-field="Charge" /></label>
+                            <label>Delay (ms)<input type="number" step="1" min="0" data-plan-field="Delay" /></label>
+                        </div>
+                        <div class="plan-editor-actions">
+                            <button type="button" id="planDeleteHole" class="tool-btn tool-btn-danger">Delete hole</button>
+                        </div>
+                    </section>
+                </div>
+                <div id="planDetail" class="plan-detail" aria-live="polite"></div>
+                <div class="bench-plan-legend"><span class="legend-proposed">Geometric preview</span><span class="legend-saved">Hole in table</span><span class="legend-outside">Outside bench</span></div>
+            </div>
+        </div>
+
+        <div class="design-card">
+            <div class="design-card-header"><h3 class="design-card-title">Live calculation summary</h3></div>
+            <div class="design-card-body">
+                <div id="liveDesignSummary" class="live-design-summary" aria-live="polite"></div>
+                <p class="design-help">The live figures are planning estimates. A qualified blaster must check the bench, product, loading and initiation details before use.</p>
+            </div>
+        </div>
+
+
+            </aside>
+        </div>
 
         @* =====================================================
            HOLE PATTERN DATA
@@ -216,7 +443,7 @@
 
             <div class="design-card-header hole-card-header">
 
-                <h3 class="design-card-title">Hole Pattern Data</h3>
+                <h3 class="design-card-title">5. Editable hole table</h3>
 
                 <div class="hole-toolbar">
 
@@ -239,6 +466,8 @@
 
             </div>
 
+            <p class="hole-card-help">The plan creates X, Y and depth. Diameter, subdrill, stemming, charge and delay estimates fill directly in these cells. Edit any cell for a site exception; manual values stay in place.</p>
+
 
             <div class="hole-table-wrapper">
 
@@ -256,7 +485,10 @@
                             <th>X (m)</th>
                             <th>Y (m)</th>
                             <th>Depth (m)</th>
-                            <th class="col-explosive">Explosive</th>
+                            <th>Diameter (mm)</th>
+                            <th>Subdrill (m)</th>
+                            <th class="col-explosive">AECI product</th>
+                            <th>Density (g/cm³)</th>
                             <th>Charge (kg)</th>
                             <th>Stemming (m)</th>
                             <th>Delay (ms)</th>
@@ -269,12 +501,12 @@
                         {
                             <partial name="~/Views/Projects/_HoleRow.cshtml"
                                      model="Model.Holes[i]"
-                                     view-data='new ViewDataDictionary(ViewData) { ["HoleIndex"] = i.ToString(), ["ExplosiveProducts"] = Model.ExplosiveProducts }' />
+                                     view-data='new ViewDataDictionary(ViewData) { ["HoleIndex"] = i.ToString(), ["ExplosiveProducts"] = Model.ExplosiveProducts, ["AeciProducts"] = Model.AeciProducts }' />
                         }
 
                         <tr id="noHolesRow" style="@(Model.Holes.Any() ? "display: none;" : "")">
-                            <td colspan="9" class="no-holes">
-                                No holes yet. Click <strong>Add Hole</strong> to start the pattern.
+                            <td colspan="12" class="no-holes">
+                                No holes yet. Enter bench dimensions, row and column counts, and drilled depth above. Holes will appear here automatically.
                             </td>
                         </tr>
 
@@ -292,66 +524,8 @@
         <template id="holeRowTemplate">
             <partial name="~/Views/Projects/_HoleRow.cshtml"
                      model="new BlastHoleViewModel { Number = 0 }"
-                     view-data='new ViewDataDictionary(ViewData) { ["HoleIndex"] = "__index__", ["ExplosiveProducts"] = Model.ExplosiveProducts }' />
+                     view-data='new ViewDataDictionary(ViewData) { ["HoleIndex"] = "__index__", ["ExplosiveProducts"] = Model.ExplosiveProducts, ["AeciProducts"] = Model.AeciProducts }' />
         </template>
-
-
-        <div class="design-card">
-            <div class="design-card-header">
-                <h3 class="design-card-title">Calculation Inputs</h3>
-            </div>
-            <div class="design-card-body">
-                <p>Use site-approved values. Only the delay window is required; leave an optional field blank when its value is unavailable.</p>
-                <div class="param-grid">
-                    <div>
-                        <label for="DelayWindowMilliseconds" class="param-label">Delay window (ms)</label>
-                        <input id="DelayWindowMilliseconds" name="Calculation.DelayWindowMilliseconds" type="number" min="1" step="1"
-                               class="form-control param-input" value="@Model.Calculation.DelayWindowMilliseconds" />
-                    </div>
-                    <div>
-                        <label for="SubdrillMetres" class="param-label">Subdrill (m)</label>
-                        <input id="SubdrillMetres" name="Calculation.SubdrillMetres" type="number" min="0" step="any"
-                               class="form-control param-input" value="@Model.Calculation.SubdrillMetres?.ToString("0.####", inv)" />
-                    </div>
-                    <div>
-                        <label for="ReceptorDistanceMetres" class="param-label">Receptor distance (m)</label>
-                        <input id="ReceptorDistanceMetres" name="Calculation.ReceptorDistanceMetres" type="number" min="0" step="any"
-                               class="form-control param-input" value="@Model.Calculation.ReceptorDistanceMetres?.ToString("0.####", inv)" />
-                    </div>
-                    <div>
-                        <label for="PpvSiteCoefficient" class="param-label">PPV site coefficient</label>
-                        <input id="PpvSiteCoefficient" name="Calculation.PpvSiteCoefficient" type="number" min="0" step="any"
-                               class="form-control param-input" value="@Model.Calculation.PpvSiteCoefficient?.ToString("0.####", inv)" />
-                    </div>
-                    <div>
-                        <label for="PpvDecayExponent" class="param-label">PPV decay exponent</label>
-                        <input id="PpvDecayExponent" name="Calculation.PpvDecayExponent" type="number" min="0" step="any"
-                               class="form-control param-input" value="@Model.Calculation.PpvDecayExponent?.ToString("0.####", inv)" />
-                    </div>
-                    <div>
-                        <label for="FlyrockLaunchSpeedMetresPerSecond" class="param-label">Flyrock launch speed (m/s)</label>
-                        <input id="FlyrockLaunchSpeedMetresPerSecond" name="Calculation.FlyrockLaunchSpeedMetresPerSecond" type="number" min="0" step="any"
-                               class="form-control param-input" value="@Model.Calculation.FlyrockLaunchSpeedMetresPerSecond?.ToString("0.####", inv)" />
-                    </div>
-                    <div>
-                        <label for="FlyrockLaunchAngleDegrees" class="param-label">Flyrock launch angle (°)</label>
-                        <input id="FlyrockLaunchAngleDegrees" name="Calculation.FlyrockLaunchAngleDegrees" type="number" min="0" max="90" step="any"
-                               class="form-control param-input" value="@Model.Calculation.FlyrockLaunchAngleDegrees?.ToString("0.####", inv)" />
-                    </div>
-                    <div>
-                        <label for="FlyrockLaunchHeightMetres" class="param-label">Flyrock launch height (m)</label>
-                        <input id="FlyrockLaunchHeightMetres" name="Calculation.FlyrockLaunchHeightMetres" type="number" min="0" step="any"
-                               class="form-control param-input" value="@Model.Calculation.FlyrockLaunchHeightMetres?.ToString("0.####", inv)" />
-                    </div>
-                    <div>
-                        <label for="ExclusionRadiusMetres" class="param-label">Exclusion radius (m)</label>
-                        <input id="ExclusionRadiusMetres" name="Calculation.ExclusionRadiusMetres" type="number" min="0" step="any"
-                               class="form-control param-input" value="@Model.Calculation.ExclusionRadiusMetres?.ToString("0.####", inv)" />
-                    </div>
-                </div>
-            </div>
-        </div>
-
 
         @* =====================================================
            FOOTER ACTIONS
@@ -363,17 +537,12 @@
                     class="save-draft-btn"
                     formaction="@Url.Action("SaveDraft", "PatternDesign")">
 
-                Save Draft Layout
+                Save Draft
 
             </button>
 
-            <button type="submit"
-                    class="calculate-btn"
-                    formaction="@Url.Action("CalculatePhysics", "Projects", new { id = Model.ProjectId })">
-
-                Calculate Blast Physics
-
-            </button>
+            <button type="submit" name="continueToResults" value="true"
+                    class="review-results-btn">Save &amp; Review Results</button>
 
         </div>
 

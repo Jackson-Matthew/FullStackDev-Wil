@@ -17,10 +17,28 @@ public class PatternDesignViewModel
     [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal Spacing { get; set; }
     [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
+    public decimal? BenchLengthMetres { get; set; }
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
+    public decimal? BenchWidthMetres { get; set; }
+    public int? LayoutRows { get; set; }
+    public int? LayoutColumns { get; set; }
+    public string TimingOrder { get; set; } = "Rows";
+    public int? TimingIntervalMilliseconds { get; set; }
+    public string PatternType { get; set; } = "Rectangular";
+    public string ReferenceExplosiveFamily { get; set; } = "";
+    public string DefaultAeciProductCode { get; set; } = "";
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
+    public decimal? LoadingDensityGramsPerCc { get; set; }
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal VibrationThreshold { get; set; }
+    public string ReceptorStructureType { get; set; } = "Unspecified";
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
+    public decimal? DominantFrequencyHz { get; set; }
+    public string VibrationThresholdMode { get; set; } = "Manual";
     public string? RowVersion { get; set; }
     public List<BlastHoleViewModel> Holes { get; set; } = new();
     public List<ExplosiveProductOptionViewModel> ExplosiveProducts { get; set; } = new();
+    public List<AeciProductOptionViewModel> AeciProducts { get; set; } = new();
     public CalculationInputsViewModel Calculation { get; set; } = new();
 
     public static IReadOnlyList<string> RockTypes { get; } =
@@ -65,7 +83,14 @@ public class BlastHoleViewModel
     public decimal Y { get; set; }
     [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal Depth { get; set; }
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
+    public decimal? DiameterMillimetres { get; set; }
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
+    public decimal? SubdrillMetres { get; set; }
     public int? ExplosiveProductId { get; set; }
+    public string AeciProductCode { get; set; } = "";
+    [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
+    public decimal? ProductDensityGramsPerCc { get; set; }
     [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal Charge { get; set; }
     [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
@@ -79,6 +104,19 @@ public class ExplosiveProductOptionViewModel
     public string Name { get; set; } = string.Empty;
 }
 
+public class AeciProductOptionViewModel
+{
+    public string Code { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string Series { get; set; } = "";
+    public string Application { get; set; } = "";
+    public decimal? DensityMinGramsPerCc { get; set; }
+    public decimal? DensityMaxGramsPerCc { get; set; }
+    public decimal EnergyMinMjPerKg { get; set; }
+    public decimal EnergyMaxMjPerKg { get; set; }
+    public int? MinimumDiameterMillimetres { get; set; }
+}
+
 public sealed class InvariantDecimalModelBinder : IModelBinder
 {
     public Task BindModelAsync(ModelBindingContext bindingContext)
@@ -89,10 +127,11 @@ public sealed class InvariantDecimalModelBinder : IModelBinder
 
         bindingContext.ModelState.SetModelValue(bindingContext.ModelName, valueResult);
         var value = valueResult.FirstValue;
-        if (string.IsNullOrWhiteSpace(value) &&
-            Nullable.GetUnderlyingType(bindingContext.ModelMetadata.ModelType) == typeof(decimal))
+        if (string.IsNullOrWhiteSpace(value))
         {
-            bindingContext.Result = ModelBindingResult.Success(null);
+            bindingContext.Result = ModelBindingResult.Success(
+                Nullable.GetUnderlyingType(bindingContext.ModelMetadata.ModelType) == typeof(decimal)
+                    ? null : 0m);
             return Task.CompletedTask;
         }
 

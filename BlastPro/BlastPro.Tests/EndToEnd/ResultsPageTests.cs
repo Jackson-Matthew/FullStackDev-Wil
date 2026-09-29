@@ -28,11 +28,26 @@ public sealed class ResultsPageTests
         Assert.Contains("Calculation.DelayWindowMilliseconds", patternHtml);
         Assert.Contains("Calculation.ExclusionRadiusMetres", patternHtml);
 
-        var first = await BrowserForms.SubmitAsync(browser,
-            $"/PatternDesign/Index?projectId={projectId}", "/Projects/CalculatePhysics",
+        var draft = await BrowserForms.SubmitAsync(browser,
+            $"/PatternDesign/Index?projectId={projectId}", "/PatternDesign/SaveDraft",
             CalculationFields(projectId, holeId));
+        Assert.Equal(HttpStatusCode.Redirect, draft.StatusCode);
+        var first = await BrowserForms.SubmitAsync(browser,
+            $"/Results/Index?projectId={projectId}", "/Projects/CalculatePhysics",
+            new Dictionary<string, string> { ["projectId"] = projectId.ToString() });
         Assert.Equal(HttpStatusCode.Redirect, first.StatusCode);
         Assert.Contains("Results", first.Headers.Location!.ToString());
+        using (var scope = api.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var savedProject = await db.BlastProjects.SingleAsync(p => p.Id == projectId);
+            Assert.Equal(3, savedProject.LayoutRows);
+            Assert.Equal(5, savedProject.LayoutColumns);
+            Assert.Equal("Rows", savedProject.TimingOrder);
+            Assert.Equal(25, savedProject.TimingIntervalMilliseconds);
+            Assert.Equal(BlastPro.Api.Models.Enums.ProjectStatus.Calculated, savedProject.Status);
+            Assert.NotNull((await db.CalculationResults.SingleAsync(r => r.BlastProjectId == projectId)).PatternSnapshotJson);
+        }
 
         var page = await browser.GetAsync($"/Results/Index?projectId={projectId}");
         var html = await page.Content.ReadAsStringAsync();
@@ -46,15 +61,40 @@ public sealed class ResultsPageTests
         Assert.Contains("kg/t", html);
         Assert.Contains("Predicted PPV", html);
         Assert.Contains("Idealized Flyrock Range", html);
-        Assert.Contains("Every hole needs a priced explosive product", html);
+        Assert.DoesNotContain("Every hole needs a priced explosive product", html);
         Assert.Contains("Flyrock is an idealized trajectory estimate", html);
         Assert.Contains("severity-warning", html);
         Assert.DoesNotContain("Test 1 Pro", html);
         Assert.DoesNotContain("Save Results", html);
+        var report = await browser.GetAsync($"/Reports/Preview?projectId={projectId}");
+        var reportHtml = await report.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, report.StatusCode);
+        Assert.Contains("Calculation report #", reportHtml);
+        Assert.Contains("Saved hole plan and schedule", reportHtml);
+        Assert.Contains("report-hole-plan", reportHtml);
+        Assert.Contains("S300 Volcano", reportHtml);
+        Assert.Contains("Density (g/cm³)", reportHtml);
+        Assert.Contains("Print / Save PDF", reportHtml);
+        Assert.Contains("Test site", reportHtml);
+        var printable = await browser.GetAsync($"/Reports/Print?projectId={projectId}");
+        Assert.Equal(HttpStatusCode.OK, printable.StatusCode);
+        Assert.Contains("report-hole-plan", await printable.Content.ReadAsStringAsync());
+
+        var unchangedDraft = await BrowserForms.SubmitAsync(browser,
+            $"/PatternDesign/Index?projectId={projectId}", "/PatternDesign/SaveDraft",
+            CalculationFields(projectId, holeId));
+        Assert.Equal(HttpStatusCode.Redirect, unchangedDraft.StatusCode);
+        using (var scope = api.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            Assert.Equal(BlastPro.Api.Models.Enums.ProjectStatus.Calculated,
+                (await db.BlastProjects.SingleAsync(p => p.Id == projectId)).Status);
+            Assert.True(await db.CalculationResults.AnyAsync(r => r.BlastProjectId == projectId && r.IsCurrent));
+        }
 
         var second = await BrowserForms.SubmitAsync(browser,
-            $"/PatternDesign/Index?projectId={projectId}", "/Projects/CalculatePhysics",
-            CalculationFields(projectId, holeId));
+            $"/Results/Index?projectId={projectId}", "/Projects/CalculatePhysics",
+            new Dictionary<string, string> { ["projectId"] = projectId.ToString() });
         Assert.Equal(HttpStatusCode.Redirect, second.StatusCode);
 
         int firstResultId;
@@ -75,18 +115,30 @@ public sealed class ResultsPageTests
         Assert.Equal(HttpStatusCode.OK, historical.StatusCode);
         Assert.Contains("Previous Calculation", historicalHtml);
         Assert.Contains("View latest result", historicalHtml);
+        var historicalReport = await browser.GetAsync($"/Reports/Preview?projectId={projectId}&resultId={firstResultId}");
+        var historicalReportHtml = await historicalReport.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, historicalReport.StatusCode);
+        Assert.Contains("report-hole-plan", historicalReportHtml);
+        Assert.Contains("S300 Volcano", historicalReportHtml);
 
         var changedFields = CalculationFields(projectId, holeId);
         changedFields["Holes[0].Charge"] = "6";
         var savedDraft = await BrowserForms.SubmitAsync(browser,
             $"/PatternDesign/Index?projectId={projectId}", "/PatternDesign/SaveDraft", changedFields);
-        Assert.Equal(HttpStatusCode.OK, savedDraft.StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect, savedDraft.StatusCode);
         var outdated = await browser.GetAsync($"/Results/Index?projectId={projectId}");
         Assert.Contains("Outdated Calculation", await outdated.Content.ReadAsStringAsync());
+        var oldReport = await browser.GetAsync($"/Reports/Preview?projectId={projectId}");
+        var oldReportHtml = await oldReport.Content.ReadAsStringAsync();
+        Assert.Contains("Outdated result", oldReportHtml);
+        Assert.Contains("saved design for this result", oldReportHtml);
+        Assert.Contains("report-hole-plan", oldReportHtml);
+        Assert.Contains("S300 Volcano", oldReportHtml);
+        Assert.Contains("<td>5</td>", oldReportHtml);
     }
 
     [Fact]
-    public async Task Invalid_site_input_is_shown_on_pattern_page_without_saving_result()
+    public async Task Incomplete_saved_draft_is_explained_on_results_without_saving_result()
     {
         await using var api = new ApiTestHost();
         var user = await api.AddUserAsync();
@@ -95,15 +147,16 @@ public sealed class ResultsPageTests
         using var browser = mvc.Browser();
         await Login(browser, user.Email!);
 
-        var fields = CalculationFields(projectId, holeId);
-        fields["Calculation.SubdrillMetres"] = "-1";
         var response = await BrowserForms.SubmitAsync(browser,
-            $"/PatternDesign/Index?projectId={projectId}", "/Projects/CalculatePhysics", fields);
-        var html = await response.Content.ReadAsStringAsync();
+            $"/Results/Index?projectId={projectId}", "/Projects/CalculatePhysics",
+            new Dictionary<string, string> { ["projectId"] = projectId.ToString() });
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        var page = await browser.GetAsync(response.Headers.Location!);
+        var html = await page.Content.ReadAsStringAsync();
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Subdrill cannot be negative", html);
-        Assert.Contains("Test explosive", html);
+        Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+        Assert.Contains("Complete the saved draft before calculating", html);
+        Assert.Contains("charge grouping window", html);
         using var scope = api.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.Empty(await db.CalculationResults.Where(r => r.BlastProjectId == projectId).ToListAsync());
@@ -128,6 +181,13 @@ public sealed class ResultsPageTests
         ["RockDensity"] = "2.5",
         ["Burden"] = "3",
         ["Spacing"] = "4",
+        ["BenchLengthMetres"] = "20",
+        ["BenchWidthMetres"] = "12",
+        ["LayoutRows"] = "3",
+        ["LayoutColumns"] = "5",
+        ["TimingOrder"] = "Rows",
+        ["TimingIntervalMilliseconds"] = "25",
+        ["DefaultAeciProductCode"] = "S300-VOLCANO",
         ["VibrationThreshold"] = "10",
         ["Holes[0].Id"] = holeId.ToString(),
         ["Holes[0].Number"] = "1",
@@ -135,6 +195,8 @@ public sealed class ResultsPageTests
         ["Holes[0].Y"] = "0",
         ["Holes[0].Depth"] = "10",
         ["Holes[0].ExplosiveProductId"] = string.Empty,
+        ["Holes[0].AeciProductCode"] = "S300-VOLCANO",
+        ["Holes[0].ProductDensityGramsPerCc"] = "1.18",
         ["Holes[0].Charge"] = "5",
         ["Holes[0].Stemming"] = "2",
         ["Holes[0].Delay"] = "25",

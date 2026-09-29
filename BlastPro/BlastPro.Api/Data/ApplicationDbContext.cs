@@ -91,7 +91,25 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         entity.Property(project => project.RockDensity).HasPrecision(18, 4);
         entity.Property(project => project.Burden).HasPrecision(18, 4);
         entity.Property(project => project.Spacing).HasPrecision(18, 4);
+        entity.Property(project => project.BenchLengthMetres).HasPrecision(18, 4);
+        entity.Property(project => project.BenchWidthMetres).HasPrecision(18, 4);
+        entity.Property(project => project.TimingOrder).HasMaxLength(20).HasDefaultValue("Rows");
+        entity.Property(project => project.PatternType).HasMaxLength(20).HasDefaultValue("Rectangular");
+        entity.Property(project => project.ReferenceExplosiveFamily).HasMaxLength(30).HasDefaultValue("");
+        entity.Property(project => project.DefaultAeciProductCode).HasMaxLength(40).HasDefaultValue("");
+        entity.Property(project => project.LoadingDensityGramsPerCc).HasPrecision(18, 4);
+        entity.Property(project => project.SubdrillMetres).HasPrecision(18, 4);
+        entity.Property(project => project.ReceptorDistanceMetres).HasPrecision(18, 4);
+        entity.Property(project => project.PpvSiteCoefficient).HasPrecision(18, 4);
+        entity.Property(project => project.PpvDecayExponent).HasPrecision(18, 4);
+        entity.Property(project => project.FlyrockLaunchSpeedMetresPerSecond).HasPrecision(18, 4);
+        entity.Property(project => project.FlyrockLaunchAngleDegrees).HasPrecision(18, 4);
+        entity.Property(project => project.FlyrockLaunchHeightMetres).HasPrecision(18, 4);
+        entity.Property(project => project.ExclusionRadiusMetres).HasPrecision(18, 4);
         entity.Property(project => project.VibrationThreshold).HasPrecision(18, 4);
+        entity.Property(project => project.ReceptorStructureType).HasMaxLength(30).HasDefaultValue("Unspecified");
+        entity.Property(project => project.DominantFrequencyHz).HasPrecision(18, 4);
+        entity.Property(project => project.VibrationThresholdMode).HasMaxLength(10).HasDefaultValue("Manual");
         entity.Property(project => project.Status).HasConversion<int>();
         entity.Property(project => project.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
         entity.Property(project => project.UpdatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
@@ -126,6 +144,12 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 "CK_BlastProjects_Spacing_Positive",
                 "[Spacing] IS NULL OR [Spacing] > 0");
             table.HasCheckConstraint(
+                "CK_BlastProjects_BenchLength_Positive",
+                "[BenchLengthMetres] IS NULL OR [BenchLengthMetres] > 0");
+            table.HasCheckConstraint(
+                "CK_BlastProjects_BenchWidth_Positive",
+                "[BenchWidthMetres] IS NULL OR [BenchWidthMetres] > 0");
+            table.HasCheckConstraint(
                 "CK_BlastProjects_VibrationThreshold_Positive",
                 "[VibrationThreshold] IS NULL OR [VibrationThreshold] > 0");
         });
@@ -138,6 +162,10 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         entity.Property(hole => hole.XCoordinate).HasPrecision(18, 4);
         entity.Property(hole => hole.YCoordinate).HasPrecision(18, 4);
         entity.Property(hole => hole.Depth).HasPrecision(18, 4);
+        entity.Property(hole => hole.DiameterMillimetres).HasPrecision(18, 4);
+        entity.Property(hole => hole.SubdrillMetres).HasPrecision(18, 4);
+        entity.Property(hole => hole.AeciProductCode).HasMaxLength(40).HasDefaultValue("");
+        entity.Property(hole => hole.ProductDensityGramsPerCc).HasPrecision(18, 4);
         entity.Property(hole => hole.ChargeKg).HasPrecision(18, 4);
         entity.Property(hole => hole.StemmingMetres).HasPrecision(18, 4);
         entity.Property(hole => hole.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
@@ -201,6 +229,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         entity.Property(result => result.PowderFactorKgPerTonne).HasPrecision(18, 6);
         entity.Property(result => result.PredictedPpvMmPerSecond).HasPrecision(18, 4);
         entity.Property(result => result.PredictedFlyrockMetres).HasPrecision(18, 4);
+        entity.Property(result => result.PatternSnapshotJson).HasColumnType("nvarchar(max)");
         entity.Property(result => result.CalculatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
 
         entity.HasQueryFilter(result => !result.BlastProject.IsDeleted);

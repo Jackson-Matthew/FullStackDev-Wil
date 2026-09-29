@@ -4,6 +4,7 @@ using BlastPro.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BlastPro.Api.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260928155551_PerHoleSubdrill")]
+    partial class PerHoleSubdrill
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -144,13 +147,6 @@ namespace BlastPro.Api.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AeciProductCode")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)")
-                        .HasDefaultValue("");
-
                     b.Property<int>("BlastProjectId")
                         .HasColumnType("int");
 
@@ -179,10 +175,6 @@ namespace BlastPro.Api.Data.Migrations
 
                     b.Property<int>("HoleNumber")
                         .HasColumnType("int");
-
-                    b.Property<decimal?>("ProductDensityGramsPerCc")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
 
                     b.Property<decimal>("StemmingMetres")
                         .HasPrecision(18, 4)
@@ -258,13 +250,6 @@ namespace BlastPro.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("SYSUTCDATETIME()");
-
-                    b.Property<string>("DefaultAeciProductCode")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)")
-                        .HasDefaultValue("");
 
                     b.Property<int?>("DelayWindowMilliseconds")
                         .HasColumnType("int");
@@ -503,9 +488,6 @@ namespace BlastPro.Api.Data.Migrations
                     b.Property<decimal>("MaxChargePerDelayKg")
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
-
-                    b.Property<string>("PatternSnapshotJson")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("PowderFactorKgPerTonne")
                         .HasPrecision(18, 6)

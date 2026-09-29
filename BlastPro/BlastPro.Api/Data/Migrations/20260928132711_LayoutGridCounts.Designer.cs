@@ -4,6 +4,7 @@ using BlastPro.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BlastPro.Api.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260928132711_LayoutGridCounts")]
+    partial class LayoutGridCounts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -144,13 +147,6 @@ namespace BlastPro.Api.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AeciProductCode")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)")
-                        .HasDefaultValue("");
-
                     b.Property<int>("BlastProjectId")
                         .HasColumnType("int");
 
@@ -180,15 +176,7 @@ namespace BlastPro.Api.Data.Migrations
                     b.Property<int>("HoleNumber")
                         .HasColumnType("int");
 
-                    b.Property<decimal?>("ProductDensityGramsPerCc")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
                     b.Property<decimal>("StemmingMetres")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal?>("SubdrillMetres")
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
 
@@ -259,38 +247,12 @@ namespace BlastPro.Api.Data.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("SYSUTCDATETIME()");
 
-                    b.Property<string>("DefaultAeciProductCode")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)")
-                        .HasDefaultValue("");
-
-                    b.Property<int?>("DelayWindowMilliseconds")
-                        .HasColumnType("int");
-
                     b.Property<decimal?>("DominantFrequencyHz")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal?>("ExclusionRadiusMetres")
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
 
                     b.Property<int?>("ExplosiveProductId")
                         .HasColumnType("int");
-
-                    b.Property<decimal?>("FlyrockLaunchAngleDegrees")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal?>("FlyrockLaunchHeightMetres")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal?>("FlyrockLaunchSpeedMetresPerSecond")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -300,10 +262,6 @@ namespace BlastPro.Api.Data.Migrations
 
                     b.Property<int?>("LayoutRows")
                         .HasColumnType("int");
-
-                    b.Property<decimal?>("LoadingDensityGramsPerCc")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -320,18 +278,6 @@ namespace BlastPro.Api.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("Rectangular");
-
-                    b.Property<decimal?>("PpvDecayExponent")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal?>("PpvSiteCoefficient")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal?>("ReceptorDistanceMetres")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("ReceptorStructureType")
                         .IsRequired()
@@ -372,20 +318,6 @@ namespace BlastPro.Api.Data.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
-
-                    b.Property<decimal?>("SubdrillMetres")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<int?>("TimingIntervalMilliseconds")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TimingOrder")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasDefaultValue("Rows");
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .ValueGeneratedOnAdd()
@@ -503,9 +435,6 @@ namespace BlastPro.Api.Data.Migrations
                     b.Property<decimal>("MaxChargePerDelayKg")
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
-
-                    b.Property<string>("PatternSnapshotJson")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("PowderFactorKgPerTonne")
                         .HasPrecision(18, 6)
