@@ -13,13 +13,7 @@ namespace BlastPro.Mvc.Controllers;
 public class AccountController : Controller
 {
     private readonly IApiClient _api;
-    private readonly ILogger<AccountController> _logger;
-
-    public AccountController(IApiClient api, ILogger<AccountController> logger)
-    {
-        _api = api;
-        _logger = logger;
-    }
+    public AccountController(IApiClient api) => _api = api;
 
     // GET: /Account/Login
     [HttpGet]
@@ -45,40 +39,16 @@ public class AccountController : Controller
         if (!result.Success || result.Data is null)
         {
             ModelState.AddModelError(string.Empty, result.StatusCode == System.Net.HttpStatusCode.Unauthorized
-                ? "Invalid login attempt. Check your details or try again later."
-                : "Sign in is temporarily unavailable. Please try again shortly.");
+                ? "Invalid login attempt. Check your email and password."
+                : result.Error ?? "The server did not return a sign-in session.");
             return View(model);
         }
 
-        var now = DateTimeOffset.UtcNow;
-        var tokenExpiry = new DateTimeOffset(DateTime.SpecifyKind(result.Data.ExpiresAtUtc, DateTimeKind.Utc));
-        if (string.IsNullOrEmpty(result.Data.Token) || tokenExpiry <= now)
+        if (!await SignInUserAsync(result.Data, model.RememberMe))
         {
-            ModelState.AddModelError(string.Empty, "Sign in is temporarily unavailable. Please try again shortly.");
+            ModelState.AddModelError(string.Empty, "The server returned an invalid sign-in session.");
             return View(model);
         }
-        var cookieExpiry = model.RememberMe ? tokenExpiry : new[] { tokenExpiry, now.AddMinutes(60) }.Min();
-        var claims = new List<Claim>
-    {
-        new(ClaimTypes.NameIdentifier, result.Data.UserId),
-        new(ClaimTypes.Email,          result.Data.Email),
-        new(ClaimTypes.Name,           result.Data.FullName),
-        new("companyId",               result.Data.CompanyId.ToString()),
-        new("jwt",                     result.Data.Token)
-    };
-        foreach (var role in result.Data.Roles)
-            claims.Add(new Claim(ClaimTypes.Role, role));
-
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(identity),
-            new AuthenticationProperties
-            {
-                IsPersistent = model.RememberMe, IssuedUtc = now,
-                ExpiresUtc = cookieExpiry, AllowRefresh = false
-            });
-
         return RedirectToLocal(model.ReturnUrl);
     }
 
@@ -107,7 +77,7 @@ public class AccountController : Controller
         var result = await _api.ForgotPasswordAsync(model.Email);
         if (!result.Success || result.Data is null)
         {
-            ModelState.AddModelError(string.Empty, "Password reset is temporarily unavailable. Please try again later.");
+            ModelState.AddModelError(string.Empty, result.Error ?? "Could not request a password reset.");
             return View(model);
         }
         TempData["DevelopmentResetDelivery"] = result.Data.IsDevelopmentDelivery;
@@ -169,9 +139,108 @@ public class AccountController : Controller
     public IActionResult ResetPasswordConfirmation()
         => TempData["PasswordResetComplete"] is true ? View() : RedirectToAction(nameof(Login));
 
-    // GET: /Account/AccessDenied
+    [HttpGet, AllowAnonymous]
+    public IActionResult AcceptInvitation(string? email, string? token)
+    {
+        Response.Headers["Referrer-Policy"] = "no-referrer";
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(token) || token.Length > 4096)
+            return View("InvitationInvalid");
+        return View(new ResetPasswordViewModel { Email = email, Token = token });
+    }
+
+    [HttpPost, AllowAnonymous, ValidateAntiForgeryToken]
+    public async Task<IActionResult> AcceptInvitation(ResetPasswordViewModel model)
+    {
+        Response.Headers["Referrer-Policy"] = "no-referrer";
+        if (!ModelState.IsValid) return View(model);
+        var result = await _api.PostAnonymousAsync<object>("api/auth/accept-invitation", new { model.Email, model.Token, model.Password });
+        if (!result.Success)
+        {
+            ModelState.AddModelError(string.Empty, result.Error ?? "Account setup could not be completed.");
+            return View(model);
+        }
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        TempData["AccountNotice"] = "Account setup complete. Sign in with your new password.";
+        return RedirectToAction(nameof(Login));
+    }
+
+    // GET: /Account/CreateCompany
+    [HttpGet, AllowAnonymous]
+    public IActionResult CreateCompany() => User.Identity?.IsAuthenticated == true
+        ? RedirectToAction("Index", "Dashboard") : View(new CreateCompanyViewModel());
+
+    [HttpPost, AllowAnonymous, ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateCompany(CreateCompanyViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(HttpContext.RequestAborted);
+        timeout.CancelAfter(TimeSpan.FromSeconds(12));
+        var result = await _api.PostAnonymousAsync<LoginResultDto>("api/companies", new
+        {
+            model.CompanyName, model.RegistrationNumber, model.ContactEmail, model.ContactPhone,
+            model.Address, model.FullName, model.Email, model.Password
+        }, timeout.Token);
+        if (!result.Success)
+        {
+            if (result.ValidationErrors is { Count: > 0 })
+            {
+                foreach (var (field, messages) in result.ValidationErrors)
+                {
+                    var modelField = ModelState.ContainsKey(field) ? field : string.Empty;
+                    if (messages.Length > 0)
+                        ModelState.AddModelError(modelField, string.Join(" ", messages));
+                }
+            }
+            else ModelState.AddModelError(string.Empty, result.Error ?? "Company setup could not be completed.");
+            return View(model);
+        }
+        if (result.Data is null || !await SignInUserAsync(result.Data, rememberMe: false))
+        {
+            TempData["AccountNotice"] = "Company created. Please sign in.";
+            return RedirectToAction(nameof(Login));
+        }
+        return RedirectToAction("Index", "Dashboard");
+    }
+
+    // Saved links from the retired confirmation flow now return to ordinary sign in.
+    [HttpGet, AllowAnonymous]
+    public IActionResult ConfirmationRequested() => RedirectToAction(nameof(Login));
+
+    [HttpGet, AllowAnonymous]
+    public IActionResult ConfirmEmail() => RedirectToAction(nameof(Login));
+
+    [HttpGet, AllowAnonymous]
+    public IActionResult ResendConfirmation() => RedirectToAction(nameof(Login));
+
     [HttpGet]
     public IActionResult AccessDenied() => View();
+
+    private async Task<bool> SignInUserAsync(LoginResultDto data, bool rememberMe)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var tokenExpiry = new DateTimeOffset(DateTime.SpecifyKind(data.ExpiresAtUtc, DateTimeKind.Utc));
+        if (string.IsNullOrEmpty(data.Token) || tokenExpiry <= now) return false;
+        var cookieExpiry = rememberMe ? tokenExpiry : new[] { tokenExpiry, now.AddMinutes(60) }.Min();
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, data.UserId),
+            new(ClaimTypes.Email, data.Email),
+            new(ClaimTypes.Name, data.FullName),
+            new("companyId", data.CompanyId.ToString()),
+            new("jwt", data.Token)
+        };
+        foreach (var role in data.Roles)
+            claims.Add(new Claim(ClaimTypes.Role, role));
+
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identity), new AuthenticationProperties
+            {
+                IsPersistent = rememberMe, IssuedUtc = now,
+                ExpiresUtc = cookieExpiry, AllowRefresh = false
+            });
+        return true;
+    }
 
     private IActionResult RedirectToLocal(string? returnUrl)
         => (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))

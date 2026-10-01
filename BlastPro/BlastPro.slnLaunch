@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "BlastPro API + Web",
+    "Projects": [
+      {
+        "Path": "BlastPro.Api\\BlastPro.Api.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "BlastPro\\BlastPro.Mvc.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

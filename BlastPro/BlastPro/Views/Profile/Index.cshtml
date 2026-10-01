@@ -1,1 +1,21 @@
 
+@model BlastPro.Mvc.Models.ViewModels.ProfileViewModel
+@{ ViewData["Title"] = "Profile"; }
+<link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
+<section class="admin-panel admin-form">
+    <h1>Your profile</h1>
+    @if (TempData["Success"] is string success) { <div class="alert alert-success" role="status">@success</div> }
+    <dl class="row">
+        <dt class="col-sm-4">Name</dt><dd class="col-sm-8">@Model.FullName</dd>
+        <dt class="col-sm-4">Email</dt><dd class="col-sm-8">@Model.Email</dd>
+        <dt class="col-sm-4">Company</dt><dd class="col-sm-8">@Model.CompanyName</dd>
+        <dt class="col-sm-4">Role</dt><dd class="col-sm-8">@(Model.Roles.Contains("MainCompanyUser") ? "Main Company User" : "Blaster")</dd>
+        <dt class="col-sm-4">Contact phone</dt><dd class="col-sm-8">@(Model.PhoneNumber ?? "Not supplied")</dd>
+        <dt class="col-sm-4">Nickname</dt><dd class="col-sm-8">@(Model.NickName ?? "Not supplied")</dd>
+        <dt class="col-sm-4">Gender</dt><dd class="col-sm-8">@(Model.Gender ?? "Not supplied")</dd>
+        <dt class="col-sm-4">Country</dt><dd class="col-sm-8">@(Model.Country ?? "Not supplied")</dd>
+        <dt class="col-sm-4">Time zone</dt><dd class="col-sm-8">@(Model.TimeZoneId ?? "Not supplied")</dd>
+        @if (!string.IsNullOrWhiteSpace(Model.CertificationId)) { <dt class="col-sm-4">Certification ID</dt><dd class="col-sm-8">@Model.CertificationId</dd> }
+    </dl>
+    <a asp-action="Edit" class="btn btn-danger">Edit profile</a> <a asp-controller="Account" asp-action="ForgotPassword" class="btn btn-outline-light">Change password</a>
+</section>

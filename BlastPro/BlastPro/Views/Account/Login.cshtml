@@ -21,6 +21,10 @@
         {
             <div class="alert login-notice" role="status">@notice</div>
         }
+        @if (TempData["AccountNotice"] is string accountNotice)
+        {
+            <div class="alert login-notice" role="status">@accountNotice</div>
+        }
 
         <form asp-action="Login" asp-controller="Account" method="post" novalidate>
             <input type="hidden" asp-for="ReturnUrl" />
@@ -70,6 +74,9 @@
 
             <button type="submit" class="sign-in-btn">Sign In</button>
         </form>
+        <div class="auth-links">
+            <a asp-action="CreateCompany" class="auth-link">Create Company</a>
+        </div>
 
     </div>
 </div>

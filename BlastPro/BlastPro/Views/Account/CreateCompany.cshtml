@@ -1,0 +1,71 @@
+@model BlastPro.Mvc.Models.ViewModels.Account.CreateCompanyViewModel
+@{ ViewData["Title"] = "Create Company"; }
+<link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+<div class="container login-page setup-page">
+    <div class="login-card">
+        <h1 class="auth-title">Create Company</h1>
+        <p class="auth-text">Set up your company and its first Main Company User. You will be signed in automatically.</p>
+        <form asp-action="CreateCompany" method="post" novalidate>
+            <section class="setup-section" aria-labelledby="company-details-heading">
+                <h2 id="company-details-heading" class="setup-section-title">Company details</h2>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="CompanyName" class="login-label"></label>
+                        <input asp-for="CompanyName" class="form-control login-input" autocomplete="organization" aria-describedby="company-name-error" />
+                        <span asp-validation-for="CompanyName" id="company-name-error" class="login-validation"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="RegistrationNumber" class="login-label"></label>
+                        <input asp-for="RegistrationNumber" class="form-control login-input" aria-describedby="registration-number-error" />
+                        <span asp-validation-for="RegistrationNumber" id="registration-number-error" class="login-validation"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ContactEmail" class="login-label"></label>
+                        <input asp-for="ContactEmail" class="form-control login-input" autocomplete="email" aria-describedby="contact-email-error" />
+                        <span asp-validation-for="ContactEmail" id="contact-email-error" class="login-validation"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ContactPhone" class="login-label"></label>
+                        <input asp-for="ContactPhone" class="form-control login-input" autocomplete="tel" aria-describedby="contact-phone-error" />
+                        <span asp-validation-for="ContactPhone" id="contact-phone-error" class="login-validation"></span>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label asp-for="Address" class="login-label"></label>
+                        <textarea asp-for="Address" class="form-control login-input" rows="2" autocomplete="street-address" aria-describedby="address-error"></textarea>
+                        <span asp-validation-for="Address" id="address-error" class="login-validation"></span>
+                    </div>
+                </div>
+            </section>
+            <section class="setup-section" aria-labelledby="main-user-heading">
+                <h2 id="main-user-heading" class="setup-section-title">Main Company User</h2>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FullName" class="login-label"></label>
+                        <input asp-for="FullName" class="form-control login-input" autocomplete="name" aria-describedby="full-name-error" />
+                        <span asp-validation-for="FullName" id="full-name-error" class="login-validation"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Email" class="login-label"></label>
+                        <input asp-for="Email" class="form-control login-input" autocomplete="username" aria-describedby="email-error" />
+                        <span asp-validation-for="Email" id="email-error" class="login-validation"></span>
+                    </div>
+                    <div class="col-12"><p class="setup-hint">Use at least 8 characters, including uppercase and lowercase letters, a number and a symbol.</p></div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Password" class="login-label"></label>
+                        <input asp-for="Password" class="form-control login-input" autocomplete="new-password" aria-describedby="password-error" />
+                        <span asp-validation-for="Password" id="password-error" class="login-validation"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ConfirmPassword" class="login-label"></label>
+                        <input asp-for="ConfirmPassword" class="form-control login-input" autocomplete="new-password" aria-describedby="confirm-password-error" />
+                        <span asp-validation-for="ConfirmPassword" id="confirm-password-error" class="login-validation"></span>
+                    </div>
+                </div>
+            </section>
+            <div asp-validation-summary="ModelOnly" class="login-validation-summary mb-3" role="alert"></div>
+            <button type="submit" class="sign-in-btn">Create Company</button>
+        </form>
+        <div class="auth-links"><a asp-action="Login" class="auth-link">Sign In</a></div>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

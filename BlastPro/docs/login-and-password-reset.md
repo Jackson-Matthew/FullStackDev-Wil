@@ -15,21 +15,22 @@ If the profile is not visible, enable Multi-Project Launch Profiles in Visual St
 Options and reopen the solution. You can also right-click the solution, choose
 Configure Startup Projects, and set both BlastPro.Api and BlastPro.Mvc to Start.
 
-The API uses the saved LocalDB database **BlastProTask2Api**. No terminal connection
-string override is required. Startup applies the current migrations and initial
-account setup automatically. The MVC app calls the API and does not connect directly
-to SQL Server. The old BlastProTask2 database is left intact and is no longer selected
-by the application's saved settings.
+The API uses the configured LocalDB database from development settings or user secrets.
+Startup applies current migrations and seeds Identity roles. Sample company/admin
+seeding runs only in Development. The MVC app calls the API and does not connect
+directly to SQL Server.
 
 The API runs at `https://localhost:7002`; Swagger is available at
 `https://localhost:7002/swagger` but no longer opens a second browser window. Use an
-existing account in the new database, or the initial development account if the
-new database has just been created. Automated tests never connect to LocalDB.
+existing confirmed account, the development seed account, or **Create Company**.
+See [company account setup](company-accounts.md) for confirmations and Blaster invitations.
+Transaction tests use isolated temporary LocalDB databases; authentication tests use in-memory data.
 
 ## Login behaviour
 
 - Five failed password attempts lock the account for 15 minutes. A locked or
   inactive account receives the same invalid-login message as incorrect credentials.
+- Email confirmation is required before sign-in. Inactive companies cannot sign in.
 - Without Remember Me, the browser receives a session cookie, limited to 60 minutes
   or the API token's remaining lifetime, whichever is shorter.
 - With Remember Me, the cookie persists across browser restarts until the API token
@@ -45,7 +46,8 @@ new database has just been created. Automated tests never connect to LocalDB.
 Email delivery is not configured. In Development, Forgot Password saves a local HTML
 message containing a working reset link. The confirmation page explicitly explains
 that no email is sent. The response is identical for eligible, inactive and unknown
-addresses; only eligible accounts receive a message.
+addresses; only active, confirmed accounts receive a message. A pending Blaster must
+use their invitation to complete account setup.
 
 1. Submit the email address on Forgot Password.
 2. On the computer running the API, open

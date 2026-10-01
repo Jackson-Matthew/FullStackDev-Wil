@@ -1,1 +1,45 @@
 
+@model BlastPro.Mvc.Models.ViewModels.CompanyViewModel
+@{ ViewData["Title"] = "Company"; }
+<link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
+<section class="admin-panel">
+    <div class="d-flex flex-wrap justify-content-between gap-3 mb-3">
+        <div><h1>@Model.Name</h1><p>Registration number: @Model.RegistrationNumber</p></div>
+        <div><a asp-action="Edit" class="btn btn-outline-light">Edit contact details</a></div>
+    </div>
+    @if (TempData["Success"] is string success) { <div class="alert alert-success" role="status">@success</div> }
+    @if (TempData["Error"] is string error) { <div class="alert alert-danger" role="alert">@error</div> }
+    <dl class="row"><dt class="col-sm-3">Contact email</dt><dd class="col-sm-9">@Model.ContactEmail</dd>
+        <dt class="col-sm-3">Contact phone</dt><dd class="col-sm-9">@Model.ContactPhone</dd>
+        <dt class="col-sm-3">Address</dt><dd class="col-sm-9">@(Model.Address ?? "Not supplied")</dd></dl>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 my-4">
+        <div><h2 class="h4">Blasters</h2><p class="mb-0" role="status">@Model.ActiveBlasterCount of @Model.BlasterLimit active Blasters</p></div>
+        @if (Model.ActiveBlasterCount < Model.BlasterLimit) { <a asp-controller="Blasters" asp-action="Create" class="btn btn-danger">Add Blaster</a> }
+        else { <span>All seats are in use. Deactivate a Blaster to free a seat.</span> }
+    </div>
+    <p>Invited active accounts reserve a seat. Deactivated Blasters keep their designs.</p>
+    @if (Model.Blasters.Count == 0) { <p>No Blasters yet. Add your first Blaster to send an invitation.</p> }
+    else
+    {
+        <div class="table-responsive"><table class="table table-dark align-middle">
+            <thead><tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Phone</th><th scope="col">Certification ID</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+            <tbody>@foreach (var blaster in Model.Blasters)
+            {
+                <tr><td>@blaster.FullName</td><td>@blaster.Email</td><td>@blaster.PhoneNumber</td><td>@blaster.CertificationId</td>
+                    <td>@(!blaster.IsActive ? "Inactive" : blaster.EmailConfirmed ? "Active" : "Invited")</td>
+                    <td><div class="d-flex flex-wrap gap-2">
+                        <a asp-controller="Blasters" asp-action="Edit" asp-route-id="@blaster.Id" class="btn btn-sm btn-outline-light">Edit</a>
+                        <form asp-controller="Blasters" asp-action="SetStatus" asp-route-id="@blaster.Id" method="post">
+                            <input type="hidden" name="isActive" value="@((!blaster.IsActive).ToString().ToLowerInvariant())" />
+                            <button class="btn btn-sm btn-outline-warning" type="submit">@(blaster.IsActive ? "Deactivate" : "Reactivate")</button>
+                        </form>
+                        @if (blaster.IsActive && !blaster.EmailConfirmed)
+                        {
+                            <form asp-controller="Blasters" asp-action="ResendInvitation" asp-route-id="@blaster.Id" method="post"><button class="btn btn-sm btn-outline-info" type="submit">Resend invitation</button></form>
+                        }
+                    </div></td>
+                </tr>
+            }</tbody>
+        </table></div>
+    }
+</section>

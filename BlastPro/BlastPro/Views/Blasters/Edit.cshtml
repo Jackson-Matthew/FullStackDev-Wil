@@ -1,1 +1,13 @@
 
+@model BlastPro.Mvc.Models.ViewModels.BlasterViewModel
+@{ ViewData["Title"] = "Edit Blaster"; }
+<link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
+<section class="admin-panel admin-form">
+    <h1>Edit Blaster</h1><p>@Model.Email</p>
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <partial name="_DetailsFields" model="Model" />
+        <button type="submit" class="btn btn-danger">Save details</button> <a asp-controller="Company" asp-action="Index" class="btn btn-outline-light">Cancel</a>
+    </form>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -11,7 +11,9 @@ BlastPro is a work integrated learning project for managing blast projects, reco
 
 | Area | Available in the current build |
 | --- | --- |
-| Accounts | Sign in, sign out, account lockout, and password reset through a local development mailbox. |
+| Accounts | Create a company and its Main Company User, confirm email, sign in, sign out, and reset passwords through a local development mailbox. |
+| Company administration | Main Company Users manage company contact details and invite, edit, deactivate, or reactivate Blasters. The API enforces five active Blasters per company. |
+| Profile | Users view and edit their permitted personal details. Company, role, and account status are controlled by the API. |
 | Projects | Create, search, filter, edit, and soft delete projects. |
 | Pattern design | Set project parameters, add or remove holes, choose available explosive products, and save a draft layout. |
 | Calculations | Calculate and save totals, estimated volume and tonnage, powder factor, predicted peak particle velocity (PPV), idealised flyrock range, and safety warnings when the required inputs are available. Review previous results. |
@@ -22,9 +24,8 @@ Explosive cost is shown only when every hole has a priced product in one currenc
 ### Still under development
 
 - Report data binding and PDF report download. The report route is present, but it does not yet display a completed report.
-- Self registration and connected company, profile, and Blaster administration screens.
 - Explosive product and price administration in the user interface.
-- Production deployment and production password reset email delivery.
+- Production deployment and production account email delivery (confirmation, invitation, and password reset).
 
 ## Architecture
 
@@ -87,7 +88,7 @@ Swagger UI is available only in the Development environment. Protected API endpo
 
 ### Database and configuration
 
-The API uses SQL Server LocalDB for local development. On startup it applies the committed EF Core migrations and seeds the development roles, company, and initial administrator if they do not exist. The seed account is for development only; review the seeding logic in [`BlastPro.Api/Program.cs`](BlastPro/BlastPro.Api/Program.cs) before using a shared environment.
+The API uses SQL Server LocalDB for local development. On startup it applies the committed EF Core migrations and ensures Identity roles exist. The sample company and initial administrator are seeded only in Development. New companies use the public Create Company flow.
 
 The Development profile uses the connection string in `BlastPro/BlastPro.Api/appsettings.Development.json`. If your existing LocalDB database conflicts with migration history, use a unique database name without deleting data you need. From the repository root:
 
@@ -105,7 +106,7 @@ From the repository root:
 dotnet test .\BlastPro\BlastPro.slnx
 ```
 
-The test project covers authentication, project access, calculations, result history, and MVC flows. Tests use isolated test data; local SQL Server migration behaviour should also be checked when changing the data model.
+The test project covers authentication, company and owner access, account setup, Blaster seats, calculations, result history, and MVC forms. Transaction tests require Windows SQL Server LocalDB and use temporary databases deleted after each test. Other tests use isolated in-memory data.
 
 ## Troubleshooting
 
@@ -115,12 +116,14 @@ The test project covers authentication, project access, calculations, result his
 | Local HTTPS certificate warning | Trust the development certificate with `dotnet dev-certs https --trust`. |
 | Migration reports that a table already exists | Use a new LocalDB database name through API user secrets; preserve the old database if it contains data you need. |
 | No password reset email arrives | Development reset links are written to `BlastPro/BlastPro.Api/App_Data/PasswordReset`, not sent by email. See the [account guide](BlastPro/docs/login-and-password-reset.md). |
+| No company confirmation or Blaster invitation arrives | Development account links are written to `BlastPro/BlastPro.Api/App_Data/AccountMail`. See [company setup](BlastPro/docs/company-accounts.md). |
 | Results show no total cost | Each hole needs an active, priced explosive product using the same currency. |
 | The report page says there are no results to report on | Report data binding and PDF generation are still under development. Review the current output on the Results page. |
 
 ## Further documentation
 
 - [Login and local password reset](BlastPro/docs/login-and-password-reset.md)
+- [Company setup, Blaster invitations, and profiles](BlastPro/docs/company-accounts.md)
 - [Database model and migration notes](BlastPro/docs/database-plan.md)
 
 This repository currently has no production deployment guide or published demonstration link.

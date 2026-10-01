@@ -225,13 +225,12 @@
                                 </a>
                             </li>
 
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="Company"
-                                   asp-action="Index">
-                                    Company
-                                </a>
-                            </li>
+                            @if (User.IsInRole("MainCompanyUser"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Company" asp-action="Index">Company</a>
+                                </li>
+                            }
 
                             <li class="nav-item">
                                 <a class="nav-link"
@@ -277,8 +276,12 @@
                                    style="color: #FFFFFF !important;"
                                    asp-controller="Account"
                                    asp-action="Login">
-                                    Login
+                                    Sign In
                                 </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" style="color: #FFFFFF !important;" asp-controller="Account" asp-action="CreateCompany">Create Company</a>
                             </li>
 
                         </ul>
