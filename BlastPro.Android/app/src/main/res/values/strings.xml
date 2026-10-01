@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">BlastPro Mobile</string>
+    <string name="dev_api_base_url">http://10.0.2.2:5002/</string>
+
+    <string-array name="project_filter_options">
+        <item>All projects</item>
+        <item>Test 1</item>
+        <item>Test 2</item>
+        <item>Test 3</item>
+    </string-array>
+
+    <string-array name="project_options">
+        <item>No project</item>
+        <item>Test 1</item>
+        <item>Test 2</item>
+        <item>Test 3</item>
+    </string-array>
 </resources>

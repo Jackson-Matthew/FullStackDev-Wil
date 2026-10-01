@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.BlastProMobile" parent="android:Theme.Material.NoActionBar" />
+    <style name="Theme.BlastProMobile" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/blast_red</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:windowBackground">@color/screen_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Makes spinner text dark so it is readable on the white field. -->
+    <style name="ThemeOverlay.BlastPro.Spinner" parent="">
+        <item name="android:textColorPrimary">@color/ink_dark</item>
+    </style>
 </resources>
