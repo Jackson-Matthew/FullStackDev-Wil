@@ -90,14 +90,15 @@ public sealed class BlastersController(ApplicationDbContext db, UserManager<Appl
     [HttpPut("{id}/status")]
     public async Task<IActionResult> SetStatus(string id, BlasterStatusRequest request)
     {
+        var isActive = request.IsActive!.Value;
         await using var transaction = await AccountTransactions.BeginAsync(db, User.GetCompanyId());
         var user = await Blasters.FirstOrDefaultAsync(u => u.Id == id);
         if (user is null) return NotFound();
-        if (request.IsActive && !user.IsActive && await Blasters.CountAsync(u => u.IsActive) >= SeatLimit)
+        if (isActive && !user.IsActive && await Blasters.CountAsync(u => u.IsActive) >= SeatLimit)
             return SeatFull();
-        if (request.IsActive != user.IsActive)
+        if (isActive != user.IsActive)
         {
-            user.IsActive = request.IsActive;
+            user.IsActive = isActive;
             user.UpdatedAtUtc = DateTime.UtcNow;
             // Deactivation permanently revokes existing sessions, even if the user is later reactivated.
             var result = await users.UpdateSecurityStampAsync(user);
@@ -134,8 +135,7 @@ public sealed class BlastersController(ApplicationDbContext db, UserManager<Appl
     private Task<bool> CertificationExists(string certification, string? exceptId = null)
         => db.Users.AnyAsync(u => u.CompanyId == User.GetCompanyId() && u.Id != exceptId
             && u.CertificationId == certification.Trim());
-    private Task SendInvitation(ApplicationUser user) => SendInvitationCore(user);
-    private async Task SendInvitationCore(ApplicationUser user)
+    private async Task SendInvitation(ApplicationUser user)
         => await delivery.SendInvitationAsync(user.Email!, PasswordResetTokens.Encode(
             await users.GenerateUserTokenAsync(user, TokenOptions.DefaultProvider, InvitationPurpose)));
     private IActionResult SeatFull() => Conflict(new { message = "This company already has 5 active Blasters. Deactivate a Blaster to free a seat." });

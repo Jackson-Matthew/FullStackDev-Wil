@@ -20,6 +20,10 @@ public class PasswordResetDeliveryTests
             Settings(enabled, url));
         await Assert.ThrowsAsync<InvalidOperationException>(service.PrepareAsync);
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.SendAsync("user@example.test", "test-token"));
+        var accounts = new DevelopmentAccountEmailDelivery(new TestEnvironment { EnvironmentName = environment }, Settings(enabled, url));
+        await Assert.ThrowsAsync<InvalidOperationException>(accounts.PrepareAsync);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => accounts.SendConfirmationAsync("user@example.test", "test-token"));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => accounts.SendInvitationAsync("user@example.test", "test-token"));
     }
 
     [Fact]
@@ -49,6 +53,39 @@ public class PasswordResetDeliveryTests
         finally
         {
             // Delete only this test's unique temporary directory.
+            var testRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "BlastProAuthTests")) + Path.DirectorySeparatorChar;
+            if (root.StartsWith(testRoot, StringComparison.OrdinalIgnoreCase) && Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(false, "ConfirmEmail")]
+    [InlineData(true, "AcceptInvitation")]
+    public async Task Account_mailbox_contains_safe_confirmation_and_invitation_links(bool invitation, string action)
+    {
+        var root = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "BlastProAuthTests", Guid.NewGuid().ToString("N")));
+        var service = new DevelopmentAccountEmailDelivery(new TestEnvironment { ContentRootPath = root }, Settings(true, "https://localhost:7001"));
+        try
+        {
+            await service.PrepareAsync();
+            const string email = "blaster+account@example.test";
+            const string identityToken = "one+time/token=with padding";
+            var token = PasswordResetTokens.Encode(identityToken);
+            if (invitation) await service.SendInvitationAsync(email, token);
+            else await service.SendConfirmationAsync(email, token);
+            var path = Assert.Single(Directory.GetFiles(Path.Combine(root, "App_Data", "AccountMail"), "*.html"));
+            var html = await File.ReadAllTextAsync(path);
+            Assert.Contains("No email was sent", html);
+            Assert.Contains("expires after one hour", html);
+            var uri = new Uri(WebUtility.HtmlDecode(Regex.Match(html, "href=\"([^\"]+)\"").Groups[1].Value));
+            Assert.Equal($"https://localhost:7001/Account/{action}", uri.GetLeftPart(UriPartial.Path));
+            var query = QueryHelpers.ParseQuery(uri.Query);
+            Assert.Equal(email, query["email"]);
+            Assert.Equal(identityToken, PasswordResetTokens.Decode(query["token"]!));
+        }
+        finally
+        {
             var testRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "BlastProAuthTests")) + Path.DirectorySeparatorChar;
             if (root.StartsWith(testRoot, StringComparison.OrdinalIgnoreCase) && Directory.Exists(root))
                 Directory.Delete(root, recursive: true);

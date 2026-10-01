@@ -20,6 +20,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Logging;
 
 namespace BlastPro.Tests.Support;
 
@@ -36,16 +38,40 @@ public sealed class TestMailbox : IPasswordResetDelivery
     }
 }
 
-public sealed class ApiTestHost(TimeSpan? resetLifetime = null, int tokenMinutes = 10)
+public sealed class TestAccountMailbox : IAccountEmailDelivery
+{
+    public ConcurrentDictionary<string, string> Confirmations { get; } = new();
+    public ConcurrentDictionary<string, string> Invitations { get; } = new();
+    public bool Available { get; set; } = true;
+    public bool FailSend { get; set; }
+    public Task PrepareAsync() => Available ? Task.CompletedTask : throw new IOException("Test delivery failure");
+    public Task SendConfirmationAsync(string email, string token)
+    {
+        if (FailSend) throw new IOException("Test delivery failure");
+        Confirmations[email] = token;
+        return Task.CompletedTask;
+    }
+    public Task SendInvitationAsync(string email, string token)
+    {
+        if (FailSend) throw new IOException("Test delivery failure");
+        Invitations[email] = token;
+        return Task.CompletedTask;
+    }
+}
+
+public sealed class ApiTestHost(TimeSpan? resetLifetime = null, int tokenMinutes = 10, bool sqlServer = false)
     : WebApplicationFactory<AuthController>
 {
     public const string Password = "TestPassword123!";
     public TestMailbox Mailbox { get; } = new();
+    public TestAccountMailbox AccountMailbox { get; } = new();
     private readonly string _database = Guid.NewGuid().ToString();
+    private bool _databaseCreated;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+        builder.ConfigureLogging(logging => logging.ClearProviders());
         builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["Jwt:Key"] = "OnlyForAutomatedTests0123456789abcdefghijklmnopqrstuvwxyz",
@@ -56,9 +82,16 @@ public sealed class ApiTestHost(TimeSpan? resetLifetime = null, int tokenMinutes
         {
             services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
-            services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase(_database));
+            services.AddDbContext<ApplicationDbContext>(options =>
+            {
+                if (sqlServer) options.UseSqlServer($"Server=(localdb)\\MSSQLLocalDB;Database=BlastProAccountTests_{_database};Trusted_Connection=True;TrustServerCertificate=True");
+                else options.UseInMemoryDatabase(_database);
+            });
+            services.AddDataProtection().UseEphemeralDataProtectionProvider();
             services.RemoveAll<IPasswordResetDelivery>();
             services.AddSingleton<IPasswordResetDelivery>(Mailbox);
+            services.RemoveAll<IAccountEmailDelivery>();
+            services.AddSingleton<IAccountEmailDelivery>(AccountMailbox);
             // Minimal hosting reads startup JWT settings before the factory's final config overrides.
             services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
             {
@@ -74,6 +107,24 @@ public sealed class ApiTestHost(TimeSpan? resetLifetime = null, int tokenMinutes
 
     public HttpClient Client() => CreateClient(new WebApplicationFactoryClientOptions
         { BaseAddress = new Uri("https://localhost"), AllowAutoRedirect = false });
+
+    public async Task InitializeDatabaseAsync()
+    {
+        using var scope = Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.EnsureCreatedAsync();
+        _databaseCreated = true;
+    }
+
+    public override async ValueTask DisposeAsync()
+    {
+        if (sqlServer && _databaseCreated)
+        {
+            using var scope = Services.CreateScope();
+            // Only this host's randomly named BlastProAccountTests database is ever deleted.
+            await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.EnsureDeletedAsync();
+        }
+        await base.DisposeAsync();
+    }
 
     public async Task<ApplicationUser> AddUserAsync(bool active = true, string? email = null)
     {
@@ -123,8 +174,10 @@ public sealed class MvcTestHost(ApiTestHost api, bool offline = false)
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+        builder.ConfigureLogging(logging => logging.ClearProviders());
         builder.ConfigureServices(services =>
         {
+            services.AddDataProtection().UseEphemeralDataProtectionProvider();
             services.AddHttpClient<IApiClient, ApiClient>()
                 .ConfigurePrimaryHttpMessageHandler(() => offline ? new OfflineHandler() : api.Server.CreateHandler());
         });

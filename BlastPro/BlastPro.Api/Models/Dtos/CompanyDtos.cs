@@ -37,7 +37,7 @@ public sealed class CreateBlasterRequest : BlasterDetailsRequest
     [Required, EmailAddress, StringLength(254)] public string Email { get; set; } = "";
 }
 
-public record BlasterStatusRequest(bool IsActive);
+public record BlasterStatusRequest([Required] bool? IsActive);
 public record AcceptInvitationRequest(
     [Required, EmailAddress, StringLength(254)] string Email,
     [Required, StringLength(4096)] string Token,

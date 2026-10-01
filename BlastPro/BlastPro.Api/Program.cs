@@ -189,39 +189,39 @@ using (var scope = app.Services.CreateScope())
     // Public setup creates real companies. Sample company and credentials are local development only.
     if (app.Environment.IsDevelopment())
     {
-    // 2. Company
-    var company = await db.Companies.FirstOrDefaultAsync(c => c.Name == "Xploma");
-    if (company is null)
-    {
-        company = new Company
+        // 2. Company
+        var company = await db.Companies.FirstOrDefaultAsync(c => c.Name == "Xploma");
+        if (company is null)
         {
-            Name = "Xploma",
-            IsActive = true,
-            CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow
-        };
-        db.Companies.Add(company);
-        await db.SaveChangesAsync();
-    }
+            company = new Company
+            {
+                Name = "Xploma",
+                IsActive = true,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow
+            };
+            db.Companies.Add(company);
+            await db.SaveChangesAsync();
+        }
 
-    // 3. Admin user — attached to the company
-    const string adminEmail = "admin@xploma.co.za";
-    if (await userManager.FindByEmailAsync(adminEmail) is null)
-    {
-        var admin = new ApplicationUser
+        // 3. Admin user — attached to the company
+        const string adminEmail = "admin@xploma.co.za";
+        if (await userManager.FindByEmailAsync(adminEmail) is null)
         {
-            UserName = adminEmail,
-            Email = adminEmail,
-            EmailConfirmed = true,
-            IsActive = true,
-            FullName = "Xploma Admin",
-            CompanyId = company.Id
-        };
+            var admin = new ApplicationUser
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                EmailConfirmed = true,
+                IsActive = true,
+                FullName = "Xploma Admin",
+                CompanyId = company.Id
+            };
 
-        var result = await userManager.CreateAsync(admin, "Admin@12345!");
-        if (result.Succeeded)
-            await userManager.AddToRoleAsync(admin, "MainCompanyUser");
-    }
+            var result = await userManager.CreateAsync(admin, "Admin@12345!");
+            if (result.Succeeded)
+                await userManager.AddToRoleAsync(admin, "MainCompanyUser");
+        }
     }
 }
 
