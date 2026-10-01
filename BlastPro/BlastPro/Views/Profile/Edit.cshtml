@@ -1,1 +1,18 @@
 
+@model BlastPro.Mvc.Models.ViewModels.ProfileViewModel
+@{ ViewData["Title"] = "Edit Profile"; }
+<link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
+<section class="admin-panel admin-form">
+    <h1>Edit your profile</h1>
+    <form asp-action="Edit" method="post">
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <div class="mb-3"><label asp-for="FullName" class="form-label"></label><input asp-for="FullName" class="form-control" autocomplete="name" /></div>
+        <div class="mb-3"><label asp-for="PhoneNumber" class="form-label"></label><input asp-for="PhoneNumber" class="form-control" autocomplete="tel" /></div>
+        <div class="mb-3"><label asp-for="NickName" class="form-label"></label><input asp-for="NickName" class="form-control" /></div>
+        <div class="mb-3"><label asp-for="Gender" class="form-label"></label><input asp-for="Gender" class="form-control" /></div>
+        <div class="mb-3"><label asp-for="Country" class="form-label"></label><input asp-for="Country" class="form-control" autocomplete="country-name" /></div>
+        <div class="mb-3"><label asp-for="TimeZoneId" class="form-label"></label><input asp-for="TimeZoneId" class="form-control" placeholder="Africa/Johannesburg" /></div>
+        <button type="submit" class="btn btn-danger">Save profile</button> <a asp-action="Index" class="btn btn-outline-light">Cancel</a>
+    </form>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
