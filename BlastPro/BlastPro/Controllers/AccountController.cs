@@ -170,6 +170,72 @@ public class AccountController : Controller
         => TempData["PasswordResetComplete"] is true ? View() : RedirectToAction(nameof(Login));
 
     // GET: /Account/AccessDenied
+    [HttpGet, AllowAnonymous]
+    public IActionResult CreateCompany() => User.Identity?.IsAuthenticated == true
+        ? RedirectToAction("Index", "Dashboard") : View(new CreateCompanyViewModel());
+
+    [HttpPost, AllowAnonymous, ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateCompany(CreateCompanyViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+        var result = await _api.PostAnonymousAsync<object>("api/companies", new
+        {
+            model.CompanyName, model.RegistrationNumber, model.ContactEmail, model.ContactPhone,
+            model.Address, model.FullName, model.Email, model.Password
+        });
+        if (!result.Success)
+        {
+            ModelState.AddModelError(string.Empty, result.Error ?? "Company setup could not be completed.");
+            return View(model);
+        }
+        TempData["AccountSetupNotice"] = "Company created. Confirm your email before signing in.";
+        return RedirectToAction(nameof(ConfirmationRequested));
+    }
+
+    [HttpGet, AllowAnonymous]
+    public IActionResult ConfirmationRequested() => View();
+
+    [HttpGet, AllowAnonymous]
+    public IActionResult ConfirmEmail(string? email, string? token)
+    {
+        Response.Headers["Referrer-Policy"] = "no-referrer";
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(token) || token.Length > 4096)
+            return View("ConfirmationInvalid");
+        return View(new EmailTokenViewModel { Email = email, Token = token });
+    }
+
+    [HttpPost, AllowAnonymous, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmEmail(EmailTokenViewModel model)
+    {
+        Response.Headers["Referrer-Policy"] = "no-referrer";
+        if (!ModelState.IsValid) return View("ConfirmationInvalid");
+        var result = await _api.PostAnonymousAsync<object>("api/auth/confirm-email", new { model.Email, model.Token });
+        if (!result.Success)
+        {
+            ViewData["Error"] = result.Error;
+            return View("ConfirmationInvalid");
+        }
+        TempData["AccountNotice"] = "Email confirmed. You can now sign in.";
+        return RedirectToAction(nameof(Login));
+    }
+
+    [HttpGet, AllowAnonymous]
+    public IActionResult ResendConfirmation() => View(new ForgotPasswordViewModel());
+
+    [HttpPost, AllowAnonymous, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResendConfirmation(ForgotPasswordViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+        var result = await _api.PostAnonymousAsync<object>("api/auth/resend-confirmation", new { model.Email });
+        if (!result.Success)
+        {
+            ModelState.AddModelError(string.Empty, result.Error ?? "Confirmation delivery is temporarily unavailable.");
+            return View(model);
+        }
+        TempData["AccountSetupNotice"] = "If an eligible account exists, a confirmation link has been requested.";
+        return RedirectToAction(nameof(ConfirmationRequested));
+    }
+
     [HttpGet]
     public IActionResult AccessDenied() => View();
 

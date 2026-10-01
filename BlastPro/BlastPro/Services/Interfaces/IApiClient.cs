@@ -10,6 +10,7 @@ public interface IApiClient
     Task<ApiResult<LoginResultDto>> LoginAsync(string email, string password);
     Task<ApiResult<PasswordResetDeliveryDto>> ForgotPasswordAsync(string email);
     Task<ApiResult> ResetPasswordAsync(string email, string token, string newPassword);
+    Task<ApiResult<T>> PostAnonymousAsync<T>(string path, object payload);
 }
 
 public class ApiResult

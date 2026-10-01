@@ -5,6 +5,8 @@
     margin-bottom: 40px;
 }
 
+.setup-page { max-width: 760px; margin-top: 40px; }
+
 .login-card {
     background-color: #000000;
     border: 1px solid #333333;

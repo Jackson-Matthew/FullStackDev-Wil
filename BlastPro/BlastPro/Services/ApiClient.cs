@@ -25,6 +25,7 @@ public class ApiClient(HttpClient http, IHttpContextAccessor contextAccessor) : 
 
     public Task<ApiResult<T>> GetAsync<T>(string path) => SendAsync<T>(HttpMethod.Get, path);
     public Task<ApiResult<T>> PostAsync<T>(string path, object payload) => SendAsync<T>(HttpMethod.Post, path, payload);
+    public Task<ApiResult<T>> PostAnonymousAsync<T>(string path, object payload) => SendAsync<T>(HttpMethod.Post, path, payload, false);
     public Task<ApiResult<T>> PutAsync<T>(string path, object payload) => SendAsync<T>(HttpMethod.Put, path, payload);
     public async Task<ApiResult> DeleteAsync(string path) => await SendAsync<object>(HttpMethod.Delete, path);
     public Task<ApiResult<LoginResultDto>> LoginAsync(string email, string password)
