@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">BlastPro Mobile</string>
+    <string name="app_name">BlastPro</string>
     <string name="dev_api_base_url">http://10.0.2.2:5002/</string>
 
     <string-array name="project_filter_options">

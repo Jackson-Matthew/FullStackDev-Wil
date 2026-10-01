@@ -9,8 +9,11 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
-    <!-- Makes spinner text dark so it is readable on the white field. -->
-    <style name="ThemeOverlay.BlastPro.Spinner" parent="">
+    <!-- Spinner dropdown: dark text on white popup so items are readable -->
+    <style name="ThemeOverlay.BlastPro.Spinner" parent="ThemeOverlay.Material3.Light">
         <item name="android:textColorPrimary">@color/ink_dark</item>
+        <item name="android:textColorSecondary">@color/ink_dark</item>
+        <item name="android:colorBackground">@color/white</item>
+        <item name="colorOnSurface">@color/ink_dark</item>
     </style>
 </resources>

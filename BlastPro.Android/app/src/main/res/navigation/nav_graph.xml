@@ -92,7 +92,12 @@
         android:id="@+id/photoViewerFragment"
         android:name="com.example.blastpromobile.ui.PhotoViewerFragment"
         android:label="Photo"
-        tools:layout="@layout/fragment_photo_viewer" />
+        tools:layout="@layout/fragment_photo_viewer">
+        <argument
+            android:name="photoPath"
+            android:defaultValue=""
+            app:argType="string" />
+    </fragment>
 
     <!-- Chat is an optional module: delete this fragment, ChatFragment, fragment_chat and Config.CHAT_ENABLED to drop it. -->
     <fragment

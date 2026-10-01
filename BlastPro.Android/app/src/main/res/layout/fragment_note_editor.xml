@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Note editor. UI only: nothing is saved yet. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -126,6 +125,37 @@
                     app:icon="@drawable/ic_photo_library" />
             </LinearLayout>
 
+            <!-- Large preview panel: shows the currently selected photo -->
+            <FrameLayout
+                android:id="@+id/photo_preview_panel"
+                android:layout_width="match_parent"
+                android:layout_height="260dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_photo_viewer"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:id="@+id/image_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="Photo preview"
+                    android:scaleType="fitCenter" />
+
+                <ImageButton
+                    android:id="@+id/preview_close"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="6dp"
+                    android:background="@drawable/bg_circle_dark"
+                    android:contentDescription="Close preview"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_close"
+                    app:tint="@color/white" />
+            </FrameLayout>
+
+            <!-- Thumbnails: tap one to preview it in the panel above -->
             <LinearLayout
                 android:id="@+id/photo_row"
                 android:layout_width="match_parent"
