@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginFragment">
+
+    <!-- Global actions: switching between the main screens. They only fade in. -->
+    <action
+        android:id="@+id/action_global_notes"
+        app:destination="@id/notesFragment"
+        app:enterAnim="@anim/fade_in"
+        app:exitAnim="@anim/hold"
+        app:launchSingleTop="true"
+        app:popUpTo="@id/notesFragment" />
+    <action
+        android:id="@+id/action_global_chat"
+        app:destination="@id/chatFragment"
+        app:enterAnim="@anim/fade_in"
+        app:exitAnim="@anim/hold"
+        app:launchSingleTop="true"
+        app:popUpTo="@id/notesFragment" />
+    <action
+        android:id="@+id/action_global_settings"
+        app:destination="@id/settingsFragment"
+        app:enterAnim="@anim/fade_in"
+        app:exitAnim="@anim/hold"
+        app:launchSingleTop="true"
+        app:popUpTo="@id/notesFragment" />
+    <action
+        android:id="@+id/action_global_new_note"
+        app:destination="@id/noteEditorFragment"
+        app:enterAnim="@anim/slide_in_subtle"
+        app:exitAnim="@anim/hold"
+        app:popEnterAnim="@anim/hold"
+        app:popExitAnim="@anim/slide_out_subtle" />
+    <action
+        android:id="@+id/action_global_login"
+        app:destination="@id/loginFragment"
+        app:enterAnim="@anim/fade_in"
+        app:exitAnim="@anim/hold"
+        app:popUpTo="@id/nav_graph"
+        app:popUpToInclusive="true" />
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.blastpromobile.ui.LoginFragment"
+        android:label="Login"
+        tools:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_login_to_notes"
+            app:destination="@id/notesFragment"
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/hold"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/notesFragment"
+        android:name="com.example.blastpromobile.ui.NotesFragment"
+        android:label="Notes"
+        tools:layout="@layout/fragment_notes">
+        <action
+            android:id="@+id/action_notes_to_editor"
+            app:destination="@id/noteEditorFragment"
+            app:enterAnim="@anim/slide_in_subtle"
+            app:exitAnim="@anim/hold"
+            app:popEnterAnim="@anim/hold"
+            app:popExitAnim="@anim/slide_out_subtle" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/noteEditorFragment"
+        android:name="com.example.blastpromobile.ui.NoteEditorFragment"
+        android:label="Note"
+        tools:layout="@layout/fragment_note_editor">
+        <argument
+            android:name="noteId"
+            android:defaultValue="new"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_editor_to_photo"
+            app:destination="@id/photoViewerFragment"
+            app:enterAnim="@anim/slide_in_subtle"
+            app:exitAnim="@anim/hold"
+            app:popEnterAnim="@anim/hold"
+            app:popExitAnim="@anim/slide_out_subtle" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/photoViewerFragment"
+        android:name="com.example.blastpromobile.ui.PhotoViewerFragment"
+        android:label="Photo"
+        tools:layout="@layout/fragment_photo_viewer" />
+
+    <!-- Chat is an optional module: delete this fragment, ChatFragment, fragment_chat and Config.CHAT_ENABLED to drop it. -->
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.example.blastpromobile.ui.ChatFragment"
+        android:label="Chat"
+        tools:layout="@layout/fragment_chat">
+        <action
+            android:id="@+id/action_chat_to_editor"
+            app:destination="@id/noteEditorFragment"
+            app:enterAnim="@anim/slide_in_subtle"
+            app:exitAnim="@anim/hold"
+            app:popEnterAnim="@anim/hold"
+            app:popExitAnim="@anim/slide_out_subtle" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.blastpromobile.ui.SettingsFragment"
+        android:label="Settings"
+        tools:layout="@layout/fragment_settings" />
+</navigation>
