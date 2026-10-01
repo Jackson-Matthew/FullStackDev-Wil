@@ -225,13 +225,12 @@
                                 </a>
                             </li>
 
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="Company"
-                                   asp-action="Index">
-                                    Company
-                                </a>
-                            </li>
+                            @if (User.IsInRole("MainCompanyUser"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Company" asp-action="Index">Company</a>
+                                </li>
+                            }
 
                             <li class="nav-item">
                                 <a class="nav-link"

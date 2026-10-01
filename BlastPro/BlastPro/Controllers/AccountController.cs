@@ -169,6 +169,31 @@ public class AccountController : Controller
     public IActionResult ResetPasswordConfirmation()
         => TempData["PasswordResetComplete"] is true ? View() : RedirectToAction(nameof(Login));
 
+    [HttpGet, AllowAnonymous]
+    public IActionResult AcceptInvitation(string? email, string? token)
+    {
+        Response.Headers["Referrer-Policy"] = "no-referrer";
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(token) || token.Length > 4096)
+            return View("InvitationInvalid");
+        return View(new ResetPasswordViewModel { Email = email, Token = token });
+    }
+
+    [HttpPost, AllowAnonymous, ValidateAntiForgeryToken]
+    public async Task<IActionResult> AcceptInvitation(ResetPasswordViewModel model)
+    {
+        Response.Headers["Referrer-Policy"] = "no-referrer";
+        if (!ModelState.IsValid) return View(model);
+        var result = await _api.PostAnonymousAsync<object>("api/auth/accept-invitation", new { model.Email, model.Token, model.Password });
+        if (!result.Success)
+        {
+            ModelState.AddModelError(string.Empty, result.Error ?? "Account setup could not be completed.");
+            return View(model);
+        }
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        TempData["AccountNotice"] = "Account setup complete. Sign in with your new password.";
+        return RedirectToAction(nameof(Login));
+    }
+
     // GET: /Account/AccessDenied
     [HttpGet, AllowAnonymous]
     public IActionResult CreateCompany() => User.Identity?.IsAuthenticated == true

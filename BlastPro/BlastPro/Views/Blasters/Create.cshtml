@@ -1,1 +1,15 @@
 
+@model BlastPro.Mvc.Models.ViewModels.BlasterViewModel
+@{ ViewData["Title"] = "Add Blaster"; }
+<link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
+<section class="admin-panel admin-form">
+    <h1>Add Blaster</h1><p role="status">@ViewData["Seats"]</p>
+    <p>The Blaster receives an invitation to confirm their email and choose their own password.</p>
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <partial name="_DetailsFields" model="Model" />
+        <div class="mb-3"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" autocomplete="email" /></div>
+        <button type="submit" class="btn btn-danger">Send invitation</button> <a asp-controller="Company" asp-action="Index" class="btn btn-outline-light">Cancel</a>
+    </form>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

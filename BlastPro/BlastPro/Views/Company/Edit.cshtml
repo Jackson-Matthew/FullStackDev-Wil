@@ -1,0 +1,14 @@
+@model BlastPro.Mvc.Models.ViewModels.CompanyViewModel
+@{ ViewData["Title"] = "Edit Company"; }
+<link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
+<section class="admin-panel admin-form">
+    <h1>Edit company contact details</h1>
+    <form asp-action="Edit" method="post">
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <div class="mb-3"><label asp-for="ContactEmail" class="form-label"></label><input asp-for="ContactEmail" class="form-control" /></div>
+        <div class="mb-3"><label asp-for="ContactPhone" class="form-label"></label><input asp-for="ContactPhone" class="form-control" /></div>
+        <div class="mb-3"><label asp-for="Address" class="form-label"></label><textarea asp-for="Address" class="form-control" rows="3"></textarea></div>
+        <button type="submit" class="btn btn-danger">Save details</button> <a asp-action="Index" class="btn btn-outline-light">Cancel</a>
+    </form>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

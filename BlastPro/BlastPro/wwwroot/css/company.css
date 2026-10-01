@@ -1,1 +1,6 @@
 
+.admin-panel { margin: 40px auto; padding: 28px; background: #141414; border: 1px solid #444; border-radius: 8px; }
+.admin-form { max-width: 720px; }
+.admin-panel h1 { font-size: 1.8rem; margin-bottom: 24px; }
+.admin-panel p { color: #ddd; }
+.admin-panel .text-danger { color: #ff9999 !important; }
