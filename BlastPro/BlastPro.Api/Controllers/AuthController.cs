@@ -5,6 +5,8 @@ using BlastPro.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using BlastPro.Api.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlastPro.Api.Controllers;
 
@@ -16,17 +18,23 @@ public class AuthController : ControllerBase
     private readonly IJwtTokenService _jwt;
     private readonly ILogger<AuthController> _logger;
     private readonly IPasswordResetDelivery _resetDelivery;
+    private readonly IAccountEmailDelivery _accountDelivery;
+    private readonly ApplicationDbContext _db;
 
     public AuthController(
         UserManager<ApplicationUser> userManager,
         IJwtTokenService jwt,
         ILogger<AuthController> logger,
-        IPasswordResetDelivery resetDelivery)
+        IPasswordResetDelivery resetDelivery,
+        IAccountEmailDelivery accountDelivery,
+        ApplicationDbContext db)
     {
         _userManager = userManager;
         _jwt = jwt;
         _logger = logger;
         _resetDelivery = resetDelivery;
+        _accountDelivery = accountDelivery;
+        _db = db;
     }
 
     // POST /api/auth/login
@@ -39,7 +47,8 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Email and password are required." });
 
         var user = await _userManager.FindByEmailAsync(request.Email.Trim());
-        if (user is null || !user.IsActive || await _userManager.IsLockedOutAsync(user))
+        if (user is null || !user.IsActive || !user.EmailConfirmed || await _userManager.IsLockedOutAsync(user)
+            || !await _db.Companies.AnyAsync(c => c.Id == user.CompanyId && c.IsActive))
             return Unauthorized(new { message = "Invalid login attempt." });
 
         var valid = await _userManager.CheckPasswordAsync(user, request.Password);
@@ -82,7 +91,7 @@ public class AuthController : ControllerBase
         }
         var user = await _userManager.FindByEmailAsync(request.Email.Trim());
 
-        if (user is not null && user.IsActive)
+        if (user is not null && user.IsActive && user.EmailConfirmed)
         {
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             try { await _resetDelivery.SendAsync(user.Email!, PasswordResetTokens.Encode(token)); }
@@ -104,7 +113,7 @@ public class AuthController : ControllerBase
         const string invalidLink = "This reset link is invalid or has expired. Please request a new link.";
         var user = await _userManager.FindByEmailAsync(request.Email.Trim());
         var token = PasswordResetTokens.Decode(request.Token);
-        if (user is null || !user.IsActive || token is null)
+        if (user is null || !user.IsActive || !user.EmailConfirmed || token is null)
             return BadRequest(new { message = invalidLink });
 
         var result = await _userManager.ResetPasswordAsync(
@@ -115,6 +124,39 @@ public class AuthController : ControllerBase
                 e.Code == "InvalidToken" ? invalidLink : e.Description) });
 
         return Ok(new { message = "Password reset complete." });
+    }
+
+    [HttpPost("confirm-email"), AllowAnonymous]
+    public async Task<IActionResult> ConfirmEmail(EmailTokenRequest request)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Email.Trim());
+        var token = PasswordResetTokens.Decode(request.Token);
+        if (user is null || !user.IsActive || user.EmailConfirmed || token is null
+            || !await _userManager.IsInRoleAsync(user, DatabaseSeeder.MainCompanyUserRole))
+            return BadRequest(new { message = "This confirmation link is invalid or has expired. Request a new link." });
+        var result = await _userManager.ConfirmEmailAsync(user, token);
+        return result.Succeeded ? Ok(new { message = "Email confirmed. You can now sign in." })
+            : BadRequest(new { message = "This confirmation link is invalid or has expired. Request a new link." });
+    }
+
+    [HttpPost("resend-confirmation"), AllowAnonymous]
+    public async Task<IActionResult> ResendConfirmation(ForgotPasswordRequest request)
+    {
+        try
+        {
+            await _accountDelivery.PrepareAsync();
+            var user = await _userManager.FindByEmailAsync(request.Email.Trim());
+            if (user is not null && user.IsActive && !user.EmailConfirmed
+                && await _userManager.IsInRoleAsync(user, DatabaseSeeder.MainCompanyUserRole))
+                await _accountDelivery.SendConfirmationAsync(user.Email!,
+                    PasswordResetTokens.Encode(await _userManager.GenerateEmailConfirmationTokenAsync(user)));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            _logger.LogWarning("Confirmation delivery is unavailable.");
+            return StatusCode(503, new { message = "Confirmation delivery is temporarily unavailable." });
+        }
+        return Ok(new { message = "If an eligible account exists, a confirmation link has been requested.", isDevelopmentDelivery = true });
     }
 
     // GET /api/auth/me

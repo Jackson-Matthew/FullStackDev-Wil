@@ -1,0 +1,19 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace BlastPro.Api.Models.Dtos;
+
+public sealed class CreateCompanyRequest
+{
+    [Required, StringLength(150)] public string CompanyName { get; set; } = "";
+    [Required, StringLength(80)] public string RegistrationNumber { get; set; } = "";
+    [Required, EmailAddress, StringLength(254)] public string ContactEmail { get; set; } = "";
+    [Required, Phone, StringLength(30)] public string ContactPhone { get; set; } = "";
+    [StringLength(300)] public string? Address { get; set; }
+    [Required, StringLength(150)] public string FullName { get; set; } = "";
+    [Required, EmailAddress, StringLength(254)] public string Email { get; set; } = "";
+    [Required, StringLength(100, MinimumLength = 8)] public string Password { get; set; } = "";
+}
+
+public record EmailTokenRequest(
+    [Required, EmailAddress, StringLength(254)] string Email,
+    [Required, StringLength(4096)] string Token);

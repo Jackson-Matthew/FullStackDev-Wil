@@ -27,6 +27,7 @@ builder.Services
     .AddIdentityCore<ApplicationUser>(options =>
     {
         options.User.RequireUniqueEmail = true;
+        options.SignIn.RequireConfirmedEmail = true;
         options.Password.RequiredLength = 8;
         options.Password.RequireDigit = true;
         options.Password.RequireLowercase = true;
@@ -72,7 +73,10 @@ builder.Services
                 var users = context.HttpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
                 var user = await users.GetUserAsync(context.Principal!);
                 // Resetting a password changes this stamp and invalidates previously issued tokens.
-                if (user is null || !user.IsActive || string.IsNullOrEmpty(user.SecurityStamp)
+                var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
+                if (user is null || !user.IsActive || !user.EmailConfirmed || string.IsNullOrEmpty(user.SecurityStamp)
+                    || user.CompanyId.ToString() != context.Principal!.FindFirst("companyId")?.Value
+                    || !await db.Companies.AnyAsync(c => c.Id == user.CompanyId && c.IsActive)
                     || user.SecurityStamp != context.Principal!.FindFirst("security_stamp")?.Value)
                     context.Fail("The session is no longer valid.");
             }
@@ -91,6 +95,7 @@ builder.Services.AddAuthorization();
 // builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IPasswordResetDelivery, DevelopmentPasswordResetDelivery>();
+builder.Services.AddScoped<IAccountEmailDelivery, DevelopmentAccountEmailDelivery>();
 
 // ---------------------------------------------------------------------------
 // 5. Controllers + Swagger (with Bearer Authorize button)
@@ -181,6 +186,9 @@ using (var scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole(role));
     }
 
+    // Public setup creates real companies. Sample company and credentials are local development only.
+    if (app.Environment.IsDevelopment())
+    {
     // 2. Company
     var company = await db.Companies.FirstOrDefaultAsync(c => c.Name == "Xploma");
     if (company is null)
@@ -213,6 +221,7 @@ using (var scope = app.Services.CreateScope())
         var result = await userManager.CreateAsync(admin, "Admin@12345!");
         if (result.Succeeded)
             await userManager.AddToRoleAsync(admin, "MainCompanyUser");
+    }
     }
 }
 
