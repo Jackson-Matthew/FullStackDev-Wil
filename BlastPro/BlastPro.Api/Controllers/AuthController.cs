@@ -159,6 +159,30 @@ public class AuthController : ControllerBase
         return Ok(new { message = "If an eligible account exists, a confirmation link has been requested.", isDevelopmentDelivery = true });
     }
 
+    [HttpPost("accept-invitation"), AllowAnonymous]
+    public async Task<IActionResult> AcceptInvitation(AcceptInvitationRequest request)
+    {
+        const string invalidLink = "This invitation is invalid or has expired. Ask your company administrator for a new invitation.";
+        var user = await _userManager.FindByEmailAsync(request.Email.Trim());
+        if (user is null) return BadRequest(new { message = invalidLink });
+        await using var transaction = await AccountTransactions.BeginAsync(_db, user.CompanyId);
+        // Reload after acquiring the company lock to prevent simultaneous acceptance or deactivation.
+        await _db.Entry(user).ReloadAsync();
+        var token = PasswordResetTokens.Decode(request.Token);
+        if (!user.IsActive || user.EmailConfirmed || token is null || await _userManager.HasPasswordAsync(user)
+            || !await _db.Companies.AnyAsync(c => c.Id == user.CompanyId && c.IsActive)
+            || !await _userManager.IsInRoleAsync(user, DatabaseSeeder.BlasterRole)
+            || !await _userManager.VerifyUserTokenAsync(user, TokenOptions.DefaultProvider, BlastersController.InvitationPurpose, token))
+            return BadRequest(new { message = invalidLink });
+        // Proof of control of the invited mailbox confirms the email and sets the user's own password.
+        user.EmailConfirmed = true;
+        user.UpdatedAtUtc = DateTime.UtcNow;
+        var result = await _userManager.AddPasswordAsync(user, request.Password);
+        if (!result.Succeeded) return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+        if (transaction is not null) await transaction.CommitAsync();
+        return Ok(new { message = "Account setup complete. You can now sign in." });
+    }
+
     // GET /api/auth/me
     [HttpGet("me")]
     [Authorize]
