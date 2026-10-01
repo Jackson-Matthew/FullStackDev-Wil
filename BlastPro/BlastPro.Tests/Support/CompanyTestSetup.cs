@@ -18,8 +18,6 @@ public static class CompanyTestSetup
         await host.InitializeDatabaseAsync();
         var registration = Registration();
         (await client.PostAsJsonAsync("/api/companies", registration)).EnsureSuccessStatusCode();
-        (await client.PostAsJsonAsync("/api/auth/confirm-email", new
-            { registration.Email, token = host.AccountMailbox.Confirmations[registration.Email] })).EnsureSuccessStatusCode();
         var login = await host.LoginAsync(client, registration.Email);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", login.Token);
         return registration;

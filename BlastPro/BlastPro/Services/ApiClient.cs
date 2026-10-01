@@ -8,8 +8,6 @@ namespace BlastPro.Mvc.Services;
 
 public class ApiClient(HttpClient http, IHttpContextAccessor contextAccessor) : IApiClient
 {
-    private const string Unavailable = "The service is temporarily unavailable. Please try again shortly.";
-
     private void SetCurrentUserToken()
     {
         if (contextAccessor.HttpContext is { } ctx)
@@ -25,7 +23,9 @@ public class ApiClient(HttpClient http, IHttpContextAccessor contextAccessor) : 
 
     public Task<ApiResult<T>> GetAsync<T>(string path) => SendAsync<T>(HttpMethod.Get, path);
     public Task<ApiResult<T>> PostAsync<T>(string path, object payload) => SendAsync<T>(HttpMethod.Post, path, payload);
-    public Task<ApiResult<T>> PostAnonymousAsync<T>(string path, object payload) => SendAsync<T>(HttpMethod.Post, path, payload, false);
+    public Task<ApiResult<T>> PostAnonymousAsync<T>(string path, object payload,
+        CancellationToken cancellationToken = default)
+        => SendAsync<T>(HttpMethod.Post, path, payload, false, cancellationToken);
     public Task<ApiResult<T>> PutAsync<T>(string path, object payload) => SendAsync<T>(HttpMethod.Put, path, payload);
     public async Task<ApiResult> DeleteAsync(string path) => await SendAsync<object>(HttpMethod.Delete, path);
     public Task<ApiResult<LoginResultDto>> LoginAsync(string email, string password)
@@ -36,7 +36,7 @@ public class ApiClient(HttpClient http, IHttpContextAccessor contextAccessor) : 
         => await SendAsync<object>(HttpMethod.Post, "api/auth/reset-password", new { email, token, newPassword }, false);
 
     private async Task<ApiResult<T>> SendAsync<T>(HttpMethod method, string path, object? payload = null,
-        bool authenticated = true)
+        bool authenticated = true, CancellationToken cancellationToken = default)
     {
         using var request = new HttpRequestMessage(method, path);
         if (payload is not null) request.Content = JsonContent.Create(payload);
@@ -49,7 +49,7 @@ public class ApiClient(HttpClient http, IHttpContextAccessor contextAccessor) : 
         }
         try
         {
-            using var response = await http.SendAsync(request);
+            using var response = await http.SendAsync(request, cancellationToken);
             if (authenticated && response.StatusCode == HttpStatusCode.Unauthorized)
                 throw new ApiAuthenticationException();
             if (response.IsSuccessStatusCode)
@@ -58,25 +58,48 @@ public class ApiClient(HttpClient http, IHttpContextAccessor contextAccessor) : 
                     ? default : await response.Content.ReadFromJsonAsync<T>();
                 return new ApiResult<T> { Success = true, Data = data, StatusCode = response.StatusCode };
             }
-            var error = (int)response.StatusCode >= 500 ? Unavailable : "The request could not be completed.";
+            var error = (int)response.StatusCode >= 500
+                ? "The BlastPro server could not complete the request."
+                : "The request could not be completed.";
+            Dictionary<string, string[]>? validationErrors = null;
             if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Conflict)
             {
                 using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
                 if (body.RootElement.TryGetProperty("errors", out var errors))
                 {
-                    var messages = errors.ValueKind == JsonValueKind.Array
-                        ? errors.EnumerateArray().Select(x => x.GetString())
-                        : errors.EnumerateObject().SelectMany(x => x.Value.EnumerateArray().Select(v => v.GetString()));
-                    error = string.Join(" ", messages.Where(x => !string.IsNullOrWhiteSpace(x)));
+                    if (errors.ValueKind == JsonValueKind.Object)
+                    {
+                        validationErrors = errors.EnumerateObject().ToDictionary(
+                            property => property.Name,
+                            property => property.Value.EnumerateArray()
+                                .Select(value => value.GetString() ?? string.Empty)
+                                .Where(message => !string.IsNullOrWhiteSpace(message)).ToArray());
+                        error = string.Join(" ", validationErrors.Values.SelectMany(messages => messages));
+                    }
+                    else if (errors.ValueKind == JsonValueKind.Array)
+                    {
+                        error = string.Join(" ", errors.EnumerateArray()
+                            .Select(value => value.GetString())
+                            .Where(message => !string.IsNullOrWhiteSpace(message)));
+                    }
                 }
                 else if (body.RootElement.TryGetProperty("message", out var message))
                     error = message.GetString() ?? error;
             }
-            return new ApiResult<T> { Success = false, Error = error, StatusCode = response.StatusCode };
+            return new ApiResult<T> { Success = false, Error = error,
+                ValidationErrors = validationErrors, StatusCode = response.StatusCode };
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        catch (HttpRequestException)
         {
-            return new ApiResult<T> { Success = false, Error = Unavailable };
+            return new ApiResult<T> { Success = false, Error = "The connection to the BlastPro server failed." };
+        }
+        catch (TaskCanceledException)
+        {
+            return new ApiResult<T> { Success = false, Error = "The BlastPro server took too long to respond." };
+        }
+        catch (JsonException)
+        {
+            return new ApiResult<T> { Success = false, Error = "The BlastPro server returned a response the web app could not read." };
         }
     }
 }

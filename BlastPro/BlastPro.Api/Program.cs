@@ -27,7 +27,7 @@ builder.Services
     .AddIdentityCore<ApplicationUser>(options =>
     {
         options.User.RequireUniqueEmail = true;
-        options.SignIn.RequireConfirmedEmail = true;
+        options.SignIn.RequireConfirmedEmail = false;
         options.Password.RequiredLength = 8;
         options.Password.RequireDigit = true;
         options.Password.RequireLowercase = true;
@@ -74,7 +74,9 @@ builder.Services
                 var user = await users.GetUserAsync(context.Principal!);
                 // Resetting a password changes this stamp and invalidates previously issued tokens.
                 var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
-                if (user is null || !user.IsActive || !user.EmailConfirmed || string.IsNullOrEmpty(user.SecurityStamp)
+                if (user is null || !user.IsActive
+                    || (!user.EmailConfirmed && !await users.IsInRoleAsync(user, DatabaseSeeder.MainCompanyUserRole))
+                    || string.IsNullOrEmpty(user.SecurityStamp)
                     || user.CompanyId.ToString() != context.Principal!.FindFirst("companyId")?.Value
                     || !await db.Companies.AnyAsync(c => c.Id == user.CompanyId && c.IsActive)
                     || user.SecurityStamp != context.Principal!.FindFirst("security_stamp")?.Value)

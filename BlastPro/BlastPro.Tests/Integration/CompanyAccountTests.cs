@@ -13,7 +13,7 @@ namespace BlastPro.Tests.Integration;
 public sealed class CompanyAccountTests
 {
     [Fact]
-    public async Task Registration_assigns_main_role_and_requires_confirmation_before_login()
+    public async Task Registration_returns_session_and_allows_immediate_login()
     {
         await using var host = new ApiTestHost();
         await host.InitializeDatabaseAsync();
@@ -21,18 +21,16 @@ public sealed class CompanyAccountTests
         var request = CompanyTestSetup.Registration();
         var response = await client.PostAsJsonAsync("/api/companies", request);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        Assert.DoesNotContain("token", await response.Content.ReadAsStringAsync(), StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync("/api/auth/login", new { request.Email, request.Password })).StatusCode);
-        var token = host.AccountMailbox.Confirmations[request.Email];
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/auth/confirm-email", new { request.Email, token = "!invalid!" })).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/auth/confirm-email", new { request.Email, token })).StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/auth/confirm-email", new { request.Email, token })).StatusCode);
+        var createdSession = (await response.Content.ReadFromJsonAsync<LoginResponse>())!;
+        Assert.NotEmpty(createdSession.Token);
+        Assert.Equal(new[] { "MainCompanyUser" }, createdSession.Roles);
         var login = await host.LoginAsync(client, request.Email);
         Assert.Equal(new[] { "MainCompanyUser" }, login.Roles);
         using var scope = host.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.Equal(request.RegistrationNumber.ToUpperInvariant(), (await db.Companies.SingleAsync()).RegistrationNumber);
         Assert.Equal(login.CompanyId, (await db.Users.SingleAsync()).CompanyId);
+        Assert.True((await db.Users.SingleAsync()).EmailConfirmed);
     }
 
     [Fact]
@@ -84,7 +82,6 @@ public sealed class CompanyAccountTests
         await anonymous.PostAsJsonAsync("/api/auth/forgot-password", new { blaster.Email });
         Assert.False(host.Mailbox.Messages.ContainsKey(blaster.Email));
         var token = host.AccountMailbox.Invitations[blaster.Email];
-        Assert.Equal(HttpStatusCode.BadRequest, (await anonymous.PostAsJsonAsync("/api/auth/confirm-email", new { blaster.Email, token })).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await anonymous.PostAsJsonAsync("/api/auth/accept-invitation", new { blaster.Email, token, password = "weakpassword" })).StatusCode);
         using var accepted = await CompanyTestSetup.AcceptAsync(host, blaster);
         Assert.Equal(HttpStatusCode.BadRequest, (await anonymous.PostAsJsonAsync("/api/auth/accept-invitation", new { blaster.Email, token, password = "ChangedPassword123!" })).StatusCode);
@@ -145,37 +142,26 @@ public sealed class CompanyAccountTests
     }
 
     [Fact]
-    public async Task Unavailable_delivery_and_confirmation_resend_do_not_leak_tokens_or_account_existence()
+    public async Task Company_registration_does_not_depend_on_email_delivery()
     {
         await using var host = new ApiTestHost();
         await host.InitializeDatabaseAsync();
         using var client = host.Client();
         var request = CompanyTestSetup.Registration();
         host.AccountMailbox.Available = false;
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, (await client.PostAsJsonAsync("/api/companies", request)).StatusCode);
-        host.AccountMailbox.Available = true;
-        (await client.PostAsJsonAsync("/api/companies", request)).EnsureSuccessStatusCode();
-        var known = await client.PostAsJsonAsync("/api/auth/resend-confirmation", new { request.Email });
-        var unknown = await client.PostAsJsonAsync("/api/auth/resend-confirmation", new { email = "missing@example.test" });
-        Assert.Equal(await known.Content.ReadAsStringAsync(), await unknown.Content.ReadAsStringAsync());
-        Assert.DoesNotContain(host.AccountMailbox.Confirmations[request.Email], await known.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.Created, (await client.PostAsJsonAsync("/api/companies", request)).StatusCode);
+        Assert.Empty(host.AccountMailbox.Invitations);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync("/api/auth/confirm-email", new { request.Email, token = "unused" })).StatusCode);
     }
 
     [Fact]
-    public async Task Email_confirmation_and_invitation_tokens_expire()
+    public async Task Invitation_tokens_expire()
     {
         await using var host = new ApiTestHost(resetLifetime: TimeSpan.FromMilliseconds(1));
         await host.InitializeDatabaseAsync();
         using var client = host.Client();
         var registration = CompanyTestSetup.Registration();
         (await client.PostAsJsonAsync("/api/companies", registration)).EnsureSuccessStatusCode();
-        await Task.Delay(25);
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/auth/confirm-email", new { registration.Email, token = host.AccountMailbox.Confirmations[registration.Email] })).StatusCode);
-        await host.ChangeUserAsync((await FindUserId(host, registration.Email)), async (users, user) =>
-        {
-            user.EmailConfirmed = true;
-            Assert.True((await users.UpdateAsync(user)).Succeeded);
-        });
         var login = await host.LoginAsync(client, registration.Email);
         client.DefaultRequestHeaders.Authorization = new("Bearer", login.Token);
         var blaster = await CompanyTestSetup.InviteAsync(client);
@@ -184,22 +170,31 @@ public sealed class CompanyAccountTests
     }
 
     [Fact]
-    public async Task Password_reset_cannot_bypass_main_user_email_confirmation()
+    public async Task Existing_unconfirmed_main_user_can_sign_in_and_reset_password()
     {
         await using var host = new ApiTestHost();
         await host.InitializeDatabaseAsync();
         using var client = host.Client();
         var registration = CompanyTestSetup.Registration();
         (await client.PostAsJsonAsync("/api/companies", registration)).EnsureSuccessStatusCode();
+        using (var scope = host.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = (await users.FindByEmailAsync(registration.Email))!;
+            user.EmailConfirmed = false;
+            Assert.True((await users.UpdateAsync(user)).Succeeded);
+        }
+        Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/auth/login", new { registration.Email, registration.Password })).StatusCode);
         string token;
         using (var scope = host.Services.CreateScope())
         {
             var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             token = BlastPro.Api.Services.PasswordResetTokens.Encode(await users.GeneratePasswordResetTokenAsync((await users.FindByEmailAsync(registration.Email))!));
         }
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/auth/reset-password", new
+        Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/auth/reset-password", new
             { registration.Email, token, newPassword = "ChangedPassword123!" })).StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync("/api/auth/login", new { registration.Email, registration.Password })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/auth/login", new
+            { registration.Email, password = "ChangedPassword123!" })).StatusCode);
     }
 
     [Fact]
@@ -223,9 +218,4 @@ public sealed class CompanyAccountTests
             Assert.Equal(HttpStatusCode.Unauthorized, (await main.PostAsJsonAsync("/api/auth/login", new { email, password = ApiTestHost.Password })).StatusCode);
     }
 
-    private static async Task<string> FindUserId(ApiTestHost host, string email)
-    {
-        using var scope = host.Services.CreateScope();
-        return (await scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>().FindByEmailAsync(email))!.Id;
-    }
 }

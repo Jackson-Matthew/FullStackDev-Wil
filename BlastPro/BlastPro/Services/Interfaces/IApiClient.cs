@@ -10,13 +10,15 @@ public interface IApiClient
     Task<ApiResult<LoginResultDto>> LoginAsync(string email, string password);
     Task<ApiResult<PasswordResetDeliveryDto>> ForgotPasswordAsync(string email);
     Task<ApiResult> ResetPasswordAsync(string email, string token, string newPassword);
-    Task<ApiResult<T>> PostAnonymousAsync<T>(string path, object payload);
+    Task<ApiResult<T>> PostAnonymousAsync<T>(string path, object payload,
+        CancellationToken cancellationToken = default);
 }
 
 public class ApiResult
 {
     public bool Success { get; init; }
     public string? Error { get; init; }
+    public IReadOnlyDictionary<string, string[]>? ValidationErrors { get; init; }
     public System.Net.HttpStatusCode? StatusCode { get; init; }
 }
 

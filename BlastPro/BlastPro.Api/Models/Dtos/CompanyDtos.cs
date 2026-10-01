@@ -14,10 +14,6 @@ public sealed class CreateCompanyRequest
     [Required, StringLength(100, MinimumLength = 8)] public string Password { get; set; } = "";
 }
 
-public record EmailTokenRequest(
-    [Required, EmailAddress, StringLength(254)] string Email,
-    [Required, StringLength(4096)] string Token);
-
 public sealed class CompanyContactRequest
 {
     [Required, EmailAddress, StringLength(254)] public string ContactEmail { get; set; } = "";

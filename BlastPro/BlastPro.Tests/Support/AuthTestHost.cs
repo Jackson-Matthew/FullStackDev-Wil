@@ -40,17 +40,10 @@ public sealed class TestMailbox : IPasswordResetDelivery
 
 public sealed class TestAccountMailbox : IAccountEmailDelivery
 {
-    public ConcurrentDictionary<string, string> Confirmations { get; } = new();
     public ConcurrentDictionary<string, string> Invitations { get; } = new();
     public bool Available { get; set; } = true;
     public bool FailSend { get; set; }
     public Task PrepareAsync() => Available ? Task.CompletedTask : throw new IOException("Test delivery failure");
-    public Task SendConfirmationAsync(string email, string token)
-    {
-        if (FailSend) throw new IOException("Test delivery failure");
-        Confirmations[email] = token;
-        return Task.CompletedTask;
-    }
     public Task SendInvitationAsync(string email, string token)
     {
         if (FailSend) throw new IOException("Test delivery failure");

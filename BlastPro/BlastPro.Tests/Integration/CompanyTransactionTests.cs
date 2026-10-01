@@ -13,23 +13,21 @@ namespace BlastPro.Tests.Integration;
 public sealed class CompanyTransactionTests
 {
     [Fact]
-    public async Task Company_and_main_user_rollback_when_delivery_fails_after_identity_creation()
+    public async Task Company_and_main_user_create_without_email_delivery()
     {
         await using var host = new ApiTestHost(sqlServer: true);
         await host.InitializeDatabaseAsync();
-        host.AccountMailbox.FailSend = true;
+        host.AccountMailbox.Available = false;
         using var client = host.Client();
         var request = CompanyTestSetup.Registration();
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, (await client.PostAsJsonAsync("/api/companies", request)).StatusCode);
+        Assert.Equal(HttpStatusCode.Created, (await client.PostAsJsonAsync("/api/companies", request)).StatusCode);
         using (var scope = host.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            Assert.Empty(await db.Companies.ToListAsync());
-            Assert.Empty(await db.Users.ToListAsync());
-            Assert.Empty(await db.UserRoles.ToListAsync());
+            Assert.Single(await db.Companies.ToListAsync());
+            Assert.Single(await db.Users.ToListAsync());
+            Assert.Single(await db.UserRoles.ToListAsync());
         }
-        host.AccountMailbox.FailSend = false;
-        Assert.Equal(HttpStatusCode.Created, (await client.PostAsJsonAsync("/api/companies", request)).StatusCode);
     }
 
     [Fact]

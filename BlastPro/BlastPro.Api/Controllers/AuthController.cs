@@ -18,7 +18,6 @@ public class AuthController : ControllerBase
     private readonly IJwtTokenService _jwt;
     private readonly ILogger<AuthController> _logger;
     private readonly IPasswordResetDelivery _resetDelivery;
-    private readonly IAccountEmailDelivery _accountDelivery;
     private readonly ApplicationDbContext _db;
 
     public AuthController(
@@ -26,14 +25,12 @@ public class AuthController : ControllerBase
         IJwtTokenService jwt,
         ILogger<AuthController> logger,
         IPasswordResetDelivery resetDelivery,
-        IAccountEmailDelivery accountDelivery,
         ApplicationDbContext db)
     {
         _userManager = userManager;
         _jwt = jwt;
         _logger = logger;
         _resetDelivery = resetDelivery;
-        _accountDelivery = accountDelivery;
         _db = db;
     }
 
@@ -47,7 +44,9 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Email and password are required." });
 
         var user = await _userManager.FindByEmailAsync(request.Email.Trim());
-        if (user is null || !user.IsActive || !user.EmailConfirmed || await _userManager.IsLockedOutAsync(user)
+        if (user is null || !user.IsActive
+            || (!user.EmailConfirmed && !await _userManager.IsInRoleAsync(user, DatabaseSeeder.MainCompanyUserRole))
+            || await _userManager.IsLockedOutAsync(user)
             || !await _db.Companies.AnyAsync(c => c.Id == user.CompanyId && c.IsActive))
             return Unauthorized(new { message = "Invalid login attempt." });
 
@@ -55,12 +54,12 @@ public class AuthController : ControllerBase
         if (!valid)
         {
             var failure = await _userManager.AccessFailedAsync(user);
-            if (!failure.Succeeded) return StatusCode(503, new { message = "Sign in is temporarily unavailable." });
+            if (!failure.Succeeded) return StatusCode(503, new { message = "The sign-in attempt could not be completed." });
             return Unauthorized(new { message = "Invalid login attempt." });
         }
 
         var reset = await _userManager.ResetAccessFailedCountAsync(user);
-        if (!reset.Succeeded) return StatusCode(503, new { message = "Sign in is temporarily unavailable." });
+        if (!reset.Succeeded) return StatusCode(503, new { message = "The sign-in attempt could not be completed." });
 
         var roles = await _userManager.GetRolesAsync(user);
         var (token, expires) = _jwt.CreateToken(user, roles);
@@ -87,11 +86,12 @@ public class AuthController : ControllerBase
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
             _logger.LogWarning("Password reset delivery is unavailable.");
-            return StatusCode(503, new { message = "Password reset is temporarily unavailable." });
+            return StatusCode(503, new { message = "Could not prepare a password reset message." });
         }
         var user = await _userManager.FindByEmailAsync(request.Email.Trim());
 
-        if (user is not null && user.IsActive && user.EmailConfirmed)
+        if (user is not null && user.IsActive && (user.EmailConfirmed
+            || await _userManager.IsInRoleAsync(user, DatabaseSeeder.MainCompanyUserRole)))
         {
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             try { await _resetDelivery.SendAsync(user.Email!, PasswordResetTokens.Encode(token)); }
@@ -113,7 +113,8 @@ public class AuthController : ControllerBase
         const string invalidLink = "This reset link is invalid or has expired. Please request a new link.";
         var user = await _userManager.FindByEmailAsync(request.Email.Trim());
         var token = PasswordResetTokens.Decode(request.Token);
-        if (user is null || !user.IsActive || !user.EmailConfirmed || token is null)
+        if (user is null || !user.IsActive || token is null
+            || (!user.EmailConfirmed && !await _userManager.IsInRoleAsync(user, DatabaseSeeder.MainCompanyUserRole)))
             return BadRequest(new { message = invalidLink });
 
         var result = await _userManager.ResetPasswordAsync(
@@ -124,39 +125,6 @@ public class AuthController : ControllerBase
                 e.Code == "InvalidToken" ? invalidLink : e.Description) });
 
         return Ok(new { message = "Password reset complete." });
-    }
-
-    [HttpPost("confirm-email"), AllowAnonymous]
-    public async Task<IActionResult> ConfirmEmail(EmailTokenRequest request)
-    {
-        var user = await _userManager.FindByEmailAsync(request.Email.Trim());
-        var token = PasswordResetTokens.Decode(request.Token);
-        if (user is null || !user.IsActive || user.EmailConfirmed || token is null
-            || !await _userManager.IsInRoleAsync(user, DatabaseSeeder.MainCompanyUserRole))
-            return BadRequest(new { message = "This confirmation link is invalid or has expired. Request a new link." });
-        var result = await _userManager.ConfirmEmailAsync(user, token);
-        return result.Succeeded ? Ok(new { message = "Email confirmed. You can now sign in." })
-            : BadRequest(new { message = "This confirmation link is invalid or has expired. Request a new link." });
-    }
-
-    [HttpPost("resend-confirmation"), AllowAnonymous]
-    public async Task<IActionResult> ResendConfirmation(ForgotPasswordRequest request)
-    {
-        try
-        {
-            await _accountDelivery.PrepareAsync();
-            var user = await _userManager.FindByEmailAsync(request.Email.Trim());
-            if (user is not null && user.IsActive && !user.EmailConfirmed
-                && await _userManager.IsInRoleAsync(user, DatabaseSeeder.MainCompanyUserRole))
-                await _accountDelivery.SendConfirmationAsync(user.Email!,
-                    PasswordResetTokens.Encode(await _userManager.GenerateEmailConfirmationTokenAsync(user)));
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
-        {
-            _logger.LogWarning("Confirmation delivery is unavailable.");
-            return StatusCode(503, new { message = "Confirmation delivery is temporarily unavailable." });
-        }
-        return Ok(new { message = "If an eligible account exists, a confirmation link has been requested.", isDevelopmentDelivery = true });
     }
 
     [HttpPost("accept-invitation"), AllowAnonymous]

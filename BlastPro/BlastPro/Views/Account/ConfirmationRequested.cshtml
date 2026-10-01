@@ -1,8 +1,0 @@
-@{ ViewData["Title"] = "Check your email"; }
-<link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
-<div class="container login-page"><div class="login-card">
-    <h1 class="auth-title">Check your email</h1>
-    <p class="auth-text">@(TempData["AccountSetupNotice"] ?? "Confirm your email before signing in.")</p>
-    <p class="auth-text">During local development, no email is sent. Open the latest confirmation message in the API's App_Data/AccountMail folder. Links expire after one hour.</p>
-    <div class="auth-links"><a asp-action="Login" class="auth-link">Sign In</a> · <a asp-action="ResendConfirmation" class="auth-link">Request a new link</a></div>
-</div></div>

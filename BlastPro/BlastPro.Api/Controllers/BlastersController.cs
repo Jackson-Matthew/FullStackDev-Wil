@@ -65,7 +65,7 @@ public sealed class BlastersController(ApplicationDbContext db, UserManager<Appl
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
             logger.LogWarning("Blaster invitation could not be completed.");
-            return StatusCode(503, new { message = "Invitation delivery is temporarily unavailable. Please try again later." });
+            return StatusCode(503, new { message = "The Blaster invitation could not be sent." });
         }
     }
 
@@ -128,7 +128,7 @@ public sealed class BlastersController(ApplicationDbContext db, UserManager<Appl
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
             logger.LogWarning("Blaster invitation delivery is unavailable.");
-            return StatusCode(503, new { message = "Invitation delivery is temporarily unavailable." });
+            return StatusCode(503, new { message = "The Blaster invitation could not be sent." });
         }
     }
 

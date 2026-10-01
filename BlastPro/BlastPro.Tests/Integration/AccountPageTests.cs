@@ -110,13 +110,14 @@ public class AccountPageTests
         using var browser = mvc.Browser();
         var login = await BrowserForms.SubmitAsync(browser, "/Account/Login", "/Account/Login", LoginFields("user@example.test"));
         var html = await login.Content.ReadAsStringAsync();
-        Assert.Contains("Sign in is temporarily unavailable", html);
+        Assert.Contains("The connection to the BlastPro server failed", html);
+        Assert.DoesNotContain("try again shortly", html);
         Assert.DoesNotContain("Invalid login attempt", html);
         Assert.DoesNotContain("Private network", html);
         var forgot = await BrowserForms.SubmitAsync(browser, "/Account/ForgotPassword", "/Account/ForgotPassword",
             new() { ["Email"] = "user@example.test" });
         Assert.Equal(HttpStatusCode.OK, forgot.StatusCode);
-        Assert.Contains("Password reset is temporarily unavailable", await forgot.Content.ReadAsStringAsync());
+        Assert.Contains("The connection to the BlastPro server failed", await forgot.Content.ReadAsStringAsync());
     }
 
     [Fact]

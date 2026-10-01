@@ -1,7 +1,0 @@
-@{ ViewData["Title"] = "Confirmation unavailable"; }
-<link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
-<div class="container login-page"><div class="login-card">
-    <h1 class="auth-title">Confirmation unavailable</h1>
-    <p class="auth-text">@(ViewData["Error"] ?? "This confirmation link is invalid or has expired.")</p>
-    <div class="auth-links"><a asp-action="ResendConfirmation" class="auth-link">Request a new link</a> · <a asp-action="Login" class="auth-link">Sign In</a></div>
-</div></div>
