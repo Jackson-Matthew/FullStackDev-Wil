@@ -1,15 +1,43 @@
-
 @model BlastPro.Mvc.Models.ViewModels.BlasterViewModel
-@{ ViewData["Title"] = "Add Blaster"; }
+@{
+    ViewData["Title"] = "Add Blaster";
+}
+
 <link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
-<section class="admin-panel admin-form">
-    <h1>Add Blaster</h1><p role="status">@ViewData["Seats"]</p>
-    <p>The Blaster receives an invitation to confirm their email and choose their own password.</p>
-    <form asp-action="Create" method="post">
-        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
-        <partial name="_DetailsFields" model="Model" />
-        <div class="mb-3"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" autocomplete="email" /></div>
-        <button type="submit" class="btn btn-danger">Send invitation</button> <a asp-controller="Company" asp-action="Index" class="btn btn-outline-light">Cancel</a>
-    </form>
+
+<section class="container blaster-form-page">
+
+    <div class="company-card blaster-form-card">
+
+        <div class="blaster-form-header">
+            <a asp-controller="Company" asp-action="Index" class="blaster-back"><i class="bi bi-arrow-left"></i> Company</a>
+            <h1 class="blaster-form-title">Add New Blaster</h1>
+            <p class="blaster-form-subtitle">The Blaster receives an invitation to confirm their email and choose their own password.</p>
+            @if (!string.IsNullOrWhiteSpace(ViewData["Seats"]?.ToString()))
+            {
+                <p class="company-seats" role="status">@ViewData["Seats"]</p>
+            }
+        </div>
+
+        <form asp-action="Create" method="post" class="blaster-form-body">
+            <div asp-validation-summary="ModelOnly" class="blaster-summary" role="alert"></div>
+
+            <div class="blaster-field">
+                <label asp-for="Email" class="blaster-label"></label>
+                <input asp-for="Email" class="form-control" autocomplete="email" placeholder="name@company.co.za" />
+                <span asp-validation-for="Email" class="blaster-error"></span>
+            </div>
+
+            <partial name="_DetailsFields" model="Model" />
+
+            <div class="blaster-form-actions">
+                <a asp-controller="Company" asp-action="Index" class="company-btn company-btn-outline blaster-cancel">Cancel</a>
+                <button type="submit" class="company-add-btn"><i class="bi bi-send"></i> Send invitation</button>
+            </div>
+        </form>
+
+    </div>
+
 </section>
+
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

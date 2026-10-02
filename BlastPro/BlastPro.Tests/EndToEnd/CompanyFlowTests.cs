@@ -109,7 +109,7 @@ public sealed class CompanyFlowTests
         var company = await browser.GetStringAsync("/Company/Index");
         Assert.Contains("0 of 5 active Blasters", company);
         Assert.Contains(request.CompanyName, company);
-        Assert.Contains("Add Blaster", company);
+        Assert.Contains("Add New Blaster", company);
     }
 
     [Fact]

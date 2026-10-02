@@ -1,45 +1,160 @@
-
 @model BlastPro.Mvc.Models.ViewModels.CompanyViewModel
-@{ ViewData["Title"] = "Company"; }
-<link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
-<section class="admin-panel">
-    <div class="d-flex flex-wrap justify-content-between gap-3 mb-3">
-        <div><h1>@Model.Name</h1><p>Registration number: @Model.RegistrationNumber</p></div>
-        <div><a asp-action="Edit" class="btn btn-outline-light">Edit contact details</a></div>
-    </div>
-    @if (TempData["Success"] is string success) { <div class="alert alert-success" role="status">@success</div> }
-    @if (TempData["Error"] is string error) { <div class="alert alert-danger" role="alert">@error</div> }
-    <dl class="row"><dt class="col-sm-3">Contact email</dt><dd class="col-sm-9">@Model.ContactEmail</dd>
-        <dt class="col-sm-3">Contact phone</dt><dd class="col-sm-9">@Model.ContactPhone</dd>
-        <dt class="col-sm-3">Address</dt><dd class="col-sm-9">@(Model.Address ?? "Not supplied")</dd></dl>
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 my-4">
-        <div><h2 class="h4">Blasters</h2><p class="mb-0" role="status">@Model.ActiveBlasterCount of @Model.BlasterLimit active Blasters</p></div>
-        @if (Model.ActiveBlasterCount < Model.BlasterLimit) { <a asp-controller="Blasters" asp-action="Create" class="btn btn-danger">Add Blaster</a> }
-        else { <span>All seats are in use. Deactivate a Blaster to free a seat.</span> }
-    </div>
-    <p>Invited active accounts reserve a seat. Deactivated Blasters keep their designs.</p>
-    @if (Model.Blasters.Count == 0) { <p>No Blasters yet. Add your first Blaster to send an invitation.</p> }
-    else
+@{
+    ViewData["Title"] = "Company";
+
+    static string Initials(string name)
     {
-        <div class="table-responsive"><table class="table table-dark align-middle">
-            <thead><tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Phone</th><th scope="col">Certification ID</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
-            <tbody>@foreach (var blaster in Model.Blasters)
-            {
-                <tr><td>@blaster.FullName</td><td>@blaster.Email</td><td>@blaster.PhoneNumber</td><td>@blaster.CertificationId</td>
-                    <td>@(!blaster.IsActive ? "Inactive" : blaster.EmailConfirmed ? "Active" : "Invited")</td>
-                    <td><div class="d-flex flex-wrap gap-2">
-                        <a asp-controller="Blasters" asp-action="Edit" asp-route-id="@blaster.Id" class="btn btn-sm btn-outline-light">Edit</a>
-                        <form asp-controller="Blasters" asp-action="SetStatus" asp-route-id="@blaster.Id" method="post">
-                            <input type="hidden" name="isActive" value="@((!blaster.IsActive).ToString().ToLowerInvariant())" />
-                            <button class="btn btn-sm btn-outline-warning" type="submit">@(blaster.IsActive ? "Deactivate" : "Reactivate")</button>
-                        </form>
-                        @if (blaster.IsActive && !blaster.EmailConfirmed)
-                        {
-                            <form asp-controller="Blasters" asp-action="ResendInvitation" asp-route-id="@blaster.Id" method="post"><button class="btn btn-sm btn-outline-info" type="submit">Resend invitation</button></form>
-                        }
-                    </div></td>
-                </tr>
-            }</tbody>
-        </table></div>
+        var parts = (name ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length == 0) return "?";
+        var letters = parts.Length == 1 ? parts[0][..1] : parts[0][..1] + parts[^1][..1];
+        return letters.ToUpperInvariant();
     }
+}
+
+<link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
+
+<section class="container company-page">
+
+    @if (TempData["Success"] is string success)
+    {
+        <div class="alert alert-success" role="status">@success</div>
+    }
+    @if (TempData["Error"] is string error)
+    {
+        <div class="alert alert-danger" role="alert">@error</div>
+    }
+
+    <div class="company-layout">
+
+        @* =====================================================
+           COMPANY DETAILS
+           ===================================================== *@
+
+        <aside class="company-card company-profile">
+
+            <div class="company-badges">
+                <span class="company-badge badge-admin">Company admin</span>
+            </div>
+
+            <div class="company-icon" aria-hidden="true"><i class="bi bi-briefcase"></i></div>
+
+            <h1 class="company-name">@Model.Name</h1>
+            <p class="company-type">Blasting Company</p>
+
+            <dl class="company-details">
+                <div>
+                    <dt>Registration number</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.RegistrationNumber) ? "Not supplied" : Model.RegistrationNumber)</dd>
+                </div>
+                <div>
+                    <dt>Contact email</dt>
+                    <dd>@Model.ContactEmail</dd>
+                </div>
+                <div>
+                    <dt>Contact phone</dt>
+                    <dd>@Model.ContactPhone</dd>
+                </div>
+                <div>
+                    <dt>Address</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.Address) ? "Not supplied" : Model.Address)</dd>
+                </div>
+            </dl>
+
+            <div class="company-profile-footer">
+                <p>You have elevated permissions to add, edit and audit blasting contractors assigned to operations.</p>
+                <a asp-action="Edit" class="company-btn company-btn-outline">Edit contact details</a>
+            </div>
+
+        </aside>
+
+
+        @* =====================================================
+           BLASTERS
+           ===================================================== *@
+
+        <div class="company-card company-blasters">
+
+            <div class="company-blasters-header">
+                <div>
+                    <h2 class="company-blasters-title">Authorized Blasters</h2>
+                    <p class="company-blasters-subtitle">Manage site blasters, certifications, and active contract profiles.</p>
+                    <p class="company-seats" role="status">@Model.ActiveBlasterCount of @Model.BlasterLimit active Blasters</p>
+                </div>
+
+                @if (Model.ActiveBlasterCount < Model.BlasterLimit)
+                {
+                    <a asp-controller="Blasters" asp-action="Create" class="company-add-btn"><i class="bi bi-plus-lg"></i> Add New Blaster</a>
+                }
+                else
+                {
+                    <span class="company-seats-full">All seats are in use. Deactivate a Blaster to free a seat.</span>
+                }
+            </div>
+
+            @if (Model.Blasters.Count == 0)
+            {
+                <div class="company-empty">No Blasters yet. Add your first Blaster to send an invitation.</div>
+            }
+            else
+            {
+                <div class="blaster-table">
+
+                    <div class="blaster-row blaster-head">
+                        <div>Blaster name</div>
+                        <div>Certification ID</div>
+                        <div>Contact phone</div>
+                        <div>Status</div>
+                        <div class="blaster-actions-head">Actions</div>
+                    </div>
+
+                    @foreach (var blaster in Model.Blasters)
+                    {
+                        var status = !blaster.IsActive ? "Inactive" : blaster.EmailConfirmed ? "Active" : "Invited";
+
+                        <div class="blaster-row">
+
+                            <div class="blaster-person">
+                                <span class="blaster-avatar">@Initials(blaster.FullName)</span>
+                                <span class="blaster-person-text">
+                                    <span class="blaster-fullname">@blaster.FullName</span>
+                                    <span class="blaster-email">@blaster.Email</span>
+                                </span>
+                            </div>
+
+                            <div class="blaster-cell" data-label="Certification ID">@blaster.CertificationId</div>
+
+                            <div class="blaster-cell blaster-phone" data-label="Contact phone">@blaster.PhoneNumber</div>
+
+                            <div class="blaster-cell" data-label="Status">
+                                <span class="blaster-status status-@status.ToLowerInvariant()">@status</span>
+                            </div>
+
+                            <div class="blaster-actions">
+                                <a asp-controller="Blasters" asp-action="Edit" asp-route-id="@blaster.Id" class="company-btn company-btn-outline">Edit</a>
+
+                                <form asp-controller="Blasters" asp-action="SetStatus" asp-route-id="@blaster.Id" method="post" class="d-flex m-0">
+                                    <input type="hidden" name="isActive" value="@((!blaster.IsActive).ToString().ToLowerInvariant())" />
+                                    <button class="company-btn company-btn-outline" type="submit">@(blaster.IsActive ? "Deactivate" : "Reactivate")</button>
+                                </form>
+
+                                @if (blaster.IsActive && !blaster.EmailConfirmed)
+                                {
+                                    <form asp-controller="Blasters" asp-action="ResendInvitation" asp-route-id="@blaster.Id" method="post" class="d-flex m-0">
+                                        <button class="company-btn company-btn-outline" type="submit">Resend invitation</button>
+                                    </form>
+                                }
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+            }
+
+            <p class="company-footnote">Invited active accounts reserve a seat. Deactivated Blasters keep their designs.</p>
+
+        </div>
+
+    </div>
+
 </section>

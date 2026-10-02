@@ -1,4 +1,18 @@
 @model BlastPro.Mvc.Models.ViewModels.BlasterViewModel
-<div class="mb-3"><label asp-for="FullName" class="form-label"></label><input asp-for="FullName" class="form-control" autocomplete="name" /></div>
-<div class="mb-3"><label asp-for="PhoneNumber" class="form-label"></label><input asp-for="PhoneNumber" class="form-control" autocomplete="tel" /></div>
-<div class="mb-3"><label asp-for="CertificationId" class="form-label"></label><input asp-for="CertificationId" class="form-control" /></div>
+<div class="blaster-field">
+    <label asp-for="FullName" class="blaster-label"></label>
+    <input asp-for="FullName" class="form-control" autocomplete="name" placeholder="e.g. Jaco Smit" />
+    <span asp-validation-for="FullName" class="blaster-error"></span>
+</div>
+<div class="blaster-form-grid">
+    <div class="blaster-field">
+        <label asp-for="CertificationId" class="blaster-label"></label>
+        <input asp-for="CertificationId" class="form-control" placeholder="e.g. CERT-4521-G" />
+        <span asp-validation-for="CertificationId" class="blaster-error"></span>
+    </div>
+    <div class="blaster-field">
+        <label asp-for="PhoneNumber" class="blaster-label"></label>
+        <input asp-for="PhoneNumber" class="form-control" autocomplete="tel" placeholder="e.g. +27 82 451 2938" />
+        <span asp-validation-for="PhoneNumber" class="blaster-error"></span>
+    </div>
+</div>

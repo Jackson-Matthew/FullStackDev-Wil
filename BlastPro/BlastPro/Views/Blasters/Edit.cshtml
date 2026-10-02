@@ -1,13 +1,44 @@
-
 @model BlastPro.Mvc.Models.ViewModels.BlasterViewModel
-@{ ViewData["Title"] = "Edit Blaster"; }
+@{
+    ViewData["Title"] = "Edit Blaster";
+
+    var initials = string.Concat((Model.FullName ?? "")
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(part => part[0]).Take(2)).ToUpperInvariant();
+    if (initials.Length == 0) { initials = "?"; }
+}
+
 <link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
-<section class="admin-panel admin-form">
-    <h1>Edit Blaster</h1><p>@Model.Email</p>
-    <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
-        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
-        <partial name="_DetailsFields" model="Model" />
-        <button type="submit" class="btn btn-danger">Save details</button> <a asp-controller="Company" asp-action="Index" class="btn btn-outline-light">Cancel</a>
-    </form>
+
+<section class="container blaster-form-page">
+
+    <div class="company-card blaster-form-card">
+
+        <div class="blaster-form-header">
+            <a asp-controller="Company" asp-action="Index" class="blaster-back"><i class="bi bi-arrow-left"></i> Company</a>
+            <div class="blaster-form-identity">
+                <span class="blaster-avatar blaster-avatar-lg">@initials</span>
+                <div>
+                    <h1 class="blaster-form-title">Edit Blaster</h1>
+                    <p class="blaster-form-subtitle">@Model.Email</p>
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="blaster-form-body">
+            <input type="hidden" asp-for="Email" />
+            <div asp-validation-summary="ModelOnly" class="blaster-summary" role="alert"></div>
+
+            <partial name="_DetailsFields" model="Model" />
+
+            <div class="blaster-form-actions">
+                <a asp-controller="Company" asp-action="Index" class="company-btn company-btn-outline blaster-cancel">Cancel</a>
+                <button type="submit" class="company-add-btn"><i class="bi bi-check-lg"></i> Save details</button>
+            </div>
+        </form>
+
+    </div>
+
 </section>
+
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }
