@@ -233,6 +233,14 @@
 
                                 </a>
 
+                                <a asp-controller="Results"
+                                   asp-action="Index"
+                                   asp-route-projectId="@p.Id"
+                                   class="project-action-btn view-btn"
+                                   title="View calculation results">
+                                    Results
+                                </a>
+
                                 <a asp-controller="Projects"
                                    asp-action="Edit"
                                    asp-route-id="@p.Id"
