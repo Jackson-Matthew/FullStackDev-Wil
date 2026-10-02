@@ -1,23 +1,68 @@
 @model BlastPro.Mvc.Models.ViewModels.ProductFormViewModel
-@{ ViewData["Title"] = Model.Id == 0 ? "Add product" : "Edit product"; }
-<section class="container py-4">
-    <h1>@ViewData["Title"]</h1>
-    <form asp-action="Save" method="post" class="col-lg-6">
-        @Html.AntiForgeryToken()
-        <input asp-for="Id" type="hidden" />
-        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-        <div class="mb-3"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-warning"></span></div>
-        <div class="mb-3"><label asp-for="AeciProductCode" class="form-label"></label>
-            <select asp-for="AeciProductCode" class="form-select">
-                <option value="">Custom product for older designs only</option>
-                @foreach (var product in Model.Catalog) { <option value="@product.Code">@product.Name</option> }
-            </select>
-            <p class="form-text text-white">Select the matching AECI product so current pattern designs use this price.</p>
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Add product" : "Edit product";
+}
+
+<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+
+<section class="container product-form-page">
+
+    <div class="products-card product-form-card">
+
+        <div class="product-form-header">
+            <a asp-action="Index" class="product-back"><i class="bi bi-arrow-left"></i> Products and prices</a>
+            <h1 class="products-title">@(Model.Id == 0 ? "Add Product" : "Edit Product")</h1>
+            <p class="products-subtitle">Prices are in ZAR per kilogram and apply to new calculations only.</p>
         </div>
-        <div class="mb-3"><label asp-for="PricePerKg" class="form-label"></label><input asp-for="PricePerKg" type="number" min="0.01" max="1000000" step="0.01" class="form-control" /><span asp-validation-for="PricePerKg" class="text-warning"></span></div>
-        <div class="form-check mb-3"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label">Available for new designs</label></div>
-        <button type="submit" class="btn btn-danger">Save product</button>
-        <a asp-action="Index" class="btn btn-outline-light">Cancel</a>
-    </form>
+
+        <form asp-action="Save" method="post" class="product-form-body">
+            @Html.AntiForgeryToken()
+            <input asp-for="Id" type="hidden" />
+            <div asp-validation-summary="ModelOnly" class="product-summary" role="alert"></div>
+
+            <div class="product-field">
+                <label asp-for="Name" class="product-label"></label>
+                <input asp-for="Name" class="form-control" placeholder="e.g. Powergel Eco 30" />
+                <span asp-validation-for="Name" class="product-error"></span>
+            </div>
+
+            <div class="product-field">
+                <label asp-for="AeciProductCode" class="product-label"></label>
+                <select asp-for="AeciProductCode" class="form-select">
+                    <option value="">Custom product for older designs only</option>
+                    @foreach (var product in Model.Catalog)
+                    {
+                        <option value="@product.Code">@product.Name</option>
+                    }
+                </select>
+                <p class="product-help">Select the matching AECI product so current pattern designs use this price.</p>
+            </div>
+
+            <div class="product-field">
+                <label asp-for="PricePerKg" class="product-label"></label>
+                <div class="product-price-input">
+                    <span class="product-price-prefix">ZAR</span>
+                    <input asp-for="PricePerKg" type="number" min="0.01" max="1000000" step="0.01" class="form-control" />
+                </div>
+                <span asp-validation-for="PricePerKg" class="product-error"></span>
+            </div>
+
+            <label class="product-toggle" for="IsActive">
+                <input asp-for="IsActive" class="form-check-input" />
+                <span>
+                    <span class="product-toggle-title">Available for new designs</span>
+                    <span class="product-toggle-help">Untick to stop offering this product on new designs.</span>
+                </span>
+            </label>
+
+            <div class="product-form-actions">
+                <a asp-action="Index" class="products-btn product-cancel">Cancel</a>
+                <button type="submit" class="products-add-btn"><i class="bi bi-check-lg"></i> Save product</button>
+            </div>
+        </form>
+
+    </div>
+
 </section>
+
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

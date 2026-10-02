@@ -1,30 +1,98 @@
 @model List<BlastPro.Mvc.Models.ViewModels.ProductViewModel>
-@{ ViewData["Title"] = "Products and prices"; }
-<section class="container py-4">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-        <div><h1>Products and prices</h1><p>Prices are in ZAR per kilogram. Saved calculation costs do not change when a price changes.</p></div>
-        <a asp-action="Create" class="btn btn-danger">Add product</a>
-    </div>
-    @if (TempData["Success"] is string success) { <div class="alert alert-success" role="status">@success</div> }
-    @if (TempData["Error"] is string error) { <div class="alert alert-danger" role="alert">@error</div> }
-    <div class="alert alert-warning" role="note">The sample prices for S100, S300, and Powergel Eco are demonstration estimates, not supplier quotes. Check actual prices before relying on a cost estimate.</div>
-    <form asp-action="AddSamples" method="post" class="mb-4">
-        @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-outline-light">Add sample prices</button>
-    </form>
-    @if (Model.Count == 0) { <p>No products yet. Add a product or load the sample prices to try the calculation workflow.</p> }
-    else
+@{
+    ViewData["Title"] = "Products and prices";
+}
+
+<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+
+<section class="container products-page">
+
+    @if (TempData["Success"] is string success)
     {
-        <div class="table-responsive"><table class="table table-dark align-middle">
-            <thead><tr><th scope="col">Product</th><th scope="col">AECI code</th><th scope="col">Price per kg</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead>
-            <tbody>
-            @foreach (var product in Model)
-            {
-                <tr><td>@product.Name</td><td>@(product.AeciProductCode ?? "Custom")</td><td>@product.CurrencyCode @product.PricePerKg.ToString("N2")</td>
-                    <td>@(product.IsActive ? "Active" : "Inactive")</td>
-                    <td><a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-outline-light">Edit</a></td></tr>
-            }
-            </tbody>
-        </table></div>
+        <div class="alert alert-success" role="status">@success</div>
     }
+    @if (TempData["Error"] is string error)
+    {
+        <div class="alert alert-danger" role="alert">@error</div>
+    }
+
+    <div class="products-card">
+
+        <div class="products-header">
+            <div>
+                <h1 class="products-title">Products and prices</h1>
+                <p class="products-subtitle">Prices are in ZAR per kilogram. Saved calculation costs do not change when a price changes.</p>
+            </div>
+
+            <div class="products-header-actions">
+                <form asp-action="AddSamples" method="post" class="d-flex m-0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="products-btn">Add sample prices</button>
+                </form>
+                <a asp-action="Create" class="products-add-btn"><i class="bi bi-plus-lg"></i> Add Product</a>
+            </div>
+        </div>
+
+        <div class="products-note" role="note">
+            <i class="bi bi-info-circle"></i>
+            <span>The sample prices for S100, S300, and Powergel Eco are demonstration estimates, not supplier quotes. Check actual prices before relying on a cost estimate.</span>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="products-empty">No products yet. Add a product or load the sample prices to try the calculation workflow.</div>
+        }
+        else
+        {
+            <div class="product-table">
+
+                <div class="product-row product-head">
+                    <div>Product</div>
+                    <div>AECI code</div>
+                    <div class="product-price-head">Price per kg</div>
+                    <div>Status</div>
+                    <div class="product-actions-head">Action</div>
+                </div>
+
+                @foreach (var product in Model)
+                {
+                    <div class="product-row">
+
+                        <div class="product-name-cell">
+                            <span class="product-icon" aria-hidden="true"><i class="bi bi-box-seam"></i></span>
+                            <span class="product-name-text">
+                                <span class="product-name">@product.Name</span>
+                                <span class="product-updated">Updated @product.UpdatedAtUtc.ToLocalTime().ToString("yyyy/MM/dd")</span>
+                            </span>
+                        </div>
+
+                        <div class="product-cell" data-label="AECI code">
+                            @if (string.IsNullOrWhiteSpace(product.AeciProductCode))
+                            {
+                                <span class="product-code product-code-custom">Custom</span>
+                            }
+                            else
+                            {
+                                <span class="product-code">@product.AeciProductCode</span>
+                            }
+                        </div>
+
+                        <div class="product-cell product-price" data-label="Price per kg">@product.CurrencyCode @product.PricePerKg.ToString("N2")</div>
+
+                        <div class="product-cell" data-label="Status">
+                            <span class="product-status @(product.IsActive ? "status-active" : "status-inactive")">@(product.IsActive ? "Active" : "Inactive")</span>
+                        </div>
+
+                        <div class="product-actions">
+                            <a asp-action="Edit" asp-route-id="@product.Id" class="products-btn">Edit</a>
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+        }
+
+    </div>
+
 </section>
