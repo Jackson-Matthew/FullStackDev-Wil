@@ -123,7 +123,7 @@ public sealed class PatternDesignController : Controller
         TempData["Success"] = "Pattern draft saved.";
         if (continueToResults)
             return RedirectToAction("Index", "Results", new { projectId = model.ProjectId });
-        return RedirectToAction(nameof(Index), new { projectId = model.ProjectId });
+        return RedirectToAction("Index", "Dashboard");
     }
 
     // Hole cells have no message slot of their own, so their errors go in the summary.

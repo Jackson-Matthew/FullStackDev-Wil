@@ -66,6 +66,11 @@ public sealed class PatternDesignSaveTests
 
         var body = response.StatusCode == HttpStatusCode.OK ? await response.Content.ReadAsStringAsync() : "";
         Assert.True(response.StatusCode == HttpStatusCode.Redirect, "Save did not redirect. " + body);
-        Assert.Contains(continueToResults ? "Results" : "PatternDesign", response.Headers.Location!.ToString());
+        Assert.Contains(continueToResults ? "Results" : "Dashboard", response.Headers.Location!.ToString());
+        if (!continueToResults)
+        {
+            var landing = await browser.GetAsync(response.Headers.Location!);
+            Assert.Contains("Pattern draft saved", await landing.Content.ReadAsStringAsync());
+        }
     }
 }
