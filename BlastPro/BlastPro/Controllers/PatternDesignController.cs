@@ -63,6 +63,7 @@ public sealed class PatternDesignController : Controller
     {
         if (!ModelState.IsValid)
         {
+            SummariseHoleErrors();
             await RestoreExplosiveProducts(model);
             return View(PatternView, model);
         }
@@ -72,6 +73,9 @@ public sealed class PatternDesignController : Controller
             ModelState.AddModelError(string.Empty, "Create a project before saving this pattern design.");
             return View(PatternView, model);
         }
+
+        // An unchosen product dropdown posts "" which binds as null; the API expects text.
+        foreach (var hole in model.Holes) hole.AeciProductCode ??= "";
 
         var result = await _api.PutAsync<PatternDesignViewModel>(
             $"api/projects/{model.ProjectId}/pattern-design",
@@ -88,8 +92,8 @@ public sealed class PatternDesignController : Controller
                 model.TimingOrder,
                 model.TimingIntervalMilliseconds,
                 model.PatternType,
-                model.ReferenceExplosiveFamily,
-                model.DefaultAeciProductCode,
+                ReferenceExplosiveFamily = model.ReferenceExplosiveFamily ?? "",
+                DefaultAeciProductCode = model.DefaultAeciProductCode ?? "",
                 model.LoadingDensityGramsPerCc,
                 model.Calculation,
                 model.VibrationThreshold,
@@ -120,6 +124,25 @@ public sealed class PatternDesignController : Controller
         if (continueToResults)
             return RedirectToAction("Index", "Results", new { projectId = model.ProjectId });
         return RedirectToAction(nameof(Index), new { projectId = model.ProjectId });
+    }
+
+    // Hole cells have no message slot of their own, so their errors go in the summary.
+    private void SummariseHoleErrors()
+    {
+        var holeErrors = ModelState
+            .Where(entry => entry.Key.StartsWith("Holes[", StringComparison.Ordinal))
+            .SelectMany(entry => entry.Value!.Errors.Select(error =>
+                $"Hole {HoleNumber(entry.Key)}: {error.ErrorMessage}"))
+            .Distinct()
+            .ToList();
+        foreach (var message in holeErrors)
+            ModelState.AddModelError(string.Empty, message);
+    }
+
+    private static string HoleNumber(string key)
+    {
+        var end = key.IndexOf(']');
+        return int.TryParse(key.AsSpan(6, Math.Max(0, end - 6)), out var index) ? (index + 1).ToString() : "?";
     }
 
     private async Task RestoreExplosiveProducts(PatternDesignViewModel model)

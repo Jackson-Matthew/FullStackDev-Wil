@@ -25,8 +25,8 @@ public class PatternDesignViewModel
     public string TimingOrder { get; set; } = "Rows";
     public int? TimingIntervalMilliseconds { get; set; }
     public string PatternType { get; set; } = "Rectangular";
-    public string ReferenceExplosiveFamily { get; set; } = "";
-    public string DefaultAeciProductCode { get; set; } = "";
+    public string? ReferenceExplosiveFamily { get; set; } = "";
+    public string? DefaultAeciProductCode { get; set; } = "";
     [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal? LoadingDensityGramsPerCc { get; set; }
     [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
@@ -88,7 +88,7 @@ public class BlastHoleViewModel
     [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal? SubdrillMetres { get; set; }
     public int? ExplosiveProductId { get; set; }
-    public string AeciProductCode { get; set; } = "";
+    public string? AeciProductCode { get; set; } = "";
     [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
     public decimal? ProductDensityGramsPerCc { get; set; }
     [ModelBinder(BinderType = typeof(InvariantDecimalModelBinder))]
