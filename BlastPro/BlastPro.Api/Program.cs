@@ -175,6 +175,9 @@ using (var scope = app.Services.CreateScope())
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
+    if (app.Environment.IsDevelopment())
+        await LocalDbStartup.EnsureAvailableAsync(connectionString, app.Logger);
+
     await db.Database.MigrateAsync();
 
     // 1. Roles

@@ -93,13 +93,13 @@ Swagger UI is available only in the Development environment. Protected API endpo
 
 The API uses SQL Server LocalDB for local development. On startup it applies the committed EF Core migrations and ensures Identity roles exist. The sample company is seeded only in Development; its administrator is created only when `DevelopmentSeed:AdminPassword` is configured. New companies use the public Create Company flow.
 
-The Development profile uses the connection string in `BlastPro/BlastPro.Api/appsettings.Development.json`. If your existing LocalDB database conflicts with migration history, use a unique database name without deleting data you need. From the repository root:
+The Development profile uses the connection string in `BlastPro/BlastPro.Api/appsettings.Development.json`. The API checks LocalDB before applying migrations. If LocalDB claims to be stopped while its old SQL process still holds the database files, the API gracefully shuts down that process when it has no other user sessions and reconnects. Existing database data is kept. If your existing LocalDB database conflicts with migration history, use a unique database name without deleting data you need. From the repository root:
 
 ```powershell
 dotnet user-secrets set 'ConnectionStrings:DefaultConnection' 'Server=(localdb)\MSSQLLocalDB;Database=BlastProApiDevYourName;Trusted_Connection=True;MultipleActiveResultSets=true' --project .\BlastPro\BlastPro.Api\BlastPro.Api.csproj
 ```
 
-Replace `YourName` with your own identifier. Each developer also needs a private JWT signing key. Generate one from the repository root:
+Replace `YourName` with your own identifier. In Development, the API creates a private signing key in the user's local application data folder if no `Jwt:Key` is configured. It reuses that key on later runs. To set your own key instead, run:
 
 ```powershell
 $jwtKey = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(64))
@@ -141,7 +141,8 @@ The test project covers authentication, company and owner access, account setup,
 
 | Symptom | Check |
 | --- | --- |
-| Sign-in or projects cannot load | Confirm that both applications are running and that MVC's `ApiBaseUrl` points to the API. |
+| Sign-in or projects cannot load | Confirm that both applications are running and that MVC's `ApiBaseUrl` points to the API. Check the API output for database or startup errors. |
+| LocalDB says it is stopped but SQL Server is still running | The Development API repairs this on startup if that LocalDB process has no other user sessions. Close other SQL clients if the API reports active sessions, then restart the API. |
 | Local HTTPS certificate warning | Trust the development certificate with `dotnet dev-certs https --trust`. |
 | Migration reports that a table already exists | Use a new LocalDB database name through API user secrets; preserve the old database if it contains data you need. |
 | No password reset email arrives | Development reset links are written to `BlastPro/BlastPro.Api/App_Data/PasswordReset`, not sent by email. See the [account guide](BlastPro/docs/login-and-password-reset.md). |
