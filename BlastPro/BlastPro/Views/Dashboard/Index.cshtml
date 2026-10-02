@@ -215,6 +215,14 @@
 
                                 </a>
 
+                                <a asp-controller="ProjectNotes"
+                                   asp-action="Index"
+                                   asp-route-projectId="@p.Id"
+                                   class="project-action-btn view-btn"
+                                   title="Open project notes and photos">
+                                    Notes
+                                </a>
+
                                 <a asp-controller="PatternDesign"
                                    asp-action="Index"
                                    asp-route-projectId="@p.Id"

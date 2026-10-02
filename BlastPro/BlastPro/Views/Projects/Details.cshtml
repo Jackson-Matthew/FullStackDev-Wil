@@ -15,6 +15,7 @@
         </div>
 
         <div class="d-flex gap-2">
+            <a asp-controller="ProjectNotes" asp-action="Index" asp-route-projectId="@Model.Project.Id" class="btn btn-outline-light">Notes and photos</a>
             <a asp-action="Edit" asp-route-id="@Model.Project.Id" class="btn btn-outline-dark">
                 Edit Project
             </a>

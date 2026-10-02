@@ -5,6 +5,7 @@ public sealed class ExplosiveProduct
     public int Id { get; set; }
     public int CompanyId { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string? AeciProductCode { get; set; }
     public decimal PricePerKg { get; set; }
     public string CurrencyCode { get; set; } = "ZAR";
     public bool IsActive { get; set; } = true;

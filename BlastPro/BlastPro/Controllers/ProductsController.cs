@@ -18,7 +18,7 @@ public sealed class ProductsController(IApiClient api) : Controller
     }
 
     [HttpGet]
-    public IActionResult Create() => View("Form", new ProductFormViewModel());
+    public async Task<IActionResult> Create() => View("Form", await WithCatalog(new ProductFormViewModel()));
 
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
@@ -26,25 +26,25 @@ public sealed class ProductsController(IApiClient api) : Controller
         var result = await api.GetAsync<List<ProductViewModel>>("api/company/products");
         var product = result.Data?.FirstOrDefault(p => p.Id == id);
         if (product is null) return NotFound();
-        return View("Form", new ProductFormViewModel
+        return View("Form", await WithCatalog(new ProductFormViewModel
         {
             Id = product.Id, Name = product.Name, PricePerKg = product.PricePerKg,
-            IsActive = product.IsActive
-        });
+            IsActive = product.IsActive, AeciProductCode = product.AeciProductCode
+        }));
     }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Save(ProductFormViewModel model)
     {
-        if (!ModelState.IsValid) return View("Form", model);
-        var payload = new { model.Name, model.PricePerKg, model.IsActive };
+        if (!ModelState.IsValid) return View("Form", await WithCatalog(model));
+        var payload = new { model.Name, model.AeciProductCode, model.PricePerKg, model.IsActive };
         var result = model.Id == 0
             ? await api.PostAsync<object>("api/company/products", payload)
             : await api.PutAsync<object>($"api/company/products/{model.Id}", payload);
         if (!result.Success)
         {
             ModelState.AddModelError(string.Empty, result.Error ?? "Could not save the product.");
-            return View("Form", model);
+            return View("Form", await WithCatalog(model));
         }
         TempData["Success"] = "Product saved.";
         return RedirectToAction(nameof(Index));
@@ -58,5 +58,12 @@ public sealed class ProductsController(IApiClient api) : Controller
             ? "Sample prices added. Replace these estimates with your supplier prices before using costs for decisions."
             : result.Error ?? "Could not add sample prices.";
         return RedirectToAction(nameof(Index));
+    }
+
+    private async Task<ProductFormViewModel> WithCatalog(ProductFormViewModel model)
+    {
+        var catalog = await api.GetAsync<List<ProductCatalogViewModel>>("api/company/products/catalog");
+        model.Catalog = catalog.Data ?? [];
+        return model;
     }
 }

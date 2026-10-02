@@ -73,6 +73,65 @@ public sealed class ProductAdministrationTests
             new { name = "Invalid", pricePerKg = -1m })).StatusCode);
         (await client.PostAsJsonAsync("/api/company/products/samples", new { })).EnsureSuccessStatusCode();
         (await client.PostAsJsonAsync("/api/company/products/samples", new { })).EnsureSuccessStatusCode();
-        Assert.Equal(3, (await client.GetFromJsonAsync<List<ProductDto>>("/api/company/products"))!.Count);
+        var products = (await client.GetFromJsonAsync<List<ProductDto>>("/api/company/products"))!;
+        Assert.Equal(3, products.Count);
+        Assert.Contains(products, p => p.AeciProductCode == "S100" && p.PricePerKg == 35m);
+        Assert.Contains(products, p => p.AeciProductCode == "S300" && p.PricePerKg == 28m);
+        Assert.Contains(products, p => p.AeciProductCode == "PG-ECO" && p.PricePerKg == 55m);
+    }
+
+    [Fact]
+    public async Task Aeci_price_applies_to_calculations_and_saved_results_keep_the_original_cost()
+    {
+        await using var host = new ApiTestHost();
+        using var client = host.Client();
+        await CompanyTestSetup.CreateMainAsync(host, client);
+        (await client.PostAsJsonAsync("/api/company/products/samples", new { })).EnsureSuccessStatusCode();
+        var product = (await client.GetFromJsonAsync<List<ProductDto>>("/api/company/products"))!
+            .Single(p => p.AeciProductCode == "S100");
+
+        int projectId;
+        using (var scope = host.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var companyId = (await db.ExplosiveProducts.SingleAsync(p => p.Id == product.Id)).CompanyId;
+            var ownerId = (await db.Users.SingleAsync(u => u.CompanyId == companyId)).Id;
+            var project = new BlastProject
+            {
+                CompanyId = companyId, OwnerId = ownerId, Name = "Priced pattern",
+                SiteLocation = "Test site", BlastType = "Surface", RockType = "Granite",
+                RockDensity = 2.5m, Burden = 3m, Spacing = 4m, VibrationThreshold = 10m
+            };
+            db.BlastProjects.Add(project);
+            await db.SaveChangesAsync();
+            db.BlastHoles.Add(new BlastHole
+            {
+                BlastProjectId = project.Id, HoleNumber = 1, Depth = 10m,
+                ChargeKg = 5m, StemmingMetres = 2m, AeciProductCode = "S100"
+            });
+            await db.SaveChangesAsync();
+            projectId = project.Id;
+        }
+
+        var firstResponse = await client.PostAsJsonAsync($"/api/projects/{projectId}/calculations",
+            new { delayWindowMilliseconds = 50 });
+        Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+        var first = (await firstResponse.Content.ReadFromJsonAsync<CalculationResultDto>())!;
+        Assert.Equal(175m, first.TotalCost);
+
+        (await client.PutAsJsonAsync($"/api/company/products/{product.Id}", new
+        {
+            name = product.Name, aeciProductCode = "S100", pricePerKg = 50m, isActive = true
+        })).EnsureSuccessStatusCode();
+
+        var secondResponse = await client.PostAsJsonAsync($"/api/projects/{projectId}/calculations",
+            new { delayWindowMilliseconds = 50 });
+        Assert.Equal(HttpStatusCode.Created, secondResponse.StatusCode);
+        var second = (await secondResponse.Content.ReadFromJsonAsync<CalculationResultDto>())!;
+        Assert.Equal(250m, second.TotalCost);
+
+        using var verifyScope = host.Services.CreateScope();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.Equal(175m, (await verifyDb.CalculationResults.SingleAsync(r => r.Id == first.Id)).TotalCost);
     }
 }

@@ -224,6 +224,8 @@ public static class CalculationService
         ArgumentNullException.ThrowIfNull(products);
 
         var priceById = products.ToDictionary(product => product.Id);
+        var priceByCode = products.Where(product => !string.IsNullOrEmpty(product.AeciProductCode))
+            .ToDictionary(product => product.AeciProductCode!);
         decimal total = 0;
         string? currency = null;
 
@@ -231,15 +233,20 @@ public static class CalculationService
         {
             if (hole.ChargeKg < 0)
                 throw new ArgumentException("Hole charge must be non-negative.", nameof(holes));
-            // Catalogue entries have no price. Never price an AECI choice with a
-            // legacy project-level company product left on an older draft.
+            ExplosiveProduct product;
             if (!string.IsNullOrEmpty(hole.AeciProductCode))
-                return new(null, null);
-            var productId = hole.ExplosiveProductId ?? project.ExplosiveProductId;
-            if (productId is null || !priceById.TryGetValue(productId.Value, out var product))
-                return new(null, null);
+            {
+                if (!priceByCode.TryGetValue(hole.AeciProductCode, out product!)) return new(null, null);
+            }
+            else
+            {
+                var productId = hole.ExplosiveProductId ?? project.ExplosiveProductId;
+                if (productId is null || !priceById.TryGetValue(productId.Value, out product!))
+                    return new(null, null);
+            }
             if (product.PricePerKg < 0 || product.CompanyId != project.CompanyId)
                 throw new ArgumentException("A product has an invalid price or belongs to another company.", nameof(products));
+            if (!product.IsActive) return new(null, null);
             if (string.IsNullOrWhiteSpace(product.CurrencyCode))
                 return new(null, null);
             if (currency is not null && !string.Equals(currency, product.CurrencyCode, StringComparison.OrdinalIgnoreCase))
