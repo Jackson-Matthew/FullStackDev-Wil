@@ -139,18 +139,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ---------------------------------------------------------------------------
-// 6. CORS
-// ---------------------------------------------------------------------------
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("BlastProClients", policy =>
-        policy
-            .AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod());
-});
-
 var app = builder.Build();
 
 // ---------------------------------------------------------------------------
@@ -162,8 +150,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseCors("BlastProClients");
+// The Android emulator reaches this development-only loopback endpoint over HTTP.
+// Hosted environments must redirect to HTTPS before credentials or tokens are sent.
+if (!app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
