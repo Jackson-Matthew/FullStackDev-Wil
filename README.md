@@ -12,19 +12,20 @@ BlastPro is a work integrated learning project for managing blast projects, reco
 | Area | Available in the current build |
 | --- | --- |
 | Accounts | Create a company and its Main Company User, confirm email, sign in, sign out, and reset passwords through a local development mailbox. |
-| Company administration | Main Company Users manage company contact details and invite, edit, deactivate, or reactivate Blasters. The API enforces five active Blasters per company. |
+| Company administration | Main Company Users manage company contact details, explosive products and prices, and invite, edit, deactivate, or reactivate Blasters. The API enforces five active Blasters per company. |
 | Profile | Users view and edit their permitted personal details. Company, role, and account status are controlled by the API. |
-| Projects | Create, search, filter, edit, and soft delete projects. |
+| Projects | Create, search, filter, edit, and soft delete projects. New mobile projects appear on the web. |
+| Project notes | Web and Android users with project access can add notes and comments and store up to three JPEG, PNG, or WebP photos per note in the shared database. |
 | Pattern design | Set project parameters, add or remove holes, choose available explosive products, and save a draft layout. |
 | Calculations | Calculate and save totals, estimated volume and tonnage, powder factor, predicted peak particle velocity (PPV), idealised flyrock range, and safety warnings when the required inputs are available. Review previous results. |
+| Reports | Preview saved calculation results and use the browser print view. A direct PDF file download is not implemented. |
 | Access control | `Blaster` users work with their own projects. `MainCompanyUser` users can access projects within their company. The API enforces company and ownership boundaries. |
 
-Explosive cost is shown only when every hole has a priced product in one currency. Product and price administration is still under development.
+Explosive cost is shown only when every hole has an active, priced product in one currency. Main Company Users can add and edit company products and link prices to the AECI catalogue choices used in pattern design. The sample button adds editable demonstration prices for S100 (R35/kg), S300 (R28/kg), and Powergel Eco (R55/kg). These are placeholders, not supplier quotes. Saved calculation totals keep their original cost when a product price changes.
 
 ### Still under development
 
-- Report data binding and PDF report download. The report route is present, but it does not yet display a completed report.
-- Explosive product and price administration in the user interface.
+- Direct PDF file download. The `DownloadPdf` action currently opens the browser print view.
 - Production deployment and production account email delivery (confirmation, invitation, and password reset).
 
 ## Architecture
@@ -35,6 +36,8 @@ Browser → BlastPro.Mvc → BlastPro.Api → SQL Server LocalDB
 ```
 
 The MVC application renders the interface and calls the API over HTTPS. The API handles authentication, authorisation, projects, calculations, and database access. MVC does not connect directly to the database.
+
+The Android app signs in with an existing web account, then uses the same API for projects, notes, comments, and photos. Android has no calculation or account-creation screen. It requires a connection to the API and asks the user to sign in again after the app process ends. Earlier device-only Room notes are not automatically imported into shared projects.
 
 | Project | Purpose |
 | --- | --- |
@@ -50,7 +53,7 @@ The MVC application renders the interface and calls the API over HTTPS. The API 
 - SQL Server LocalDB.
 - Visual Studio with ASP.NET and web development support, or two terminals for the .NET CLI.
 
-The repository's development launch profiles use HTTPS. If your local ASP.NET Core certificate is not trusted, run:
+The web development launch profile uses HTTPS. The API also exposes local HTTP on port 5002 for the Android emulator debug build. If your local ASP.NET Core certificate is not trusted, run:
 
 ```powershell
 dotnet dev-certs https --trust
@@ -88,7 +91,7 @@ Swagger UI is available only in the Development environment. Protected API endpo
 
 ### Database and configuration
 
-The API uses SQL Server LocalDB for local development. On startup it applies the committed EF Core migrations and ensures Identity roles exist. The sample company and initial administrator are seeded only in Development. New companies use the public Create Company flow.
+The API uses SQL Server LocalDB for local development. On startup it applies the committed EF Core migrations and ensures Identity roles exist. The sample company is seeded only in Development; its administrator is created only when `DevelopmentSeed:AdminPassword` is configured. New companies use the public Create Company flow.
 
 The Development profile uses the connection string in `BlastPro/BlastPro.Api/appsettings.Development.json`. If your existing LocalDB database conflicts with migration history, use a unique database name without deleting data you need. From the repository root:
 
@@ -96,7 +99,33 @@ The Development profile uses the connection string in `BlastPro/BlastPro.Api/app
 dotnet user-secrets set 'ConnectionStrings:DefaultConnection' 'Server=(localdb)\MSSQLLocalDB;Database=BlastProApiDevYourName;Trusted_Connection=True;MultipleActiveResultSets=true' --project .\BlastPro\BlastPro.Api\BlastPro.Api.csproj
 ```
 
-Replace `YourName` with your own identifier, then restart the API. The MVC API address is configured through `ApiBaseUrl` in `BlastPro/BlastPro/appsettings.json`. Keep real credentials and deployment secrets out of committed settings.
+Replace `YourName` with your own identifier. Each developer also needs a private JWT signing key. Generate one from the repository root:
+
+```powershell
+$jwtKey = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(64))
+dotnet user-secrets set 'Jwt:Key' $jwtKey --project .\BlastPro\BlastPro.Api\BlastPro.Api.csproj
+Remove-Variable jwtKey
+```
+
+The old committed signing key has been removed. Previously issued tokens will no longer work once the API uses a new key. If you need the optional local sample administrator when creating a fresh development database, set `DevelopmentSeed:AdminPassword` in user secrets to a private password that meets the Identity policy. Otherwise create a company through the application. The MVC API address is configured through `ApiBaseUrl` in `BlastPro/BlastPro/appsettings.json`.
+
+For hosting, configure `Jwt__Key` and `ConnectionStrings__DefaultConnection` as secrets in the deployment environment. Use a new random signing key and production database credentials. Do not commit either value to GitHub. Each environment that needs to accept the same active tokens must use its own stable key.
+
+### Android app
+
+The debug build connects from the Android emulator to `http://10.0.2.2:5002/`. Start the API with its Development launch profile before signing in. Build from `BlastPro.Android` with Android SDK 35 installed:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+Install the debug APK on a running Android emulator with Android Studio, or run:
+
+```powershell
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r .\app\build\outputs\apk\debug\app-debug.apk
+```
+
+To use another API address, pass `-PblastProApiUrl=https://your-api-host/` to Gradle. A release build must use HTTPS; configure its real hosted URL before distributing it. The app has no registration flow. Create and confirm accounts on the web first, then sign in on mobile with the same credentials. Photos are limited to three per note and 5 MB each. Mobile notes use the shared API while online; the old device-only notes are not migrated automatically. Main Company Users see their company's projects; Blasters see the projects they own.
 
 ## Test
 
@@ -106,7 +135,7 @@ From the repository root:
 dotnet test .\BlastPro\BlastPro.slnx
 ```
 
-The test project covers authentication, company and owner access, account setup, Blaster seats, calculations, result history, and MVC forms. Transaction tests require Windows SQL Server LocalDB and use temporary databases deleted after each test. Other tests use isolated in-memory data.
+The test project covers authentication, company and owner access, account setup, Blaster seats, product prices and saved costs, project notes and photo access, calculations, result history, and MVC forms. Transaction tests require Windows SQL Server LocalDB and use temporary databases deleted after each test. Other tests use isolated in-memory data.
 
 ## Troubleshooting
 
@@ -118,7 +147,7 @@ The test project covers authentication, company and owner access, account setup,
 | No password reset email arrives | Development reset links are written to `BlastPro/BlastPro.Api/App_Data/PasswordReset`, not sent by email. See the [account guide](BlastPro/docs/login-and-password-reset.md). |
 | No company confirmation or Blaster invitation arrives | Development account links are written to `BlastPro/BlastPro.Api/App_Data/AccountMail`. See [company setup](BlastPro/docs/company-accounts.md). |
 | Results show no total cost | Each hole needs an active, priced explosive product using the same currency. |
-| The report page says there are no results to report on | Report data binding and PDF generation are still under development. Review the current output on the Results page. |
+| The report page says there are no results to report on | Save a calculation result for the project first, then reopen the report preview. |
 
 ## Further documentation
 

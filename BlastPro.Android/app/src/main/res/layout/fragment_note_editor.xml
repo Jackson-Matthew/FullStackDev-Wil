@@ -35,7 +35,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="Add text and photos. Notes save on this device first." />
+                android:text="Add text and photos to a shared project." />
 
             <TextView
                 style="@style/BlastPro.Label"
@@ -89,7 +89,6 @@
                 style="@style/BlastPro.Spinner"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:entries="@array/project_options"
                 android:theme="@style/ThemeOverlay.BlastPro.Spinner" />
 
             <TextView
@@ -173,12 +172,12 @@
                     android:focusable="true">
 
                     <ImageView
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:layout_gravity="center"
                         android:contentDescription="Photo"
-                        android:src="@drawable/ic_image"
-                        app:tint="@color/ink_muted" />
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_image" />
 
                     <ImageButton
                         android:id="@+id/thumb_1_remove"
@@ -203,12 +202,12 @@
                     android:focusable="true">
 
                     <ImageView
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:layout_gravity="center"
                         android:contentDescription="Photo"
-                        android:src="@drawable/ic_image"
-                        app:tint="@color/ink_muted" />
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_image" />
 
                     <ImageButton
                         android:id="@+id/thumb_2_remove"
@@ -233,12 +232,12 @@
                     android:visibility="gone">
 
                     <ImageView
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:layout_gravity="center"
                         android:contentDescription="Photo"
-                        android:src="@drawable/ic_image"
-                        app:tint="@color/ink_muted" />
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_image" />
 
                     <ImageButton
                         android:id="@+id/thumb_3_remove"
@@ -262,6 +261,38 @@
                 android:layout_marginTop="10dp"
                 android:text="No photos attached."
                 android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/comments_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:orientation="vertical">
+                <TextView
+                    style="@style/BlastPro.Label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Comments" />
+                <LinearLayout
+                    android:id="@+id/comments_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+                <EditText
+                    android:id="@+id/edit_comment"
+                    style="@style/BlastPro.Field"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Add a comment"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:maxLength="2000" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_add_comment"
+                    style="@style/BlastPro.Button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Post comment" />
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 

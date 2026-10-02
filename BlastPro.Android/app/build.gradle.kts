@@ -19,8 +19,15 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "API_BASE_URL", "\"${providers.gradleProperty("blastProApiUrl").orElse("http://10.0.2.2:5002/").get()}\"")
+        }
         release {
             isMinifyEnabled = false
+            val apiUrl = providers.gradleProperty("blastProApiUrl").orNull
+                ?: "https://your-hosted-api.example/"
+            require(apiUrl.startsWith("https://")) { "Release API URL must use HTTPS" }
+            buildConfigField("String", "API_BASE_URL", "\"$apiUrl\"")
         }
     }
 
@@ -35,6 +42,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 

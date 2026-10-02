@@ -35,15 +35,19 @@ public sealed class CalculationsApiController(
         if (validationError is not null) return BadRequest(new { message = validationError });
 
         var productIds = project.Holes
+            .Where(h => string.IsNullOrEmpty(h.AeciProductCode))
             .Select(h => h.ExplosiveProductId ?? project.ExplosiveProductId)
             .Where(productId => productId.HasValue)
             .Select(productId => productId!.Value)
             .Distinct()
             .ToArray();
+        var productCodes = project.Holes.Where(h => !string.IsNullOrEmpty(h.AeciProductCode))
+            .Select(h => h.AeciProductCode).Distinct().ToArray();
         var products = await db.ExplosiveProducts
-            .Where(p => productIds.Contains(p.Id) && p.CompanyId == companyId)
+            .Where(p => p.CompanyId == companyId &&
+                (productIds.Contains(p.Id) || (p.AeciProductCode != null && productCodes.Contains(p.AeciProductCode))))
             .ToListAsync();
-        if (products.Count != productIds.Length)
+        if (products.Count(p => productIds.Contains(p.Id)) != productIds.Length)
             return BadRequest(new { message = "A selected explosive product is unavailable to this company." });
 
         try

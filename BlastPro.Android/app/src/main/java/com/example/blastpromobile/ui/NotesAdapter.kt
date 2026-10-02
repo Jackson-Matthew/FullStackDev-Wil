@@ -8,24 +8,25 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.blastpromobile.R
-import com.example.blastpromobile.data.local.Note
+import com.example.blastpromobile.data.RemoteNote
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.time.Instant
 
 class NotesAdapter(
-    private val onOpen: (Note) -> Unit
+    private val onOpen: (RemoteNote) -> Unit
 ) : RecyclerView.Adapter<NotesAdapter.NoteViewHolder>() {
 
-    private val items = mutableListOf<Note>()
-    private val photoCounts = mutableMapOf<Long, Int>()
+    private val items = mutableListOf<RemoteNote>()
+    private val projectNames = mutableMapOf<Int, String>()
     private val dateFmt = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
 
-    fun submit(newItems: List<Note>, counts: Map<Long, Int>) {
+    fun submit(newItems: List<RemoteNote>, names: Map<Int, String>) {
         items.clear()
         items.addAll(newItems)
-        photoCounts.clear()
-        photoCounts.putAll(counts)
+        projectNames.clear()
+        projectNames.putAll(names)
         notifyDataSetChanged()
     }
 
@@ -37,7 +38,7 @@ class NotesAdapter(
 
     override fun onBindViewHolder(holder: NoteViewHolder, position: Int) {
         val note = items[position]
-        holder.bind(note, photoCounts[note.id] ?: 0, onOpen)
+        holder.bind(note, projectNames[note.projectId].orEmpty(), onOpen)
     }
 
     override fun getItemCount(): Int = items.size
@@ -51,29 +52,17 @@ class NotesAdapter(
         private val project: TextView = itemView.findViewById(R.id.note_project)
         private val photoCount: TextView = itemView.findViewById(R.id.note_photo_count)
 
-        fun bind(note: Note, count: Int, onOpen: (Note) -> Unit) {
+        fun bind(note: RemoteNote, projectName: String, onOpen: (RemoteNote) -> Unit) {
             title.text = note.title.ifBlank { "(Untitled note)" }
             preview.text = note.body.ifBlank { "No text" }
-            project.text = note.projectName.ifBlank { "No project" }
-            date.text = dateFmt.format(Date(note.updatedAtMillis))
-
-            chip.text = when (note.status) {
-                Note.STATUS_SYNCED -> "Synced"
-                Note.STATUS_RETRY -> "Needs retry"
-                Note.STATUS_CONFLICT -> "Conflict"
-                else -> "Saved on device"
-            }
-
-            val colorRes = when (note.status) {
-                Note.STATUS_SYNCED -> R.color.status_green
-                Note.STATUS_RETRY -> R.color.status_orange
-                Note.STATUS_CONFLICT -> R.color.blast_red
-                else -> R.color.status_grey
-            }
+            project.text = projectName
+            date.text = runCatching { dateFmt.format(Date.from(Instant.parse(note.updatedAtUtc))) }.getOrDefault("")
+            chip.text = "Synced"
+            val colorRes = R.color.status_green
             chip.backgroundTintList =
                 ContextCompat.getColorStateList(itemView.context, colorRes)
 
-            photoCount.text = count.toString()
+            photoCount.text = note.photos.size.toString()
             card.setOnClickListener { onOpen(note) }
         }
     }

@@ -18,6 +18,9 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ExplosiveProduct> ExplosiveProducts => Set<ExplosiveProduct>();
     public DbSet<CalculationResult> CalculationResults => Set<CalculationResult>();
     public DbSet<BlastWarning> BlastWarnings => Set<BlastWarning>();
+    public DbSet<ProjectNote> ProjectNotes => Set<ProjectNote>();
+    public DbSet<ProjectNotePhoto> ProjectNotePhotos => Set<ProjectNotePhoto>();
+    public DbSet<ProjectNoteComment> ProjectNoteComments => Set<ProjectNoteComment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,8 +33,38 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         ConfigureExplosiveProduct(modelBuilder);
         ConfigureCalculationResult(modelBuilder);
         ConfigureBlastWarning(modelBuilder);
+        ConfigureProjectNotes(modelBuilder);
 
         DatabaseSeeder.Seed(modelBuilder);
+    }
+
+    private static void ConfigureProjectNotes(ModelBuilder modelBuilder)
+    {
+        var note = modelBuilder.Entity<ProjectNote>();
+        note.Property(n => n.Title).HasMaxLength(150).IsRequired();
+        note.Property(n => n.Body).HasMaxLength(10000).IsRequired();
+        note.HasQueryFilter(n => !n.BlastProject.IsDeleted);
+        note.HasIndex(n => new { n.BlastProjectId, n.UpdatedAtUtc });
+        note.HasOne(n => n.BlastProject).WithMany().HasForeignKey(n => n.BlastProjectId)
+            .OnDelete(DeleteBehavior.Restrict);
+        note.HasOne(n => n.Author).WithMany().HasForeignKey(n => n.AuthorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        var photo = modelBuilder.Entity<ProjectNotePhoto>();
+        photo.Property(p => p.FileName).HasMaxLength(200).IsRequired();
+        photo.Property(p => p.ContentType).HasMaxLength(50).IsRequired();
+        photo.Property(p => p.Data).IsRequired();
+        photo.HasQueryFilter(p => !p.Note.BlastProject.IsDeleted);
+        photo.HasOne(p => p.Note).WithMany(n => n.Photos).HasForeignKey(p => p.ProjectNoteId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        var comment = modelBuilder.Entity<ProjectNoteComment>();
+        comment.Property(c => c.Body).HasMaxLength(2000).IsRequired();
+        comment.HasQueryFilter(c => !c.Note.BlastProject.IsDeleted);
+        comment.HasOne(c => c.Note).WithMany(n => n.Comments).HasForeignKey(c => c.ProjectNoteId)
+            .OnDelete(DeleteBehavior.Cascade);
+        comment.HasOne(c => c.Author).WithMany().HasForeignKey(c => c.AuthorId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 
     private static void ConfigureCompany(ModelBuilder modelBuilder)
@@ -199,12 +232,15 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
         entity.Property(product => product.Name).HasMaxLength(150).IsRequired();
         entity.Property(product => product.PricePerKg).HasPrecision(18, 4);
+        entity.Property(product => product.AeciProductCode).HasMaxLength(40);
         entity.Property(product => product.CurrencyCode).HasMaxLength(3).IsRequired();
         entity.Property(product => product.IsActive).HasDefaultValue(true);
         entity.Property(product => product.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
         entity.Property(product => product.UpdatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
 
         entity.HasIndex(product => new { product.CompanyId, product.Name }).IsUnique();
+        entity.HasIndex(product => new { product.CompanyId, product.AeciProductCode })
+            .IsUnique().HasFilter("[AeciProductCode] IS NOT NULL");
 
         entity.HasOne(product => product.Company)
             .WithMany(company => company.ExplosiveProducts)

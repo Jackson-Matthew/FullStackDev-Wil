@@ -6,6 +6,8 @@ public interface IApiClient
     Task<ApiResult<T>> PostAsync<T>(string path, object payload);
     Task<ApiResult<T>> PutAsync<T>(string path, object payload);
     Task<ApiResult> DeleteAsync(string path);
+    Task<ApiResult<RemoteFile>> GetFileAsync(string path);
+    Task<ApiResult> PostFileAsync(string path, IFormFile file);
 
     Task<ApiResult<LoginResultDto>> LoginAsync(string email, string password);
     Task<ApiResult<PasswordResetDeliveryDto>> ForgotPasswordAsync(string email);
@@ -13,6 +15,8 @@ public interface IApiClient
     Task<ApiResult<T>> PostAnonymousAsync<T>(string path, object payload,
         CancellationToken cancellationToken = default);
 }
+
+public sealed record RemoteFile(byte[] Data, string ContentType);
 
 public class ApiResult
 {

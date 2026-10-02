@@ -30,7 +30,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:layout_marginBottom="12dp"
-            android:text="Field notes and photos saved on this device." />
+            android:text="Field notes and photos shared with your web projects." />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_create_project"
+            style="@style/BlastPro.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="New project" />
 
         <EditText
             android:id="@+id/edit_search"
@@ -48,7 +55,6 @@
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:layout_marginTop="8dp"
-            android:entries="@array/project_filter_options"
             android:theme="@style/ThemeOverlay.BlastPro.Spinner" />
 
         <FrameLayout

@@ -28,6 +28,51 @@ public class ApiClient(HttpClient http, IHttpContextAccessor contextAccessor) : 
         => SendAsync<T>(HttpMethod.Post, path, payload, false, cancellationToken);
     public Task<ApiResult<T>> PutAsync<T>(string path, object payload) => SendAsync<T>(HttpMethod.Put, path, payload);
     public async Task<ApiResult> DeleteAsync(string path) => await SendAsync<object>(HttpMethod.Delete, path);
+    public async Task<ApiResult<RemoteFile>> GetFileAsync(string path)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, path);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            contextAccessor.HttpContext?.User.FindFirst("jwt")?.Value ?? throw new ApiAuthenticationException());
+        try
+        {
+            using var response = await http.SendAsync(request);
+            if (response.StatusCode == HttpStatusCode.Unauthorized) throw new ApiAuthenticationException();
+            if (!response.IsSuccessStatusCode) return new ApiResult<RemoteFile> { Error = "Photo not found.", StatusCode = response.StatusCode };
+            return new ApiResult<RemoteFile> { Success = true, Data = new RemoteFile(
+                await response.Content.ReadAsByteArrayAsync(),
+                response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream") };
+        }
+        catch (HttpRequestException)
+        {
+            return new ApiResult<RemoteFile> { Error = "The connection to the BlastPro server failed." };
+        }
+    }
+
+    public async Task<ApiResult> PostFileAsync(string path, IFormFile file)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, path);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            contextAccessor.HttpContext?.User.FindFirst("jwt")?.Value ?? throw new ApiAuthenticationException());
+        using var multipart = new MultipartFormDataContent();
+        using var stream = file.OpenReadStream();
+        var content = new StreamContent(stream);
+        content.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+        multipart.Add(content, "file", file.FileName);
+        request.Content = multipart;
+        try
+        {
+            using var response = await http.SendAsync(request);
+            if (response.StatusCode == HttpStatusCode.Unauthorized) throw new ApiAuthenticationException();
+            if (response.IsSuccessStatusCode) return new ApiResult { Success = true };
+            return new ApiResult { Error = response.StatusCode == HttpStatusCode.BadRequest
+                ? "The photo could not be accepted. Use a JPEG, PNG, or WebP image under 5 MB."
+                : "The photo could not be uploaded.", StatusCode = response.StatusCode };
+        }
+        catch (HttpRequestException)
+        {
+            return new ApiResult { Error = "The connection to the BlastPro server failed." };
+        }
+    }
     public Task<ApiResult<LoginResultDto>> LoginAsync(string email, string password)
         => SendAsync<LoginResultDto>(HttpMethod.Post, "api/auth/login", new { email, password }, false);
     public Task<ApiResult<PasswordResetDeliveryDto>> ForgotPasswordAsync(string email)
