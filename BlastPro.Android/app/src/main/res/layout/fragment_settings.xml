@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Settings. UI only: the API address is for reference and the switch does nothing yet. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -53,24 +52,7 @@
                 android:importantForAutofill="no"
                 android:inputType="none"
                 android:maxLines="1"
-                android:text="@string/dev_api_base_url" />
-
-            <TextView
-                style="@style/BlastPro.Label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="4dp"
-                android:text="Chat" />
-
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/switch_ai"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                android:text="AI chat enabled"
-                android:textColor="@color/white"
-                android:textSize="16sp" />
+                android:text="" />
 
             <TextView
                 style="@style/BlastPro.Label"

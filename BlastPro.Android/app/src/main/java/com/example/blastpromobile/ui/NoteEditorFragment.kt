@@ -5,10 +5,12 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
+import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -17,329 +19,221 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.blastpromobile.R
-import com.example.blastpromobile.data.NoteRepository
-import com.example.blastpromobile.data.local.NotePhoto
+import com.example.blastpromobile.data.RemotePhoto
+import com.example.blastpromobile.data.RemoteProject
+import com.example.blastpromobile.data.RemoteRepository
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import java.io.File
 
 class NoteEditorFragment : BaseFragment(R.layout.fragment_note_editor) {
-
-    private val tag = "NoteEditor"
-
-    private lateinit var repo: NoteRepository
-
+    private lateinit var repo: RemoteRepository
     private lateinit var editTitle: EditText
     private lateinit var editBody: EditText
     private lateinit var projectSpinner: Spinner
     private lateinit var textHeading: TextView
     private lateinit var textNoPhotos: TextView
-
-    // Large preview panel + image
     private lateinit var previewPanel: View
     private lateinit var previewImage: ImageView
-
+    private lateinit var commentInput: EditText
+    private lateinit var commentsContainer: LinearLayout
     private val photoFrames = mutableListOf<View>()
     private val photoIcons = mutableListOf<ImageView>()
-
-    private val currentPaths = mutableListOf<String>()
-
-    private var noteId: Long = 0L
-    private var isNew = true
     private val pendingUris = mutableListOf<Uri>()
-    private val existingPhotos = mutableListOf<NotePhoto>()
+    private val existingPhotos = mutableListOf<RemotePhoto>()
+    private val currentPaths = mutableListOf<String>()
+    private val shownPaths = mutableListOf<String>()
+    private var projects = listOf<RemoteProject>()
+    private var noteId = 0
+    private var projectId = 0
 
-    // ----------------------------------------------------------------
-    // Activity result launchers
-    // ----------------------------------------------------------------
-
-    private val takePhoto = registerForActivityResult(
-        ActivityResultContracts.TakePicturePreview()
-    ) { bitmap: Bitmap? ->
+    private val takePhoto = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap: Bitmap? ->
         if (bitmap != null) {
-            val tmp = File(requireContext().cacheDir, "cap_${System.currentTimeMillis()}.jpg")
-            tmp.outputStream().use { out ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
-            }
-            onPhotoPicked(Uri.fromFile(tmp))
+            val file = File(requireContext().cacheDir, "cap_${System.currentTimeMillis()}.jpg")
+            file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it) }
+            addPending(Uri.fromFile(file))
         }
     }
-
-    private val pickImage = registerForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri: Uri? -> if (uri != null) onPhotoPicked(uri) }
-
-    private val requestCameraPermission = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            takePhoto.launch(null)
-        } else {
-            Toast.makeText(
-                requireContext(),
-                "Camera permission is needed to take photos.",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
+    private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) addPending(uri)
     }
-
-    // ----------------------------------------------------------------
-    // Lifecycle
-    // ----------------------------------------------------------------
+    private val requestCameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) takePhoto.launch(null)
+        else toast("Camera permission is needed to take photos.")
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        repo = NoteRepository(requireContext().applicationContext)
-
+        repo = RemoteRepository(requireContext().applicationContext)
+        noteId = arguments?.getString("noteId")?.toIntOrNull() ?: 0
+        projectId = arguments?.getInt("projectId") ?: 0
         editTitle = view.findViewById(R.id.edit_title)
         editBody = view.findViewById(R.id.edit_body)
         projectSpinner = view.findViewById(R.id.spinner_project)
         textHeading = view.findViewById(R.id.text_heading)
         textNoPhotos = view.findViewById(R.id.text_no_photos)
-
         previewPanel = view.findViewById(R.id.photo_preview_panel)
         previewImage = view.findViewById(R.id.image_preview)
+        commentInput = view.findViewById(R.id.edit_comment)
+        commentsContainer = view.findViewById(R.id.comments_container)
+        textHeading.text = if (noteId == 0) "New Note" else "Edit Note"
+        view.findViewById<View>(R.id.btn_delete).visibility = if (noteId == 0) View.GONE else View.VISIBLE
+        view.findViewById<View>(R.id.comments_section).visibility = if (noteId == 0) View.GONE else View.VISIBLE
 
-        val frameIds = listOf(R.id.thumb_1, R.id.thumb_2, R.id.thumb_3)
-        frameIds.forEach { id ->
+        listOf(R.id.thumb_1, R.id.thumb_2, R.id.thumb_3).forEach { id ->
             val frame = view.findViewById<View>(id)
             photoFrames += frame
-            val icon = (frame as android.view.ViewGroup).getChildAt(0) as ImageView
-            photoIcons += icon
+            photoIcons += (frame as android.view.ViewGroup).getChildAt(0) as ImageView
         }
-
-        val arg = requireArguments().getString("noteId")
-        isNew = arg.isNullOrBlank() || arg == "new"
-
-        if (isNew) {
-            textHeading.text = "New Note"
-            view.findViewById<View>(R.id.btn_delete).visibility = View.GONE
-        } else {
-            noteId = arg!!.toLongOrNull() ?: 0L
-            textHeading.text = "Edit Note"
-            view.findViewById<View>(R.id.btn_delete).visibility = View.VISIBLE
-            loadNote()
+        photoFrames.forEachIndexed { index, frame ->
+            frame.setOnClickListener { shownPaths.getOrNull(index)?.let(::showPreview) }
+            photoIcons[index].setOnClickListener { shownPaths.getOrNull(index)?.let(::showPreview) }
         }
-
-        // Camera
+        listOf(R.id.thumb_1_remove, R.id.thumb_2_remove, R.id.thumb_3_remove)
+            .forEachIndexed { index, id -> view.findViewById<View>(id).setOnClickListener { removePhotoAt(index) } }
+        view.findViewById<View>(R.id.preview_close).setOnClickListener { previewPanel.visibility = View.GONE }
         view.findViewById<View>(R.id.btn_take_photo).setOnClickListener {
-            val hasPermission = ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-
-            if (hasPermission) {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
                 takePhoto.launch(null)
-            } else {
-                requestCameraPermission.launch(Manifest.permission.CAMERA)
-            }
+            else requestCameraPermission.launch(Manifest.permission.CAMERA)
         }
-
-        // Gallery
-        view.findViewById<View>(R.id.btn_gallery).setOnClickListener {
-            pickImage.launch("image/*")
-        }
-
+        view.findViewById<View>(R.id.btn_gallery).setOnClickListener { pickImage.launch("image/*") }
         view.findViewById<View>(R.id.btn_save).setOnClickListener { saveNote() }
         view.findViewById<View>(R.id.btn_delete).setOnClickListener { confirmDelete() }
-
-        // Close preview panel
-        view.findViewById<View>(R.id.preview_close).setOnClickListener {
-            previewPanel.visibility = View.GONE
-        }
-
-        // Remove photo buttons
-        val removeButtons = listOf(
-            R.id.thumb_1_remove,
-            R.id.thumb_2_remove,
-            R.id.thumb_3_remove
-        )
-        removeButtons.forEachIndexed { index, id ->
-            view.findViewById<View>(id).setOnClickListener { removePhotoAt(index) }
-        }
-
-        // Wire tap listeners on frames and icons — show in the preview panel
-        photoFrames.forEachIndexed { index, frame ->
-            val showPreview: (View) -> Unit = {
-                val path = currentPaths.getOrNull(index)
-                Log.d(tag, "Tap thumb $index, path=$path")
-                if (!path.isNullOrBlank()) {
-                    showInPreviewPanel(path)
-                }
-            }
-            frame.setOnClickListener(showPreview)
-            photoIcons[index].setOnClickListener(showPreview)
-        }
-
-        refreshPhotoStrip()
+        view.findViewById<View>(R.id.btn_add_comment).setOnClickListener { addComment() }
+        load()
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (::textNoPhotos.isInitialized) {
-            refreshPhotoStrip()
-        }
-    }
-
-    // ----------------------------------------------------------------
-    // Inline preview
-    // ----------------------------------------------------------------
-
-    private fun showInPreviewPanel(path: String) {
-        previewPanel.visibility = View.VISIBLE
-        previewImage.setImageResource(R.drawable.ic_image)
-
-        try {
-            when {
-                path.startsWith("content://") ->
-                    previewImage.setImageURI(Uri.parse(path))
-                path.startsWith("file://") ->
-                    previewImage.setImageURI(Uri.parse(path))
-                else -> {
-                    val file = File(path)
-                    if (file.exists()) {
-                        previewImage.setImageURI(Uri.fromFile(file))
-                    }
-                }
-            }
-        } catch (t: Throwable) {
-            Log.e(tag, "Failed to load preview", t)
-        }
-    }
-
-    // ----------------------------------------------------------------
-    // Load / Save / Delete
-    // ----------------------------------------------------------------
-
-    private fun loadNote() {
+    private fun load() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val note = repo.getNote(noteId) ?: return@launch
-            editTitle.setText(note.title)
-            editBody.setText(note.body)
+            try {
+                projects = repo.projects()
+                projectSpinner.adapter = ArrayAdapter(requireContext(), R.layout.item_project_spinner,
+                    projects.map { it.name }).also { it.setDropDownViewResource(R.layout.item_project_spinner) }
+                if (noteId != 0) {
+                    val found = if (projectId != 0) repo.note(projectId, noteId)
+                    else projects.firstNotNullOfOrNull { p -> runCatching { repo.note(p.id, noteId) }.getOrNull() }
+                        ?: throw IllegalStateException("Note not found")
+                    projectId = found.projectId
+                    editTitle.setText(found.title)
+                    editBody.setText(found.body)
+                    projectSpinner.isEnabled = false
+                    existingPhotos.clear(); existingPhotos.addAll(found.photos)
+                    renderComments(found.comments.map { "${it.authorName}: ${it.body}" })
+                    loadPhotoPaths()
+                }
+                projectSpinner.setSelection(projects.indexOfFirst { it.id == projectId }.coerceAtLeast(0))
+                refreshPhotoStrip()
+            } catch (error: Exception) { toast(error.message ?: "Could not load the note") }
+        }
+    }
 
-            val projects = resources.getStringArray(R.array.project_options)
-            val idx = projects.indexOfFirst { it.equals(note.projectName, ignoreCase = true) }
-            if (idx >= 0) projectSpinner.setSelection(idx)
+    private fun renderComments(comments: List<String>) {
+        commentsContainer.removeAllViews()
+        comments.forEach { line -> commentsContainer.addView(TextView(requireContext()).apply {
+            text = line; setTextColor(ContextCompat.getColor(requireContext(), R.color.white)); textSize = 15f
+            setPadding(0, 4, 0, 4)
+        }) }
+    }
 
-            existingPhotos.clear()
-            existingPhotos += repo.getPhotos(noteId)
-            refreshPhotoStrip()
+    private fun addComment() {
+        val body = commentInput.text.toString().trim()
+        if (body.isBlank()) { toast("Enter a comment"); return }
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                repo.addComment(projectId, noteId, body)
+                commentInput.text.clear()
+                val note = repo.note(projectId, noteId)
+                renderComments(note.comments.map { "${it.authorName}: ${it.body}" })
+            } catch (error: Exception) { toast(error.message ?: "Could not add comment") }
         }
     }
 
     private fun saveNote() {
-        val title = editTitle.text?.toString()?.trim().orEmpty()
-        val body = editBody.text?.toString().orEmpty()
-        val project = projectSpinner.selectedItem?.toString().orEmpty()
-
-        if (title.isBlank() && body.isBlank() && pendingUris.isEmpty()) {
-            Toast.makeText(requireContext(), "Add a title or note text", Toast.LENGTH_SHORT).show()
-            return
-        }
-
+        val selected = projects.getOrNull(projectSpinner.selectedItemPosition)
+        if (selected == null) { toast("Create or select a project first"); return }
+        val title = editTitle.text.toString().trim().ifBlank { if (pendingUris.isNotEmpty()) "Field photo" else "" }
+        val body = editBody.text.toString().trim()
+        if (title.isBlank() && body.isBlank()) { toast("Add a title, note text, or photo"); return }
+        val button = requireView().findViewById<View>(R.id.btn_save)
+        button.isEnabled = false
         viewLifecycleOwner.lifecycleScope.launch {
-            if (isNew) {
-                repo.createNote(title, body, project, pendingUris.toList())
-            } else {
-                repo.updateNote(noteId, title, body, project)
-            }
-            findNavController().popBackStack()
+            try {
+                if (noteId == 0) {
+                    val created = repo.createNote(selected.id, title, body)
+                    noteId = created.id
+                    projectId = selected.id
+                } else repo.updateNote(projectId, noteId, title, body)
+                pendingUris.toList().forEach { repo.uploadPhoto(projectId, noteId, it); pendingUris.remove(it) }
+                findNavController().popBackStack()
+            } catch (error: Exception) { toast(error.message ?: "Could not save note or photo") }
+            finally { button.isEnabled = true }
         }
     }
 
     private fun confirmDelete() {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Delete note?")
-            .setMessage("This note and its photos will be removed.")
-            .setPositiveButton("Delete") { _, _ ->
-                viewLifecycleOwner.lifecycleScope.launch {
-                    repo.deleteNote(noteId)
-                    findNavController().popBackStack()
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+        MaterialAlertDialogBuilder(requireContext()).setTitle("Delete note?")
+            .setMessage("This note, its comments, and its photos will be removed from the web and mobile app.")
+            .setPositiveButton("Delete") { _, _ -> viewLifecycleOwner.lifecycleScope.launch {
+                try { repo.deleteNote(projectId, noteId); findNavController().popBackStack() }
+                catch (error: Exception) { toast(error.message ?: "Could not delete note") }
+            } }.setNegativeButton("Cancel", null).show()
     }
 
-    // ----------------------------------------------------------------
-    // Photo handling
-    // ----------------------------------------------------------------
-
-    private fun onPhotoPicked(uri: Uri) {
-        val totalNow = existingPhotos.size + pendingUris.size
-        if (totalNow >= 3) {
-            Toast.makeText(requireContext(), "Up to 3 photos per note.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (isNew) {
-            pendingUris += uri
-            refreshPhotoStrip()
-            // Auto-show the newly added photo
-            showInPreviewPanel(uri.toString())
-        } else {
-            viewLifecycleOwner.lifecycleScope.launch {
-                if (repo.addPhoto(noteId, uri)) {
-                    existingPhotos.clear()
-                    existingPhotos += repo.getPhotos(noteId)
-                    refreshPhotoStrip()
-                    showInPreviewPanel(uri.toString())
-                }
-            }
-        }
+    private fun addPending(uri: Uri) {
+        if (existingPhotos.size + pendingUris.size >= 3) { toast("Up to three photos per note"); return }
+        pendingUris += uri
+        refreshPhotoStrip()
+        showPreview(uri.toString())
     }
 
     private fun removePhotoAt(index: Int) {
-        val totalShown = existingPhotos.size + pendingUris.size
-        if (index >= totalShown) return
-
         if (index < existingPhotos.size) {
             val photo = existingPhotos[index]
             viewLifecycleOwner.lifecycleScope.launch {
-                repo.removePhoto(noteId, photo.id)
-                existingPhotos.clear()
-                existingPhotos += repo.getPhotos(noteId)
-                refreshPhotoStrip()
-                previewPanel.visibility = View.GONE
+                try {
+                    repo.deletePhoto(projectId, noteId, photo.id)
+                    existingPhotos.removeAt(index)
+                    loadPhotoPaths()
+                    refreshPhotoStrip()
+                } catch (error: Exception) { toast(error.message ?: "Could not remove photo") }
             }
         } else {
             val pendingIndex = index - existingPhotos.size
-            pendingUris.removeAt(pendingIndex)
+            if (pendingIndex in pendingUris.indices) pendingUris.removeAt(pendingIndex)
             refreshPhotoStrip()
-            previewPanel.visibility = View.GONE
+        }
+        previewPanel.visibility = View.GONE
+    }
+
+    private suspend fun loadPhotoPaths() {
+        currentPaths.clear()
+        existingPhotos.forEach { photo ->
+            currentPaths += runCatching { repo.photoFile(projectId, noteId, photo.id).absolutePath }.getOrDefault("")
         }
     }
 
     private fun refreshPhotoStrip() {
-        currentPaths.clear()
-        existingPhotos.forEach { currentPaths += it.filePath }
-        pendingUris.forEach { currentPaths += it.toString() }
-
-        for (i in 0..2) {
-            if (i < currentPaths.size) {
-                photoFrames[i].visibility = View.VISIBLE
-
-                try {
-                    val path = currentPaths[i]
-                    when {
-                        path.startsWith("content://") ->
-                            photoIcons[i].setImageURI(Uri.parse(path))
-                        path.startsWith("file://") ->
-                            photoIcons[i].setImageURI(Uri.parse(path))
-                        else ->
-                            photoIcons[i].setImageURI(Uri.fromFile(File(path)))
-                    }
-                } catch (_: Throwable) {
-                    photoIcons[i].setImageResource(R.drawable.ic_image)
-                }
-            } else {
-                photoFrames[i].visibility = View.GONE
-                photoIcons[i].setImageResource(R.drawable.ic_image)
-            }
+        val paths = currentPaths + pendingUris.map { it.toString() }
+        shownPaths.clear(); shownPaths.addAll(paths)
+        photoFrames.forEachIndexed { index, frame ->
+            val path = paths.getOrNull(index)
+            frame.visibility = if (path == null) View.GONE else View.VISIBLE
+            if (path != null) {
+                val uri = if (path.startsWith("content:") || path.startsWith("file:")) Uri.parse(path)
+                    else Uri.fromFile(File(path))
+                photoIcons[index].setImageURI(uri)
+            } else photoIcons[index].setImageResource(R.drawable.ic_image)
         }
-
-        textNoPhotos.visibility =
-            if (currentPaths.isEmpty()) View.VISIBLE else View.GONE
+        textNoPhotos.visibility = if (paths.isEmpty()) View.VISIBLE else View.GONE
     }
+
+    private fun showPreview(path: String) {
+        previewPanel.visibility = View.VISIBLE
+        val uri = if (path.startsWith("content:") || path.startsWith("file:")) Uri.parse(path)
+            else Uri.fromFile(File(path))
+        previewImage.setImageURI(uri)
+    }
+
+    private fun toast(message: String) = Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
 }

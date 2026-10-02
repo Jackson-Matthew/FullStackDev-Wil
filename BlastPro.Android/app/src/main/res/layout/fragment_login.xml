@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dummy login: nothing is checked or sent. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -52,7 +51,7 @@
                 style="@style/BlastPro.Field"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:importantForAutofill="no"
+                android:autofillHints="emailAddress"
                 android:inputType="textEmailAddress"
                 android:maxLines="1" />
 
@@ -69,7 +68,7 @@
                 style="@style/BlastPro.Field"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:importantForAutofill="no"
+                android:autofillHints="password"
                 android:inputType="textPassword"
                 android:maxLines="1" />
 

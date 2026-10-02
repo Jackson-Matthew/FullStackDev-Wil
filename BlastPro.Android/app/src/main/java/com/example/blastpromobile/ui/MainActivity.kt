@@ -16,6 +16,7 @@ import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
 import com.example.blastpromobile.Config
 import com.example.blastpromobile.R
+import com.example.blastpromobile.data.MobileSession
 import com.example.blastpromobile.databinding.ActivityMainBinding
 
 /** Hosts the screens, the bottom bar and the slide-out menu. */
@@ -109,8 +110,13 @@ class MainActivity : AppCompatActivity() {
         binding.menuNotes.setOnClickListener { closeMenu(); goTo(R.id.action_global_notes) }
         binding.menuChat.setOnClickListener { closeMenu(); goTo(R.id.action_global_chat) }
         binding.menuSettings.setOnClickListener { closeMenu(); goTo(R.id.action_global_settings) }
-        binding.menuSync.setOnClickListener { closeMenu() } // UI only for now
-        binding.menuLogout.setOnClickListener { closeMenu(); goTo(R.id.action_global_login) }
+        binding.menuSync.setOnClickListener {
+            closeMenu()
+            val host = supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment
+            val notes = host.childFragmentManager.primaryNavigationFragment as? NotesFragment
+            if (notes != null) notes.refresh() else goTo(R.id.action_global_notes)
+        }
+        binding.menuLogout.setOnClickListener { MobileSession.signOut(); closeMenu(); goTo(R.id.action_global_login) }
         if (!Config.CHAT_ENABLED) binding.menuChat.visibility = View.GONE
     }
 

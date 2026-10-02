@@ -7,6 +7,7 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Spinner
+import android.widget.Toast
 import androidx.core.os.bundleOf
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
@@ -14,74 +15,102 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.blastpromobile.R
-import com.example.blastpromobile.data.NoteRepository
-import kotlinx.coroutines.flow.collectLatest
+import com.example.blastpromobile.data.ApiFailure
+import com.example.blastpromobile.data.RemoteNote
+import com.example.blastpromobile.data.RemoteProject
+import com.example.blastpromobile.data.RemoteRepository
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class NotesFragment : BaseFragment(R.layout.fragment_notes) {
-
-    private lateinit var repo: NoteRepository
+    private lateinit var repo: RemoteRepository
     private lateinit var adapter: NotesAdapter
     private lateinit var recycler: RecyclerView
     private lateinit var empty: LinearLayout
     private lateinit var search: EditText
     private lateinit var filterSpinner: Spinner
-
-    private var currentProject: String? = null
-    private var currentQuery: String? = null
+    private var projects = listOf<RemoteProject>()
+    private var notes = listOf<RemoteNote>()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        repo = NoteRepository(requireContext().applicationContext)
-
+        repo = RemoteRepository(requireContext().applicationContext)
         recycler = view.findViewById(R.id.recycler_notes)
         empty = view.findViewById(R.id.empty_notes)
         search = view.findViewById(R.id.edit_search)
         filterSpinner = view.findViewById(R.id.spinner_project_filter)
-
         adapter = NotesAdapter { note ->
-            findNavController().safeNavigate(
-                R.id.action_notes_to_editor,
-                bundleOf("noteId" to note.id.toString())
-            )
+            findNavController().safeNavigate(R.id.action_notes_to_editor,
+                bundleOf("noteId" to note.id.toString(), "projectId" to note.projectId))
         }
         recycler.layoutManager = LinearLayoutManager(requireContext())
         recycler.adapter = adapter
-
-        ArrayAdapter.createFromResource(
-            requireContext(),
-            R.array.project_filter_options,
-            android.R.layout.simple_spinner_item
-        ).also { a ->
-            a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            filterSpinner.adapter = a
-        }
-
         filterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, v: View?, pos: Int, id: Long) {
-                currentProject = filterSpinner.selectedItem?.toString()
-                refresh()
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) = showFiltered()
+            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
         }
+        search.doAfterTextChanged { showFiltered() }
+        view.findViewById<View>(R.id.btn_create_project).setOnClickListener { createProjectDialog() }
+    }
 
-        search.doAfterTextChanged { text ->
-            currentQuery = text?.toString()
-            refresh()
-        }
-
+    override fun onResume() {
+        super.onResume()
         refresh()
     }
 
-    private fun refresh() {
+    fun refresh() {
         viewLifecycleOwner.lifecycleScope.launch {
-            repo.observeNotes(currentProject, currentQuery).collectLatest { notes ->
-                val counts = notes.associate { it.id to repo.countPhotos(it.id) }
-                adapter.submit(notes, counts)
-                empty.visibility = if (notes.isEmpty()) View.VISIBLE else View.GONE
-                recycler.visibility = if (notes.isEmpty()) View.GONE else View.VISIBLE
+            try {
+                projects = repo.projects()
+                notes = projects.flatMap { repo.notes(it.id) }
+                    .sortedByDescending { it.updatedAtUtc }
+                val names = listOf("All projects") + projects.map { it.name }
+                val selected = filterSpinner.selectedItem?.toString()
+                filterSpinner.adapter = ArrayAdapter(requireContext(), R.layout.item_project_spinner, names).also {
+                    it.setDropDownViewResource(R.layout.item_project_spinner)
+                }
+                filterSpinner.setSelection(names.indexOf(selected).coerceAtLeast(0))
+                showFiltered()
+            } catch (error: Exception) {
+                if (error is ApiFailure && error.status == 401) {
+                    findNavController().safeNavigate(R.id.action_global_login)
+                } else Toast.makeText(requireContext(), error.message ?: "Could not load notes", Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    private fun showFiltered() {
+        if (!::adapter.isInitialized) return
+        val selectedProject = projects.getOrNull(filterSpinner.selectedItemPosition - 1)?.id
+        val query = search.text?.toString()?.trim().orEmpty()
+        val visible = notes.filter { note ->
+            (selectedProject == null || note.projectId == selectedProject) &&
+                (query.isBlank() || note.title.contains(query, true) || note.body.contains(query, true))
+        }
+        adapter.submit(visible, projects.associate { it.id to it.name })
+        empty.visibility = if (visible.isEmpty()) View.VISIBLE else View.GONE
+        recycler.visibility = if (visible.isEmpty()) View.GONE else View.VISIBLE
+    }
+
+    private fun createProjectDialog() {
+        val context = requireContext()
+        val container = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(36, 12, 36, 0) }
+        val name = EditText(context).apply { hint = "Project name"; maxLines = 1 }
+        val site = EditText(context).apply { hint = "Site location"; maxLines = 1 }
+        val type = EditText(context).apply { hint = "Blast type, for example Surface"; maxLines = 1 }
+        container.addView(name); container.addView(site); container.addView(type)
+        MaterialAlertDialogBuilder(context).setTitle("New project").setView(container)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Create") { _, _ ->
+                val n = name.text.toString().trim()
+                val s = site.text.toString().trim()
+                val t = type.text.toString().trim()
+                if (n.isBlank() || s.isBlank() || t.isBlank()) {
+                    Toast.makeText(context, "Enter a name, site, and blast type", Toast.LENGTH_LONG).show()
+                } else viewLifecycleOwner.lifecycleScope.launch {
+                    try { repo.createProject(n, s, t); refresh() }
+                    catch (error: Exception) { Toast.makeText(context, error.message ?: "Could not create project", Toast.LENGTH_LONG).show() }
+                }
+            }.show()
     }
 }
