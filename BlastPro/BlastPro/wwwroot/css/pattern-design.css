@@ -7,27 +7,6 @@
     padding-bottom: 40px;
 }
 
-.design-workflow {
-    background: #fff7e9;
-    border: 1px solid #ddb46b;
-    border-radius: 8px;
-    color: #302414;
-    line-height: 1.5;
-    margin-bottom: 18px;
-    padding: 14px 18px;
-}
-
-.design-readiness {
-    background: #fff;
-    border-left: 4px solid #ef8c00;
-    border-radius: 4px;
-    color: #26323b;
-    font-size: .88rem;
-    margin-bottom: 18px;
-    padding: 10px 14px;
-}
-
-.design-readiness.is-ready { border-left-color: #198754; }
 
 .input-required, .input-calculated {
     border-radius: 3px;
@@ -71,8 +50,8 @@
 .back-btn {
     display: inline-flex;
     align-items: center;
-    min-height: 38px;
-    padding: 0 16px;
+    min-height: 32px;
+    padding: 0 12px;
     background-color: #FF8C00;
     border: 1px solid #FF8C00;
     border-radius: 5px;
@@ -94,22 +73,44 @@
        HEADER
        ========================================================= */
 
-.design-header {
+.design-topbar {
+    background: #FFFFFF;
+    border: 1px solid #d9dee4;
+    border-radius: 10px;
+    margin: 14px 0 18px;
+    overflow: hidden;
+}
+
+.design-topbar-main {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 12px;
-    margin-bottom: 20px;
+    gap: 6px 14px;
+    padding: 12px 16px;
 }
 
 .design-title {
-    color: #000000;
-    font-size: 1.5rem;
+    color: #18232f;
+    font-size: 1.25rem;
     font-weight: 700;
-    margin-bottom: 0;
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
+
+.design-readiness {
+    background: #f6f8fa;
+    border-top: 1px solid #e3e7ec;
+    border-left: 4px solid #e46d19;
+    color: #293747;
+    font-size: .85rem;
+    line-height: 1.4;
+    padding: 8px 16px;
+}
+
+.design-readiness:empty { display: none; }
+
+.design-readiness.is-ready { border-left-color: #198754; }
 
 .design-status-badge {
     display: inline-block;
@@ -567,9 +568,6 @@ select.param-input {
 .design-card-body { padding: 0 22px 22px; }
 .design-card-title { color: #18232f; font-size: 1rem; letter-spacing: -.01em; }
 .design-help { color: #596574; line-height: 1.45; }
-.design-workflow { background: #fff; border: 1px solid #d9dee4; border-left: 4px solid #e46d19; border-radius: 9px; color: #293747; }
-.design-readiness { border: 1px solid #d9dee4; border-left: 4px solid #e46d19; border-radius: 8px; }
-.design-readiness.is-ready { border-left-color: #198754; }
 .param-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px 18px; }
 .param-label { color: #425063; font-size: .72rem; font-weight: 700; line-height: 1.35; text-transform: none; }
 .param-input { font-family: inherit; font-size: .9rem; font-variant-numeric: tabular-nums; }

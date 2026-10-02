@@ -21,25 +21,27 @@
        BACK BUTTON + TITLE
        ========================================================= *@
 
-    <a asp-controller="Dashboard"
-       asp-action="Index"
-       class="back-btn">
+    <header class="design-topbar">
 
-        Back to Dashboard
+        <div class="design-topbar-main">
 
-    </a>
+            <a asp-controller="Dashboard"
+               asp-action="Index"
+               class="back-btn">
+                <i class="bi bi-arrow-left"></i> Dashboard
+            </a>
 
-    <div class="design-header">
+            <h2 class="design-title">@Model.ProjectName — Pattern Design</h2>
 
-        <h2 class="design-title">
-            @Model.ProjectName — Pattern Design
-        </h2>
+            <span class="design-status-badge @(isCalculated || isReviewed ? "status-reviewed" : "status-draft")">
+                @(isReviewed ? "Reviewed" : isCalculated ? "Calculated" : "Draft")
+            </span>
 
-        <span class="design-status-badge @(isCalculated || isReviewed ? "status-reviewed" : "status-draft")">
-            @(isReviewed ? "Reviewed" : isCalculated ? "Calculated" : "Draft")
-        </span>
+        </div>
 
-    </div>
+        <div id="designReadiness" class="design-readiness" role="status" aria-live="polite"></div>
+
+    </header>
 
 
     @* =========================================================
@@ -75,11 +77,6 @@
 
         <div asp-validation-summary="ModelOnly" class="design-validation-summary mb-3"></div>
 
-
-        <div class="design-workflow" role="note">
-            <strong>Build the draft from left to right.</strong> Enter bench dimensions, hole counts and depth. The plan and editable hole estimates update as you type; enter measured site data where indicated.
-        </div>
-        <div id="designReadiness" class="design-readiness" role="status" aria-live="polite"></div>
 
         <div class="design-main-grid">
             <div class="design-input-column">

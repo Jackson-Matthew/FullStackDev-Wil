@@ -447,7 +447,7 @@ document.addEventListener("DOMContentLoaded", () => {
             : !ready ? "4 · Site check — enter " + siteNeeds.join(", ") + " before calculating."
             : screeningNeeds.length ? "Ready for review · Minimum calculation inputs are populated. For the remaining live estimates, enter " +
                 screeningNeeds.join(", ") + "." :
-                "Ready for review · Live estimates are populated. Confirm site assumptions, each hole and the timing plan before calculation.";
+                "Ready for review · Confirm site assumptions, each hole and the timing plan before calculating.";
         const chosen = get("DefaultAeciProductCode").selectedOptions[0];
         const densityRange = chosen?.dataset.densityMin && chosen?.dataset.densityMax
             ? chosen.dataset.densityMin + "–" + chosen.dataset.densityMax + " g/cm³" : "site value required";
