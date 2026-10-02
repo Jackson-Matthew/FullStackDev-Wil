@@ -1,0 +1,30 @@
+@model List<BlastPro.Mvc.Models.ViewModels.ProductViewModel>
+@{ ViewData["Title"] = "Products and prices"; }
+<section class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <div><h1>Products and prices</h1><p>Prices are in ZAR per kilogram. Saved calculation costs do not change when a price changes.</p></div>
+        <a asp-action="Create" class="btn btn-danger">Add product</a>
+    </div>
+    @if (TempData["Success"] is string success) { <div class="alert alert-success" role="status">@success</div> }
+    @if (TempData["Error"] is string error) { <div class="alert alert-danger" role="alert">@error</div> }
+    <div class="alert alert-warning" role="note">The sample prices are demonstration estimates, not supplier quotes. Check actual prices before relying on a cost estimate.</div>
+    <form asp-action="AddSamples" method="post" class="mb-4">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-outline-light">Add sample prices</button>
+    </form>
+    @if (Model.Count == 0) { <p>No products yet. Add a product or load the sample prices to try the calculation workflow.</p> }
+    else
+    {
+        <div class="table-responsive"><table class="table table-dark align-middle">
+            <thead><tr><th scope="col">Product</th><th scope="col">Price per kg</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead>
+            <tbody>
+            @foreach (var product in Model)
+            {
+                <tr><td>@product.Name</td><td>@product.CurrencyCode @product.PricePerKg.ToString("N2")</td>
+                    <td>@(product.IsActive ? "Active" : "Inactive")</td>
+                    <td><a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-outline-light">Edit</a></td></tr>
+            }
+            </tbody>
+        </table></div>
+    }
+</section>

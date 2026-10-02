@@ -12,19 +12,18 @@ BlastPro is a work integrated learning project for managing blast projects, reco
 | Area | Available in the current build |
 | --- | --- |
 | Accounts | Create a company and its Main Company User, confirm email, sign in, sign out, and reset passwords through a local development mailbox. |
-| Company administration | Main Company Users manage company contact details and invite, edit, deactivate, or reactivate Blasters. The API enforces five active Blasters per company. |
+| Company administration | Main Company Users manage company contact details, explosive products and prices, and invite, edit, deactivate, or reactivate Blasters. The API enforces five active Blasters per company. |
 | Profile | Users view and edit their permitted personal details. Company, role, and account status are controlled by the API. |
 | Projects | Create, search, filter, edit, and soft delete projects. |
 | Pattern design | Set project parameters, add or remove holes, choose available explosive products, and save a draft layout. |
 | Calculations | Calculate and save totals, estimated volume and tonnage, powder factor, predicted peak particle velocity (PPV), idealised flyrock range, and safety warnings when the required inputs are available. Review previous results. |
 | Access control | `Blaster` users work with their own projects. `MainCompanyUser` users can access projects within their company. The API enforces company and ownership boundaries. |
 
-Explosive cost is shown only when every hole has a priced product in one currency. Product and price administration is still under development.
+Explosive cost is shown only when every hole has a priced product in one currency. Main Company Users can add and edit company products and can load three editable demonstration prices (R28, R35, and R55 per kg). These are placeholders, not supplier quotes. Saved calculation totals keep their original cost when a product price changes.
 
 ### Still under development
 
 - Report data binding and PDF report download. The report route is present, but it does not yet display a completed report.
-- Explosive product and price administration in the user interface.
 - Production deployment and production account email delivery (confirmation, invitation, and password reset).
 
 ## Architecture
