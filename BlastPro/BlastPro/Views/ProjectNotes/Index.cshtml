@@ -1,67 +1,152 @@
 @model BlastPro.Mvc.Models.ViewModels.ProjectNotesPageViewModel
-@{ ViewData["Title"] = $"{Model.ProjectName} notes"; }
-<section class="container py-4">
-    <a asp-controller="Projects" asp-action="Details" asp-route-id="@Model.ProjectId" class="text-white">&larr; Back to project</a>
-    <h1 class="mt-3">@Model.ProjectName notes</h1>
-    <p>Notes, comments, and photos here are shared with the mobile app.</p>
-    @if (TempData["Success"] is string success) { <div class="alert alert-success" role="status">@success</div> }
-    @if (TempData["Error"] is string error) { <div class="alert alert-danger" role="alert">@error</div> }
-    <div class="card text-dark mb-4"><div class="card-body">
-        <h2 class="h4">Add a note</h2>
+@{
+    ViewData["Title"] = $"{Model.ProjectName} notes";
+}
+
+<link rel="stylesheet" href="~/css/notes.css" asp-append-version="true" />
+
+<section class="container notes-page">
+
+    <header class="notes-topbar">
+        <a asp-controller="Dashboard" asp-action="Index" class="notes-back-btn">
+            <i class="bi bi-arrow-left"></i> Dashboard
+        </a>
+        <div class="notes-topbar-text">
+            <h1 class="notes-title">@Model.ProjectName — Notes</h1>
+            <p class="notes-subtitle">Notes, comments and photos are shared with the mobile app.</p>
+        </div>
+        <span class="notes-count">@Model.Notes.Count @(Model.Notes.Count == 1 ? "note" : "notes")</span>
+    </header>
+
+    @if (TempData["Success"] is string success)
+    {
+        <div class="alert alert-success notes-alert" role="status">@success</div>
+    }
+    @if (TempData["Error"] is string error)
+    {
+        <div class="alert alert-danger notes-alert" role="alert">@error</div>
+    }
+
+    <div class="notes-card">
+        <h2 class="notes-card-title">Add a note</h2>
         <form asp-action="Save" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
-            <div class="mb-3"><label for="new-title" class="form-label">Title</label><input id="new-title" name="Title" maxlength="150" class="form-control" /></div>
-            <div class="mb-3"><label for="new-body" class="form-label">Note</label><textarea id="new-body" name="Body" maxlength="10000" class="form-control" rows="4"></textarea></div>
-            <button class="btn btn-danger" type="submit">Save note</button>
+            <div class="notes-field">
+                <label for="new-title" class="notes-label">Title</label>
+                <input id="new-title" name="Title" maxlength="150" class="form-control" placeholder="Short title" />
+            </div>
+            <div class="notes-field">
+                <label for="new-body" class="notes-label">Note</label>
+                <textarea id="new-body" name="Body" maxlength="10000" class="form-control" rows="3" placeholder="Write a note..."></textarea>
+            </div>
+            <div class="notes-actions">
+                <button class="notes-btn notes-btn-primary" type="submit"><i class="bi bi-plus-lg"></i> Save note</button>
+            </div>
         </form>
-    </div></div>
-    @if (Model.Notes.Count == 0) { <p>No notes for this project yet.</p> }
+    </div>
+
+    @if (Model.Notes.Count == 0)
+    {
+        <div class="notes-empty">No notes for this project yet.</div>
+    }
+
     @foreach (var note in Model.Notes)
     {
-        <article class="card text-dark mb-4"><div class="card-body">
-            <h2 class="h4">@(string.IsNullOrWhiteSpace(note.Title) ? "Untitled note" : note.Title)</h2>
-            <p class="small">By @note.AuthorName on @note.CreatedAtUtc.ToLocalTime().ToString("g")</p>
-            <p style="white-space:pre-wrap">@note.Body</p>
-            <details class="mb-3"><summary>Edit note</summary>
-                <form asp-action="Save" method="post" class="mt-2">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="ProjectId" value="@Model.ProjectId" /><input type="hidden" name="NoteId" value="@note.Id" />
-                    <label class="form-label" for="title-@note.Id">Title</label><input id="title-@note.Id" name="Title" value="@note.Title" maxlength="150" class="form-control mb-2" />
-                    <label class="form-label" for="body-@note.Id">Note</label><textarea id="body-@note.Id" name="Body" maxlength="10000" class="form-control mb-2" rows="4">@note.Body</textarea>
-                    <button class="btn btn-outline-dark" type="submit">Save changes</button>
-                </form>
-            </details>
-            <div class="d-flex flex-wrap gap-3 mb-3">
-                @foreach (var photo in note.Photos)
+        <article class="notes-card">
+
+            <div class="note-head">
+                <div class="note-head-text">
+                    <h2 class="note-title">@(string.IsNullOrWhiteSpace(note.Title) ? "Untitled note" : note.Title)</h2>
+                    <p class="note-meta">By @note.AuthorName · @note.CreatedAtUtc.ToLocalTime().ToString("g")</p>
+                </div>
+                <div class="note-head-actions">
+                    <label for="edit-toggle-@note.Id" class="notes-btn notes-btn-edit" role="button" tabindex="0"><i class="bi bi-pencil"></i> Edit</label>
+                    <form asp-action="Delete" method="post" class="d-flex m-0"
+                          onsubmit="return confirm('Are you sure you want to delete this note?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                        <input type="hidden" name="noteId" value="@note.Id" />
+                        <button type="submit" class="notes-btn notes-btn-delete" title="Delete note"><i class="bi bi-trash"></i> Delete</button>
+                    </form>
+                </div>
+            </div>
+
+            <p class="note-body">@note.Body</p>
+
+            <input type="checkbox" id="edit-toggle-@note.Id" class="note-edit-toggle" />
+            <form asp-action="Save" method="post" class="note-edit-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
+                <input type="hidden" name="NoteId" value="@note.Id" />
+                <div class="notes-field">
+                    <label class="notes-label" for="title-@note.Id">Title</label>
+                    <input id="title-@note.Id" name="Title" value="@note.Title" maxlength="150" class="form-control" />
+                </div>
+                <div class="notes-field">
+                    <label class="notes-label" for="body-@note.Id">Note</label>
+                    <textarea id="body-@note.Id" name="Body" maxlength="10000" class="form-control" rows="4">@note.Body</textarea>
+                </div>
+                <div class="notes-actions">
+                    <button class="notes-btn notes-btn-primary" type="submit">Save changes</button>
+                </div>
+            </form>
+
+            <div class="note-section">
+                <h3 class="note-section-title">Photos <span>@note.Photos.Count / 3</span></h3>
+                @if (note.Photos.Count > 0)
                 {
-                    <div><a asp-action="Photo" asp-route-projectId="@Model.ProjectId" asp-route-noteId="@note.Id" asp-route-photoId="@photo.Id" target="_blank" rel="noopener">
-                        <img src="@Url.Action("Photo", new { projectId = Model.ProjectId, noteId = note.Id, photoId = photo.Id })" alt="@photo.FileName" style="width:140px;max-height:140px;object-fit:cover" />
-                    </a><form asp-action="DeletePhoto" method="post">@Html.AntiForgeryToken()
-                        <input type="hidden" name="projectId" value="@Model.ProjectId" /><input type="hidden" name="noteId" value="@note.Id" /><input type="hidden" name="photoId" value="@photo.Id" />
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove photo</button></form></div>
+                    <div class="note-photos">
+                        @foreach (var photo in note.Photos)
+                        {
+                            <figure class="note-photo">
+                                <a asp-action="Photo" asp-route-projectId="@Model.ProjectId" asp-route-noteId="@note.Id" asp-route-photoId="@photo.Id" target="_blank" rel="noopener">
+                                    <img src="@Url.Action("Photo", new { projectId = Model.ProjectId, noteId = note.Id, photoId = photo.Id })" alt="@photo.FileName" />
+                                </a>
+                                <form asp-action="DeletePhoto" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                                    <input type="hidden" name="noteId" value="@note.Id" />
+                                    <input type="hidden" name="photoId" value="@photo.Id" />
+                                    <button type="submit" class="note-photo-remove" title="Remove photo" aria-label="Remove photo"><i class="bi bi-x-lg"></i></button>
+                                </form>
+                            </figure>
+                        }
+                    </div>
+                }
+                @if (note.Photos.Count < 3)
+                {
+                    <form asp-action="Upload" method="post" enctype="multipart/form-data" class="note-inline-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                        <input type="hidden" name="noteId" value="@note.Id" />
+                        <label class="visually-hidden" for="photo-@note.Id">Add photo</label>
+                        <input id="photo-@note.Id" name="file" type="file" accept="image/jpeg,image/png,image/webp" class="form-control" required />
+                        <button class="notes-btn notes-btn-dark" type="submit"><i class="bi bi-upload"></i> Upload</button>
+                    </form>
                 }
             </div>
-            @if (note.Photos.Count < 3)
-            {
-                <form asp-action="Upload" method="post" enctype="multipart/form-data" class="mb-3">
+
+            <div class="note-section">
+                <h3 class="note-section-title">Comments <span>@note.Comments.Count</span></h3>
+                @foreach (var comment in note.Comments)
+                {
+                    <div class="note-comment">
+                        <div class="note-comment-meta"><strong>@comment.AuthorName</strong> · @comment.CreatedAtUtc.ToLocalTime().ToString("g")</div>
+                        <div class="note-comment-body">@comment.Body</div>
+                    </div>
+                }
+                <form asp-action="Comment" method="post" class="note-inline-form">
                     @Html.AntiForgeryToken()
-                    <input type="hidden" name="projectId" value="@Model.ProjectId" /><input type="hidden" name="noteId" value="@note.Id" />
-                    <label class="form-label" for="photo-@note.Id">Add photo</label><input id="photo-@note.Id" name="file" type="file" accept="image/jpeg,image/png,image/webp" class="form-control mb-2" required />
-                    <button class="btn btn-outline-dark" type="submit">Upload</button>
+                    <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                    <input type="hidden" name="noteId" value="@note.Id" />
+                    <label for="comment-@note.Id" class="visually-hidden">Add comment</label>
+                    <textarea id="comment-@note.Id" name="body" maxlength="2000" required class="form-control" rows="1" placeholder="Add a comment..."></textarea>
+                    <button type="submit" class="notes-btn notes-btn-dark">Post</button>
                 </form>
-            }
-            <h3 class="h5">Comments</h3>
-            @foreach (var comment in note.Comments) { <p><strong>@comment.AuthorName:</strong> @comment.Body <small>@comment.CreatedAtUtc.ToLocalTime().ToString("g")</small></p> }
-            <form asp-action="Comment" method="post" class="mb-3">@Html.AntiForgeryToken()
-                <input type="hidden" name="projectId" value="@Model.ProjectId" /><input type="hidden" name="noteId" value="@note.Id" />
-                <label for="comment-@note.Id" class="form-label">Add comment</label><textarea id="comment-@note.Id" name="body" maxlength="2000" required class="form-control mb-2" rows="2"></textarea>
-                <button type="submit" class="btn btn-outline-dark">Post comment</button>
-            </form>
-            <form asp-action="Delete" method="post">@Html.AntiForgeryToken()
-                <input type="hidden" name="projectId" value="@Model.ProjectId" /><input type="hidden" name="noteId" value="@note.Id" />
-                <button type="submit" class="btn btn-outline-danger">Delete note</button>
-            </form>
-        </div></article>
+            </div>
+
+        </article>
     }
+
 </section>
