@@ -558,7 +558,6 @@ select.param-input {
 }
 
 /* Design workspace */
-body:has(.design-page) { background: #f4f6f8 !important; }
 .design-page { max-width: 1500px; }
 .design-main-grid { display: grid; grid-template-columns: minmax(0, 1.07fr) minmax(0, .93fr); gap: 22px; align-items: start; }
 .design-input-column, .design-preview-column { min-width: 0; }
