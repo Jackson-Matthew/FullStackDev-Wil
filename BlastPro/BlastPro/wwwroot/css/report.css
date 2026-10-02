@@ -50,9 +50,13 @@
 .report-footnote strong { color: #293d53; }
 .report-print-body { margin: 0; background: #eff3f7; font-family: Arial, sans-serif; }
 .report-print-toolbar { display: flex; align-items: center; gap: 16px; max-width: 1160px; margin: 20px auto 0; padding: 0 18px; font-size: 13px; color: #59697a; }
-.report-list-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 0 28px; color: #152437; }
-.report-list-header h1 { margin: 7px 0; font-size: 32px; font-weight: 750; }
-.report-list-header p { margin: 0; color: #64748b; }
+.report-list-header { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; padding: 12px 16px; border: 1px solid #d9dee4; border-radius: 10px; background: #fff; color: #18232f; }
+.report-back-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border: 1px solid #FF8C00; border-radius: 5px; background: #FF8C00; color: #fff; font-size: .85rem; font-weight: 500; text-decoration: none; }
+.report-back-btn:hover { border-color: #E07B00; background: #E07B00; color: #fff; }
+.report-list-heading { flex: 1; min-width: 0; }
+.report-list-heading h1 { margin: 0; font-size: 1.25rem; font-weight: 700; color: #18232f; }
+.report-list-heading p { margin: 2px 0 0; color: #596574; font-size: .8rem; }
+.report-list-count { padding: 3px 10px; border: 1px solid #d1d5db; border-radius: 999px; background: #f3f4f6; color: #374151; font-size: .75rem; font-weight: 600; white-space: nowrap; }
 .report-project-list { display: grid; gap: 12px; }
 .report-project { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 23px 26px; border: 1px solid #dfe5ec; border-radius: 11px; background: #fff; }
 .report-project h2 { margin: 6px 0; font-size: 19px; font-weight: 700; }
@@ -60,7 +64,7 @@
 .report-project-status { color: #a73c2e; font-size: 11px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
 .report-project .report-actions { margin: 0; }
 @media (max-width: 760px) {
-    .report-list-header, .report-project { flex-direction: column; align-items: flex-start; }
+    .report-project { flex-direction: column; align-items: flex-start; }
     .report-page { padding: 14px 10px 36px; }
     .report-hero { flex-direction: column; padding: 26px 22px; }
     .report-section { padding: 22px; }
