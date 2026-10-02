@@ -3,12 +3,20 @@ using BlastPro.Api.Data;
 using BlastPro.Api.Models.Entities;
 using BlastPro.Api.Services;
 using BlastPro.Api.Services.Interfaces;
+using BlastPro.Api.Startup;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+
+DevelopmentJwtKey.EnsureConfigured(builder);
+var startupJwtKey = builder.Configuration["Jwt:Key"];
+if (!builder.Environment.IsEnvironment("Testing") &&
+    (string.IsNullOrWhiteSpace(startupJwtKey) || Encoding.UTF8.GetByteCount(startupJwtKey) < 32))
+    throw new InvalidOperationException(
+        "Jwt:Key must be set outside the repository and contain at least 32 UTF-8 bytes.");
 
 // ---------------------------------------------------------------------------
 // 1. Database
