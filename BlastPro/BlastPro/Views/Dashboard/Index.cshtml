@@ -218,7 +218,7 @@
                                 <a asp-controller="ProjectNotes"
                                    asp-action="Index"
                                    asp-route-projectId="@p.Id"
-                                   class="project-action-btn view-btn"
+                                   class="project-action-btn notes-btn"
                                    title="Open project notes and photos">
                                     Notes
                                 </a>
@@ -236,7 +236,7 @@
                                 <a asp-controller="Results"
                                    asp-action="Index"
                                    asp-route-projectId="@p.Id"
-                                   class="project-action-btn view-btn"
+                                   class="project-action-btn results-btn"
                                    title="View calculation results">
                                     Results
                                 </a>
@@ -255,16 +255,16 @@
                                       asp-action="Delete"
                                       asp-route-id="@p.Id"
                                       method="post"
-                                      class="d-inline"
+                                      class="d-flex m-0"
                                       onsubmit="return confirm('Are you sure you want to delete this project?');">
 
                                     @Html.AntiForgeryToken()
 
                                     <button type="submit"
-                                            class="project-action delete"
+                                            class="project-action-btn delete-btn"
                                             title="Delete Project">
 
-                                        <i class="bi bi-trash"></i>
+                                        <i class="bi bi-trash"></i> Delete
 
                                     </button>
 
