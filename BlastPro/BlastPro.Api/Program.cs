@@ -46,23 +46,22 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 // ---------------------------------------------------------------------------
 // 3. JWT
 // ---------------------------------------------------------------------------
-var jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("Jwt:Key missing from configuration.");
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "BlastPro.Api";
-var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "BlastPro.Clients";
-
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        var jwtKey = builder.Configuration["Jwt:Key"];
+        if (string.IsNullOrWhiteSpace(jwtKey) || Encoding.UTF8.GetByteCount(jwtKey) < 32)
+            throw new InvalidOperationException(
+                "Jwt:Key must be set outside the repository and contain at least 32 UTF-8 bytes.");
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtIssuer,
-            ValidAudience = jwtAudience,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "BlastPro.Api",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "BlastPro.Clients",
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ClockSkew = TimeSpan.FromMinutes(1)
         };
@@ -208,7 +207,9 @@ using (var scope = app.Services.CreateScope())
 
         // 3. Admin user — attached to the company
         const string adminEmail = "admin@xploma.co.za";
-        if (await userManager.FindByEmailAsync(adminEmail) is null)
+        var developmentAdminPassword = builder.Configuration["DevelopmentSeed:AdminPassword"];
+        if (!string.IsNullOrWhiteSpace(developmentAdminPassword)
+            && await userManager.FindByEmailAsync(adminEmail) is null)
         {
             var admin = new ApplicationUser
             {
@@ -220,7 +221,7 @@ using (var scope = app.Services.CreateScope())
                 CompanyId = company.Id
             };
 
-            var result = await userManager.CreateAsync(admin, "Admin@12345!");
+            var result = await userManager.CreateAsync(admin, developmentAdminPassword);
             if (result.Succeeded)
                 await userManager.AddToRoleAsync(admin, "MainCompanyUser");
         }

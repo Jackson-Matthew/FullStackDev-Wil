@@ -96,7 +96,17 @@ The Development profile uses the connection string in `BlastPro/BlastPro.Api/app
 dotnet user-secrets set 'ConnectionStrings:DefaultConnection' 'Server=(localdb)\MSSQLLocalDB;Database=BlastProApiDevYourName;Trusted_Connection=True;MultipleActiveResultSets=true' --project .\BlastPro\BlastPro.Api\BlastPro.Api.csproj
 ```
 
-Replace `YourName` with your own identifier, then restart the API. The MVC API address is configured through `ApiBaseUrl` in `BlastPro/BlastPro/appsettings.json`. Keep real credentials and deployment secrets out of committed settings.
+Replace `YourName` with your own identifier. Each developer also needs a private JWT signing key. Generate one from the repository root:
+
+```powershell
+$jwtKey = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(64))
+dotnet user-secrets set 'Jwt:Key' $jwtKey --project .\BlastPro\BlastPro.Api\BlastPro.Api.csproj
+Remove-Variable jwtKey
+```
+
+The old committed signing key has been removed. Previously issued tokens will no longer work once the API uses a new key. If you need the optional local sample administrator when creating a fresh development database, set `DevelopmentSeed:AdminPassword` in user secrets to a private password that meets the Identity policy. Otherwise create a company through the application. The MVC API address is configured through `ApiBaseUrl` in `BlastPro/BlastPro/appsettings.json`.
+
+For hosting, configure `Jwt__Key` and `ConnectionStrings__DefaultConnection` as secrets in the deployment environment. Use a new random signing key and production database credentials. Do not commit either value to GitHub. Each environment that needs to accept the same active tokens must use its own stable key.
 
 ## Test
 
