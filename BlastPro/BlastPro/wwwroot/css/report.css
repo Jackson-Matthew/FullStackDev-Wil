@@ -77,6 +77,7 @@
     @page { size: A4 landscape; margin: 12mm; }
     html, body, .report-print-body { background: #fff !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     .no-print { display: none !important; }
+    body > header { display: none !important; }
     .report-page { max-width: none; padding: 0; }
     .report-document { border: 0; border-radius: 0; box-shadow: none; }
     .report-hero { padding: 18px 20px; }

@@ -18,5 +18,9 @@
     <main class="report-page">
         <partial name="_ReportBody" model="Model" />
     </main>
+    <script>
+        // Open the print dialog straight away; the button above prints again.
+        window.addEventListener("load", function () { window.print(); });
+    </script>
 </body>
 </html>
