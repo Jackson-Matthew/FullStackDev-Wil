@@ -10,6 +10,19 @@ namespace BlastPro.Mvc.Controllers;
 public sealed class PatternDesignController : Controller
 {
     private const string PatternView = "~/Views/Projects/Index.cshtml";
+    // Fields that have a message slot in the view; anything else is shown in the summary.
+    private static readonly HashSet<string> FieldNames = new(StringComparer.Ordinal)
+    {
+        "RockType", "RockDensity", "Burden", "Spacing", "BenchLengthMetres", "BenchWidthMetres",
+        "LayoutRows", "LayoutColumns", "TimingOrder", "TimingIntervalMilliseconds", "PatternType",
+        "DefaultAeciProductCode", "VibrationThreshold", "ReceptorStructureType", "DominantFrequencyHz",
+        "Calculation.DelayWindowMilliseconds",
+        "Calculation.ReceptorDistanceMetres", "Calculation.PpvSiteCoefficient",
+        "Calculation.PpvDecayExponent", "Calculation.FlyrockLaunchSpeedMetresPerSecond",
+        "Calculation.FlyrockLaunchAngleDegrees", "Calculation.FlyrockLaunchHeightMetres",
+        "Calculation.ExclusionRadiusMetres"
+    };
+
     private readonly IApiClient _api;
 
     public PatternDesignController(IApiClient api)
@@ -89,7 +102,16 @@ public sealed class PatternDesignController : Controller
 
         if (!result.Success || result.Data is null)
         {
-            ModelState.AddModelError(string.Empty, result.Error ?? "Could not save the pattern design.");
+            if (result.ValidationErrors is { Count: > 0 })
+            {
+                foreach (var (field, messages) in result.ValidationErrors)
+                {
+                    var modelField = FieldNames.Contains(field) ? field : string.Empty;
+                    foreach (var message in messages)
+                        ModelState.AddModelError(modelField, message);
+                }
+            }
+            else ModelState.AddModelError(string.Empty, result.Error ?? "Could not save the pattern design.");
             await RestoreExplosiveProducts(model);
             return View(PatternView, model);
         }

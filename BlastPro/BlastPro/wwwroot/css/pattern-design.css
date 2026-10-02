@@ -649,3 +649,17 @@ body.plan-expanded { overflow: hidden; }
     .design-plan-card.is-expanded .plan-workspace:has(.plan-hole-editor:not([hidden])) { grid-template-columns: 1fr; }
     .design-plan-card.is-expanded .bench-plan { max-height: 55vh; }
 }
+
+/* Field validation messages sit under each label, above the input */
+.field-error.field-validation-error {
+    display: block;
+    margin-bottom: 4px;
+    color: #C62828;
+    font-size: .78rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.field-error.field-validation-valid { display: none; }
+
+.param-input.input-validation-error { border-color: #C62828; }

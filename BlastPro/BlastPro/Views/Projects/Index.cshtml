@@ -73,7 +73,7 @@
         <input type="hidden" name="Status" value="@Model.Status" />
         <input type="hidden" name="RowVersion" value="@Model.RowVersion" />
 
-        <div asp-validation-summary="All" class="design-validation-summary mb-3"></div>
+        <div asp-validation-summary="ModelOnly" class="design-validation-summary mb-3"></div>
 
 
         <div class="design-workflow" role="note">
@@ -90,22 +90,27 @@
                 <div class="param-grid">
                     <div>
                         <label for="BenchLengthMetres" class="param-label">Bench length / X <span class="input-required">Site input</span></label>
+                        <span asp-validation-for="BenchLengthMetres" class="field-error"></span>
                         <input id="BenchLengthMetres" name="BenchLengthMetres" type="number" min="0.01" max="10000" step="0.01" class="form-control param-input" placeholder="Metres" value="@Model.BenchLengthMetres?.ToString("0.##", inv)" />
                     </div>
                     <div>
                         <label for="BenchWidthMetres" class="param-label">Bench width / Y <span class="input-required">Site input</span></label>
+                        <span asp-validation-for="BenchWidthMetres" class="field-error"></span>
                         <input id="BenchWidthMetres" name="BenchWidthMetres" type="number" min="0.01" max="10000" step="0.01" class="form-control param-input" placeholder="Metres" value="@Model.BenchWidthMetres?.ToString("0.##", inv)" />
                     </div>
                     <div>
                         <label for="LayoutRows" class="param-label">Rows across width <span class="input-required">Site input</span></label>
+                        <span asp-validation-for="LayoutRows" class="field-error"></span>
                         <input id="LayoutRows" name="LayoutRows" type="number" min="1" max="500" step="1" class="form-control param-input" placeholder="Row count" value="@Model.LayoutRows" />
                     </div>
                     <div>
                         <label for="LayoutColumns" class="param-label">Holes per row <span class="input-required">Site input</span></label>
+                        <span asp-validation-for="LayoutColumns" class="field-error"></span>
                         <input id="LayoutColumns" name="LayoutColumns" type="number" min="1" max="500" step="1" class="form-control param-input" placeholder="Column count" value="@Model.LayoutColumns" />
                     </div>
                     <div>
                         <label for="PatternType" class="param-label">Pattern arrangement <span class="input-required">Selection</span></label>
+                        <span asp-validation-for="PatternType" class="field-error"></span>
                         <select id="PatternType" name="PatternType" class="form-select param-input">
                             <option value="Rectangular" selected="@(Model.PatternType == "Rectangular")">Rectangular</option>
                             <option value="Staggered" selected="@(Model.PatternType == "Staggered")">Staggered</option>
@@ -119,10 +124,12 @@
                 <div class="layout-derived">
                     <div>
                         <label for="Burden" class="param-label">Geometric burden / row pitch <span class="input-calculated">Calculated, editable</span></label>
+                        <span asp-validation-for="Burden" class="field-error"></span>
                         <div class="param-input-wrapper"><input id="Burden" name="Burden" type="number" min="0.0001" step="any" class="form-control param-input has-unit" value="@(Model.Burden > 0 ? Model.Burden.ToString("0.####", inv) : "")" /><span class="param-unit">m</span></div>
                     </div>
                     <div>
                         <label for="Spacing" class="param-label">Geometric spacing / column pitch <span class="input-calculated">Calculated, editable</span></label>
+                        <span asp-validation-for="Spacing" class="field-error"></span>
                         <div class="param-input-wrapper"><input id="Spacing" name="Spacing" type="number" min="0.0001" step="any" class="form-control param-input has-unit" value="@(Model.Spacing > 0 ? Model.Spacing.ToString("0.####", inv) : "")" /><span class="param-unit">m</span></div>
                     </div>
                     <div class="layout-action"><button type="button" id="resetGeometryBtn" class="tool-btn">Use bench geometry</button></div>
@@ -159,6 +166,7 @@
                     <div>
 
                         <label for="RockType" class="param-label">Rock Type</label>
+                        <span asp-validation-for="RockType" class="field-error"></span>
 
                         <select id="RockType"
                                 name="RockType"
@@ -178,6 +186,7 @@
 
                     <div>
                         <label for="DefaultAeciProductCode" class="param-label">AECI explosive product <span class="input-required">Select product</span></label>
+                        <span asp-validation-for="DefaultAeciProductCode" class="field-error"></span>
                         <select id="DefaultAeciProductCode" name="DefaultAeciProductCode" class="form-select param-input">
                             <option value="">Choose an AECI surface product</option>
                             @foreach (var group in Model.AeciProducts.GroupBy(product => product.Series))
@@ -204,6 +213,7 @@
                     <div>
 
                         <label for="RockDensity" class="param-label">Rock density <span class="input-required">Site input</span></label>
+                        <span asp-validation-for="RockDensity" class="field-error"></span>
 
                         <div class="param-input-wrapper">
 
@@ -228,6 +238,7 @@
                     <div>
 
                         <label for="VibrationThreshold" class="param-label">Vibration limit <span class="input-calculated">Suggested, editable</span></label>
+                        <span asp-validation-for="VibrationThreshold" class="field-error"></span>
 
                         <div class="param-input-wrapper">
 
@@ -251,6 +262,7 @@
 
                     <div>
                         <label for="ReceptorStructureType" class="param-label">Nearby structure</label>
+                        <span asp-validation-for="ReceptorStructureType" class="field-error"></span>
                         <select id="ReceptorStructureType" name="ReceptorStructureType" class="form-select param-input">
                             <option value="Unspecified" selected="@(Model.ReceptorStructureType == "Unspecified")">Not specified</option>
                             <option value="ResidentialPlaster" selected="@(Model.ReceptorStructureType == "ResidentialPlaster")">House: plaster on lath</option>
@@ -260,6 +272,7 @@
                     </div>
                     <div>
                         <label for="DominantFrequencyHz" class="param-label">Measured frequency (Hz)</label>
+                        <span asp-validation-for="DominantFrequencyHz" class="field-error"></span>
                         <input id="DominantFrequencyHz" name="DominantFrequencyHz" type="number" min="0.01" max="100" step="0.01"
                                class="form-control param-input" value="@Model.DominantFrequencyHz?.ToString("0.##", inv)" />
                     </div>
@@ -287,6 +300,7 @@
                 <div class="param-grid">
                     <div>
                         <label for="TimingOrder" class="param-label">Sequence order</label>
+                        <span asp-validation-for="TimingOrder" class="field-error"></span>
                         <select id="TimingOrder" name="TimingOrder" class="form-select param-input">
                             <option value="Sequential" selected="@(Model.TimingOrder == "Sequential")">Sequential by hole number</option>
                             <option value="Rows" selected="@(Model.TimingOrder == "Rows")">Sequential across rows</option>
@@ -301,6 +315,7 @@
                     </div>
                     <div>
                         <label for="TimingStepMs" class="param-label">Interval (ms) <span class="input-required">Editable estimate</span></label>
+                        <span asp-validation-for="TimingIntervalMilliseconds" class="field-error"></span>
                         <input id="TimingStepMs" name="TimingIntervalMilliseconds" type="number" min="1" step="1" class="form-control param-input" placeholder="Calculated from burden" value="@Model.TimingIntervalMilliseconds" />
                     </div>
                     <div class="layout-action"><button type="button" id="applyTimingBtn" class="tool-btn">Apply sequence to edited delays</button></div>
@@ -325,41 +340,49 @@
                 <div class="param-grid">
                     <div>
                         <label for="DelayWindowMilliseconds" class="param-label">Charge grouping window <span class="input-required">Site input</span></label>
+                        <span asp-validation-for="Calculation.DelayWindowMilliseconds" class="field-error"></span>
                         <input id="DelayWindowMilliseconds" name="Calculation.DelayWindowMilliseconds" type="number" min="1" step="1"
                                class="form-control param-input" value="@Model.Calculation.DelayWindowMilliseconds" />
                     </div>
                     <div>
                         <label for="ReceptorDistanceMetres" class="param-label">Distance to receptor <span class="input-required">Site input</span></label>
+                        <span asp-validation-for="Calculation.ReceptorDistanceMetres" class="field-error"></span>
                         <input id="ReceptorDistanceMetres" name="Calculation.ReceptorDistanceMetres" type="number" min="0" step="any"
                                class="form-control param-input" value="@Model.Calculation.ReceptorDistanceMetres?.ToString("0.####", inv)" />
                     </div>
                     <div>
                         <label for="PpvSiteCoefficient" class="param-label">PPV site coefficient <span class="input-required">Site input</span></label>
+                        <span asp-validation-for="Calculation.PpvSiteCoefficient" class="field-error"></span>
                         <input id="PpvSiteCoefficient" name="Calculation.PpvSiteCoefficient" type="number" min="0" step="any"
                                class="form-control param-input" value="@Model.Calculation.PpvSiteCoefficient?.ToString("0.####", inv)" />
                     </div>
                     <div>
                         <label for="PpvDecayExponent" class="param-label">PPV decay exponent <span class="input-required">Site input</span></label>
+                        <span asp-validation-for="Calculation.PpvDecayExponent" class="field-error"></span>
                         <input id="PpvDecayExponent" name="Calculation.PpvDecayExponent" type="number" min="0" step="any"
                                class="form-control param-input" value="@Model.Calculation.PpvDecayExponent?.ToString("0.####", inv)" />
                     </div>
                     <div>
                         <label for="FlyrockLaunchSpeedMetresPerSecond" class="param-label">Flyrock launch speed (m/s) <span class="input-required">Site estimate</span></label>
+                        <span asp-validation-for="Calculation.FlyrockLaunchSpeedMetresPerSecond" class="field-error"></span>
                         <input id="FlyrockLaunchSpeedMetresPerSecond" name="Calculation.FlyrockLaunchSpeedMetresPerSecond" type="number" min="0" step="any"
                                class="form-control param-input" value="@Model.Calculation.FlyrockLaunchSpeedMetresPerSecond?.ToString("0.####", inv)" />
                     </div>
                     <div>
                         <label for="FlyrockLaunchAngleDegrees" class="param-label">Trajectory angle (°) <span class="input-required">Editable assumption</span></label>
+                        <span asp-validation-for="Calculation.FlyrockLaunchAngleDegrees" class="field-error"></span>
                         <input id="FlyrockLaunchAngleDegrees" name="Calculation.FlyrockLaunchAngleDegrees" type="number" min="0" max="90" step="any"
                                class="form-control param-input" value="@Model.Calculation.FlyrockLaunchAngleDegrees?.ToString("0.####", inv)" />
                     </div>
                     <div>
                         <label for="FlyrockLaunchHeightMetres" class="param-label">Trajectory height (m) <span class="input-required">Editable estimate</span></label>
+                        <span asp-validation-for="Calculation.FlyrockLaunchHeightMetres" class="field-error"></span>
                         <input id="FlyrockLaunchHeightMetres" name="Calculation.FlyrockLaunchHeightMetres" type="number" min="0" step="any"
                                class="form-control param-input" value="@Model.Calculation.FlyrockLaunchHeightMetres?.ToString("0.####", inv)" />
                     </div>
                     <div>
                         <label for="ExclusionRadiusMetres" class="param-label">Approved exclusion radius (m) <span class="input-required">Site input</span></label>
+                        <span asp-validation-for="Calculation.ExclusionRadiusMetres" class="field-error"></span>
                         <input id="ExclusionRadiusMetres" name="Calculation.ExclusionRadiusMetres" type="number" min="0" step="any"
                                class="form-control param-input" value="@Model.Calculation.ExclusionRadiusMetres?.ToString("0.####", inv)" />
                     </div>

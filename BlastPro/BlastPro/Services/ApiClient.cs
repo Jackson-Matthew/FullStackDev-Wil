@@ -119,7 +119,7 @@ public class ApiClient(HttpClient http, IHttpContextAccessor contextAccessor) : 
                             property => property.Value.EnumerateArray()
                                 .Select(value => value.GetString() ?? string.Empty)
                                 .Where(message => !string.IsNullOrWhiteSpace(message)).ToArray());
-                        error = string.Join(" ", validationErrors.Values.SelectMany(messages => messages));
+                        error = string.Join(" ", validationErrors.Values.SelectMany(messages => messages).Distinct());
                     }
                     else if (errors.ValueKind == JsonValueKind.Array)
                     {

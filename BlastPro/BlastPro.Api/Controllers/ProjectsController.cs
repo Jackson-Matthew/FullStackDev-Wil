@@ -254,6 +254,15 @@ public class ProjectsController : ControllerBase
         return NoContent();
     }
 
+    // Reports a validation failure against the form fields it belongs to, keeping
+    // the plain "message" for clients that only show a single error.
+    private BadRequestObjectResult FieldError(string message, params string[] fields) =>
+        BadRequest(new
+        {
+            message,
+            errors = fields.ToDictionary(field => field, _ => new[] { message })
+        });
+
     // ---------------------------------------------------------------------
     // GET /api/projects/{id}/pattern-design
     // Loads the project fields, holes and active company explosive products.
@@ -297,60 +306,60 @@ public class ProjectsController : ControllerBase
             return NotFound();
 
         if (string.IsNullOrWhiteSpace(dto.RockType) || dto.RockType.Length > 100)
-            return BadRequest(new { message = "Select a valid rock type." });
+            return FieldError("Select a valid rock type.", "RockType");
         if (dto.RockDensity < 0)
-            return BadRequest(new { message = "Rock density cannot be negative." });
+            return FieldError("Rock density cannot be negative.", "RockDensity");
         if (dto.Burden < 0 || dto.Burden is > 0 and < 0.0001m)
-            return BadRequest(new { message = "Burden must be zero while pending or at least 0.0001 m." });
+            return FieldError("Burden must be zero while pending or at least 0.0001 m.", "Burden");
         if (dto.Spacing < 0 || dto.Spacing is > 0 and < 0.0001m)
-            return BadRequest(new { message = "Spacing must be zero while pending or at least 0.0001 m." });
+            return FieldError("Spacing must be zero while pending or at least 0.0001 m.", "Spacing");
         if (dto.BenchLengthMetres is <= 0 or > 10000 || dto.BenchWidthMetres is <= 0 or > 10000)
-            return BadRequest(new { message = "Bench dimensions must be greater than zero and no more than 10,000 metres." });
+            return FieldError("Bench dimensions must be greater than zero and no more than 10,000 metres.", "BenchLengthMetres", "BenchWidthMetres");
         if (dto.LayoutRows is <= 0 or > 500 || dto.LayoutColumns is <= 0 or > 500 ||
             (dto.LayoutRows.HasValue && dto.LayoutColumns.HasValue &&
                 (long)dto.LayoutRows.Value * dto.LayoutColumns.Value > 500))
-            return BadRequest(new { message = "Row and column counts must be whole numbers from 1 to 500 and total at most 500 holes." });
+            return FieldError("Row and column counts must be whole numbers from 1 to 500 and total at most 500 holes.", "LayoutRows", "LayoutColumns");
         if (dto.TimingOrder is not ("Sequential" or "Rows" or "Columns" or "Serpentine" or "Chevron" or "Echelon" or "HalfRowOverlap" or "RowGroups" or "ColumnGroups") ||
             dto.TimingIntervalMilliseconds is <= 0 ||
             (dto.TimingIntervalMilliseconds.HasValue &&
                 (long)Math.Max(0, dto.Holes.Count - 1) * dto.TimingIntervalMilliseconds.Value > int.MaxValue))
-            return BadRequest(new { message = "Select a supported timing order and a valid site interval." });
+            return FieldError("Select a supported timing order and a valid site interval.", "TimingOrder", "TimingIntervalMilliseconds");
         if (dto.PatternType is not ("Rectangular" or "Staggered"))
-            return BadRequest(new { message = "Select a supported pattern type." });
+            return FieldError("Select a supported pattern type.", "PatternType");
         if (dto.ReferenceExplosiveFamily is not ("" or "S100" or "PowergelEco" or "PowergelX2" or "S300" or "S300Supreme" or "S300Volcano"))
             return BadRequest(new { message = "Select a supported product reference family." });
         if (!string.IsNullOrEmpty(dto.DefaultAeciProductCode) &&
             AeciSurfaceProductCatalog.Find(dto.DefaultAeciProductCode) is null)
-            return BadRequest(new { message = "Select an AECI product from the catalogue." });
+            return FieldError("Select an AECI product from the catalogue.", "DefaultAeciProductCode");
         if (dto.LoadingDensityGramsPerCc is <= 0 or > 5)
-            return BadRequest(new { message = "Enter a positive actual in-hole density no greater than 5 g/cm³." });
+            return FieldError("Enter a positive actual in-hole density no greater than 5 g/cm³.", "LoadingDensityGramsPerCc");
         var calculation = dto.Calculation;
         if (calculation?.DelayWindowMilliseconds is <= 0)
-            return BadRequest(new { message = "Delay window must be positive." });
+            return FieldError("Delay window must be positive.", "Calculation.DelayWindowMilliseconds");
         if (calculation?.SubdrillMetres is < 0)
-            return BadRequest(new { message = "Subdrill cannot be negative." });
+            return FieldError("Subdrill cannot be negative.", "Calculation.SubdrillMetres");
         if (calculation?.ReceptorDistanceMetres is <= 0)
-            return BadRequest(new { message = "Receptor distance must be positive." });
+            return FieldError("Receptor distance must be positive.", "Calculation.ReceptorDistanceMetres");
         if (calculation?.PpvSiteCoefficient is <= 0 || calculation?.PpvDecayExponent is <= 0)
-            return BadRequest(new { message = "PPV site coefficient and decay exponent must be positive." });
+            return FieldError("PPV site coefficient and decay exponent must be positive.", "Calculation.PpvSiteCoefficient", "Calculation.PpvDecayExponent");
         if (calculation?.FlyrockLaunchSpeedMetresPerSecond is <= 0 ||
             calculation?.FlyrockLaunchAngleDegrees is < 0 or > 90 ||
             calculation?.FlyrockLaunchHeightMetres is < 0)
-            return BadRequest(new { message = "Check flyrock launch speed, angle and height." });
+            return FieldError("Check flyrock launch speed, angle and height.", "Calculation.FlyrockLaunchSpeedMetresPerSecond", "Calculation.FlyrockLaunchAngleDegrees", "Calculation.FlyrockLaunchHeightMetres");
         if (calculation?.ExclusionRadiusMetres is <= 0)
-            return BadRequest(new { message = "Exclusion radius must be positive." });
+            return FieldError("Exclusion radius must be positive.", "Calculation.ExclusionRadiusMetres");
         if (dto.ReceptorStructureType is not ("Unspecified" or "ResidentialPlaster" or "ResidentialDrywall" or "Other") ||
             dto.VibrationThresholdMode is not ("Manual" or "Automatic") ||
             dto.DominantFrequencyHz is <= 0 or > 100)
-            return BadRequest(new { message = "Check the receptor type, vibration mode and frequency (0–100 Hz)." });
+            return FieldError("Check the receptor type, vibration mode and frequency (0–100 Hz).", "ReceptorStructureType", "DominantFrequencyHz");
         var vibrationThreshold = dto.VibrationThresholdMode == "Automatic"
             ? UsbMResidentialVibrationGuidance.SuggestedLimitMmPerSecond(
                 dto.ReceptorStructureType, dto.DominantFrequencyHz)
             : dto.VibrationThreshold;
         if (dto.VibrationThresholdMode == "Automatic" && vibrationThreshold is null or <= 0)
-            return BadRequest(new { message = "Choose a supported house type and measured frequency for USBM guidance." });
+            return FieldError("Choose a supported house type and measured frequency for USBM guidance.", "ReceptorStructureType", "DominantFrequencyHz");
         if (dto.VibrationThresholdMode == "Manual" && dto.VibrationThreshold < 0)
-            return BadRequest(new { message = "Vibration limit cannot be negative." });
+            return FieldError("Vibration limit cannot be negative.", "VibrationThreshold");
 
         var rockDensity = dto.RockDensity > 0 ? dto.RockDensity : (decimal?)null;
         var burden = dto.Burden > 0 ? dto.Burden : (decimal?)null;
