@@ -113,7 +113,7 @@ For hosting, configure `Jwt__Key` and `ConnectionStrings__DefaultConnection` as 
 
 ### Android app
 
-The debug build connects from the Android emulator to `http://10.0.2.2:5002/`. Start the API with its Development launch profile before signing in. Build from `BlastPro.Android` with Android SDK 35 installed:
+The debug build connects from the Android emulator to `http://10.0.2.2:5002/`. Start the API with its Development launch profile before signing in. Install Android SDK 35 and select an installed JDK 21 in Android Studio under **Settings > Build, Execution, Deployment > Build Tools > Gradle > Gradle JDK**. For terminal builds, point `JAVA_HOME` at that JDK. The repository does not contain a computer-specific Java path. Build from `BlastPro.Android`:
 
 ```powershell
 .\gradlew.bat assembleDebug
