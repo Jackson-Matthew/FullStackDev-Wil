@@ -14,13 +14,6 @@
         app:launchSingleTop="true"
         app:popUpTo="@id/notesFragment" />
     <action
-        android:id="@+id/action_global_chat"
-        app:destination="@id/chatFragment"
-        app:enterAnim="@anim/fade_in"
-        app:exitAnim="@anim/hold"
-        app:launchSingleTop="true"
-        app:popUpTo="@id/notesFragment" />
-    <action
         android:id="@+id/action_global_settings"
         app:destination="@id/settingsFragment"
         app:enterAnim="@anim/fade_in"
