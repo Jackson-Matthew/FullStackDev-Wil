@@ -1,21 +1,95 @@
-
 @model BlastPro.Mvc.Models.ViewModels.ProfileViewModel
-@{ ViewData["Title"] = "Profile"; }
-<link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
-<section class="admin-panel admin-form">
-    <h1>Your profile</h1>
-    @if (TempData["Success"] is string success) { <div class="alert alert-success" role="status">@success</div> }
-    <dl class="row">
-        <dt class="col-sm-4">Name</dt><dd class="col-sm-8">@Model.FullName</dd>
-        <dt class="col-sm-4">Email</dt><dd class="col-sm-8">@Model.Email</dd>
-        <dt class="col-sm-4">Company</dt><dd class="col-sm-8">@Model.CompanyName</dd>
-        <dt class="col-sm-4">Role</dt><dd class="col-sm-8">@(Model.Roles.Contains("MainCompanyUser") ? "Main Company User" : "Blaster")</dd>
-        <dt class="col-sm-4">Contact phone</dt><dd class="col-sm-8">@(Model.PhoneNumber ?? "Not supplied")</dd>
-        <dt class="col-sm-4">Nickname</dt><dd class="col-sm-8">@(Model.NickName ?? "Not supplied")</dd>
-        <dt class="col-sm-4">Gender</dt><dd class="col-sm-8">@(Model.Gender ?? "Not supplied")</dd>
-        <dt class="col-sm-4">Country</dt><dd class="col-sm-8">@(Model.Country ?? "Not supplied")</dd>
-        <dt class="col-sm-4">Time zone</dt><dd class="col-sm-8">@(Model.TimeZoneId ?? "Not supplied")</dd>
-        @if (!string.IsNullOrWhiteSpace(Model.CertificationId)) { <dt class="col-sm-4">Certification ID</dt><dd class="col-sm-8">@Model.CertificationId</dd> }
-    </dl>
-    <a asp-action="Edit" class="btn btn-danger">Edit profile</a> <a asp-controller="Account" asp-action="ForgotPassword" class="btn btn-outline-light">Change password</a>
+@{
+    ViewData["Title"] = "Profile";
+
+    var initials = string.Concat((Model.FullName ?? "")
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(part => part[0]).Take(2)).ToUpperInvariant();
+    if (initials.Length == 0) { initials = "?"; }
+}
+
+<link rel="stylesheet" href="~/css/profile.css" asp-append-version="true" />
+
+<section class="container profile-page">
+
+    @if (TempData["Success"] is string success)
+    {
+        <div class="alert alert-success" role="status">@success</div>
+    }
+
+    <div class="profile-card">
+
+        <div class="profile-banner" aria-hidden="true"></div>
+
+        <div class="profile-body">
+
+            <div class="profile-head">
+                <div class="profile-identity">
+                    <span class="profile-avatar">@initials</span>
+                    <div>
+                        <h1 class="profile-name">@Model.FullName</h1>
+                        <p class="profile-email">@Model.Email</p>
+                    </div>
+                </div>
+                <a asp-action="Edit" class="profile-edit-btn">Edit</a>
+            </div>
+
+            <div class="profile-grid">
+                <div class="profile-field">
+                    <span class="profile-label">Full Name</span>
+                    <div class="profile-value">@Model.FullName</div>
+                </div>
+                <div class="profile-field">
+                    <span class="profile-label">Nickname</span>
+                    <div class="profile-value @(string.IsNullOrWhiteSpace(Model.NickName) ? "is-empty" : "")">@(string.IsNullOrWhiteSpace(Model.NickName) ? "Not supplied" : Model.NickName)</div>
+                </div>
+                <div class="profile-field">
+                    <span class="profile-label">Contact phone</span>
+                    <div class="profile-value @(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "is-empty" : "")">@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "Not supplied" : Model.PhoneNumber)</div>
+                </div>
+                <div class="profile-field">
+                    <span class="profile-label">Gender</span>
+                    <div class="profile-value @(string.IsNullOrWhiteSpace(Model.Gender) ? "is-empty" : "")">@(string.IsNullOrWhiteSpace(Model.Gender) ? "Not supplied" : Model.Gender)</div>
+                </div>
+                <div class="profile-field">
+                    <span class="profile-label">Country</span>
+                    <div class="profile-value @(string.IsNullOrWhiteSpace(Model.Country) ? "is-empty" : "")">@(string.IsNullOrWhiteSpace(Model.Country) ? "Not supplied" : Model.Country)</div>
+                </div>
+                <div class="profile-field">
+                    <span class="profile-label">Time Zone</span>
+                    <div class="profile-value @(string.IsNullOrWhiteSpace(Model.TimeZoneId) ? "is-empty" : "")">@(string.IsNullOrWhiteSpace(Model.TimeZoneId) ? "Not supplied" : Model.TimeZoneId)</div>
+                </div>
+            </div>
+
+            <h2 class="profile-section-title">Company and access</h2>
+            <div class="profile-grid">
+                <div class="profile-field">
+                    <span class="profile-label">Company</span>
+                    <div class="profile-value">@Model.CompanyName</div>
+                </div>
+                <div class="profile-field">
+                    <span class="profile-label">Role</span>
+                    <div class="profile-value">@(Model.Roles.Contains("MainCompanyUser") ? "Main Company User" : "Blaster")</div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.CertificationId))
+                {
+                    <div class="profile-field">
+                        <span class="profile-label">Certification ID</span>
+                        <div class="profile-value">@Model.CertificationId</div>
+                    </div>
+                }
+            </div>
+
+            <h2 class="profile-section-title">My email address</h2>
+            <div class="profile-email-row">
+                <span class="profile-email-icon" aria-hidden="true"><i class="bi bi-envelope-fill"></i></span>
+                <span class="profile-email-text">@Model.Email</span>
+            </div>
+
+            <a asp-controller="Account" asp-action="ForgotPassword" class="profile-secondary-btn">Change password</a>
+
+        </div>
+
+    </div>
+
 </section>
