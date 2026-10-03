@@ -5,7 +5,7 @@
 }
 <link rel="stylesheet" href="~/css/report.css" asp-append-version="true" />
 
-<main class="report-page">
+<main class="report-page report-page-wide">
     @if (!Model.HasResults)
     {
         <div class="report-empty">
@@ -26,14 +26,23 @@
     }
     else
     {
-        <nav class="report-actions no-print" aria-label="Report actions">
-            <a asp-controller="Results" asp-action="Index" asp-route-projectId="@Model.ProjectId"
-               asp-route-resultId="@Model.ResultId" class="report-button">← Results</a>
-            <a asp-controller="PatternDesign" asp-action="Index" asp-route-projectId="@Model.ProjectId"
-               class="report-button">Pattern Design</a>
-            <button type="button" id="printReportBtn" class="report-button report-button-primary">Print / Save PDF</button>
-        </nav>
-        <partial name="_ReportBody" model="Model" />
+        <div class="report-view">
+            <aside class="report-side no-print" aria-label="Report actions">
+                <a asp-controller="Dashboard" asp-action="Index" class="report-side-btn report-side-back">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+                <a asp-controller="Reports" asp-action="DownloadPdf" asp-route-projectId="@Model.ProjectId"
+                   asp-route-resultId="@Model.ResultId" class="report-side-btn report-side-download">
+                    <i class="bi bi-download"></i> Download PDF
+                </a>
+                <button type="button" id="printReportBtn" class="report-side-btn report-side-print" data-report-print>
+                    <i class="bi bi-printer"></i> Print
+                </button>
+            </aside>
+            <div class="report-view-main">
+                <partial name="_ReportBody" model="Model" />
+            </div>
+        </div>
     }
 </main>
 

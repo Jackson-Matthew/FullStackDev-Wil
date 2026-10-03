@@ -1,17 +1,10 @@
 ﻿document.addEventListener("DOMContentLoaded", function () {
 
-    const printBtn =
-        document.getElementById("printReportBtn");
-
-    if (!printBtn) {
-        return;
-    }
-
-    printBtn.addEventListener(
-        "click",
-        function () {
+    // Print and Download PDF both open the print dialog; "Save as PDF" there gives the PDF copy.
+    document.querySelectorAll("[data-report-print]").forEach(function (button) {
+        button.addEventListener("click", function () {
             window.print();
-        }
-    );
+        });
+    });
 
 });

@@ -1,18 +1,77 @@
-
 @model BlastPro.Mvc.Models.ViewModels.ProfileViewModel
-@{ ViewData["Title"] = "Edit Profile"; }
-<link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
-<section class="admin-panel admin-form">
-    <h1>Edit your profile</h1>
-    <form asp-action="Edit" method="post">
-        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
-        <div class="mb-3"><label asp-for="FullName" class="form-label"></label><input asp-for="FullName" class="form-control" autocomplete="name" /></div>
-        <div class="mb-3"><label asp-for="PhoneNumber" class="form-label"></label><input asp-for="PhoneNumber" class="form-control" autocomplete="tel" /></div>
-        <div class="mb-3"><label asp-for="NickName" class="form-label"></label><input asp-for="NickName" class="form-control" /></div>
-        <div class="mb-3"><label asp-for="Gender" class="form-label"></label><input asp-for="Gender" class="form-control" /></div>
-        <div class="mb-3"><label asp-for="Country" class="form-label"></label><input asp-for="Country" class="form-control" autocomplete="country-name" /></div>
-        <div class="mb-3"><label asp-for="TimeZoneId" class="form-label"></label><input asp-for="TimeZoneId" class="form-control" placeholder="Africa/Johannesburg" /></div>
-        <button type="submit" class="btn btn-danger">Save profile</button> <a asp-action="Index" class="btn btn-outline-light">Cancel</a>
-    </form>
+@{
+    ViewData["Title"] = "Edit Profile";
+
+    var initials = string.Concat((Model.FullName ?? "")
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(part => part[0]).Take(2)).ToUpperInvariant();
+    if (initials.Length == 0) { initials = "?"; }
+}
+
+<link rel="stylesheet" href="~/css/profile.css" asp-append-version="true" />
+
+<section class="container profile-page">
+
+    <div class="profile-card">
+
+        <div class="profile-banner" aria-hidden="true"></div>
+
+        <form asp-action="Edit" method="post" class="profile-body">
+            <input type="hidden" asp-for="Email" />
+
+            <div class="profile-head">
+                <div class="profile-identity">
+                    <span class="profile-avatar">@initials</span>
+                    <div>
+                        <h1 class="profile-name">Edit your profile</h1>
+                        <p class="profile-email">@Model.Email</p>
+                    </div>
+                </div>
+                <div class="profile-head-actions">
+                    <a asp-action="Index" class="profile-secondary-btn">Cancel</a>
+                    <button type="submit" class="profile-edit-btn">Save profile</button>
+                </div>
+            </div>
+
+            <div asp-validation-summary="ModelOnly" class="profile-summary" role="alert"></div>
+
+            <div class="profile-grid">
+                <div class="profile-field">
+                    <label asp-for="FullName" class="profile-label"></label>
+                    <input asp-for="FullName" class="form-control" autocomplete="name" placeholder="Your full name" />
+                    <span asp-validation-for="FullName" class="profile-error"></span>
+                </div>
+                <div class="profile-field">
+                    <label asp-for="NickName" class="profile-label"></label>
+                    <input asp-for="NickName" class="form-control" placeholder="A nickname" />
+                    <span asp-validation-for="NickName" class="profile-error"></span>
+                </div>
+                <div class="profile-field">
+                    <label asp-for="PhoneNumber" class="profile-label"></label>
+                    <input asp-for="PhoneNumber" class="form-control" autocomplete="tel" placeholder="+27 82 000 0000" />
+                    <span asp-validation-for="PhoneNumber" class="profile-error"></span>
+                </div>
+                <div class="profile-field">
+                    <label asp-for="Gender" class="profile-label"></label>
+                    <input asp-for="Gender" class="form-control" placeholder="Gender" />
+                    <span asp-validation-for="Gender" class="profile-error"></span>
+                </div>
+                <div class="profile-field">
+                    <label asp-for="Country" class="profile-label"></label>
+                    <input asp-for="Country" class="form-control" autocomplete="country-name" placeholder="Country" />
+                    <span asp-validation-for="Country" class="profile-error"></span>
+                </div>
+                <div class="profile-field">
+                    <label asp-for="TimeZoneId" class="profile-label"></label>
+                    <input asp-for="TimeZoneId" class="form-control" placeholder="Africa/Johannesburg" />
+                    <span asp-validation-for="TimeZoneId" class="profile-error"></span>
+                </div>
+            </div>
+
+        </form>
+
+    </div>
+
 </section>
+
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

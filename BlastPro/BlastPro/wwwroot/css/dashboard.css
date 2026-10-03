@@ -244,27 +244,11 @@
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-/* Read: blue */
-.project-action-btn.view-btn { background: #0D6EFD; border-color: #0D6EFD; color: #FFFFFF; }
-.project-action-btn.view-btn:hover { background: #0B5ED7; border-color: #0B5ED7; color: #FFFFFF; }
+/* Every action shares one colour; only Delete stands apart */
+.project-action-btn { background: #111111; border-color: #111111; color: #FFFFFF; }
+.project-action-btn:hover { background: #333333; border-color: #333333; color: #FFFFFF; }
 
-/* Notes: grey */
-.project-action-btn.notes-btn { background: #6C757D; border-color: #6C757D; color: #FFFFFF; }
-.project-action-btn.notes-btn:hover { background: #5A6268; border-color: #5A6268; color: #FFFFFF; }
-
-/* Pattern design: brand red */
-.project-action-btn.pattern-design-btn { background: #FF0000; border-color: #FF0000; color: #FFFFFF; }
-.project-action-btn.pattern-design-btn:hover { background: #CC0000; border-color: #CC0000; color: #FFFFFF; }
-
-/* Results: green */
-.project-action-btn.results-btn { background: #198754; border-color: #198754; color: #FFFFFF; }
-.project-action-btn.results-btn:hover { background: #146C43; border-color: #146C43; color: #FFFFFF; }
-
-/* Update: brand orange */
-.project-action-btn.edit-btn { background: #FF8C00; border-color: #FF8C00; color: #FFFFFF; }
-.project-action-btn.edit-btn:hover { background: #E07B00; border-color: #E07B00; color: #FFFFFF; }
-
-/* Delete: outlined so it stays distinct from the solid red pattern design button */
+/* Delete: red outline */
 .project-action-btn.delete-btn { background: #FFFFFF; border-color: #DC3545; color: #DC3545; }
 .project-action-btn.delete-btn:hover { background: #DC3545; border-color: #DC3545; color: #FFFFFF; }
 

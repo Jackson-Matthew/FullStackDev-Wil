@@ -35,16 +35,75 @@
     else
     {
 
-        @*back button*@
-           
-        <a asp-controller="PatternDesign"
-           asp-action="Index"
-           asp-route-projectId="@Model.ProjectId"
-           class="results-back-btn">
+        @* =========================================================
+           TOP BAR: back, title and status, main actions
+           ========================================================= *@
 
-            Back to Pattern Design
+        <header class="results-topbar">
 
-        </a>
+            <div class="results-nav">
+
+                <a asp-controller="Dashboard"
+                   asp-action="Index"
+                   class="results-back-btn">
+
+                    <i class="bi bi-arrow-left"></i> Dashboard
+
+                </a>
+
+                <a asp-controller="PatternDesign"
+                   asp-action="Index"
+                   asp-route-projectId="@Model.ProjectId"
+                   class="results-nav-btn">
+
+                    Pattern Design
+
+                </a>
+
+            </div>
+
+            <div class="results-topbar-title">
+
+                <h2 class="results-title">@Model.ProjectName — Results Analysis</h2>
+
+                @if (Model.HasResults)
+                {
+                    <span class="results-status-badge @(Model.ViewingHistory || Model.IsOutdated ? "results-status-warn" : "")">
+                        @(Model.ViewingHistory ? "Previous Calculation" : Model.IsOutdated ? "Outdated Calculation" : "Calculation Complete")
+                    </span>
+                }
+                else
+                {
+                    <span class="results-status-badge results-status-none">Not Calculated</span>
+                }
+
+            </div>
+
+            @if (Model.HasResults)
+            {
+                <div class="results-topbar-actions">
+
+                    <form asp-controller="Projects" asp-action="CalculatePhysics" method="post" class="d-flex m-0">
+                        <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                        <button type="submit" class="results-action-btn results-action-dark">
+                            <i class="bi bi-arrow-repeat"></i> Recalculate Saved Draft
+                        </button>
+                    </form>
+
+                    <a asp-controller="Reports"
+                       asp-action="Preview"
+                       asp-route-projectId="@Model.ProjectId"
+                       asp-route-resultId="@Model.ResultId"
+                       class="results-action-btn results-action-red">
+
+                        <i class="bi bi-file-earmark-text"></i> View Report
+
+                    </a>
+
+                </div>
+            }
+
+        </header>
 
 
         @* suc and err msg *@
@@ -64,11 +123,6 @@
         {
 
             @* if there no results *@
-
-            <div class="results-header">
-                <h2 class="results-title">@Model.ProjectName — Results Analysis</h2>
-                <span class="results-status-badge results-status-none">Not Calculated</span>
-            </div>
 
             <div class="results-empty-state">
 
@@ -100,19 +154,6 @@
         else
         {
 
-            @*header*@
-
-            <div class="results-header">
-
-                <h2 class="results-title">@Model.ProjectName — Results Analysis</h2>
-
-                <span class="results-status-badge">
-                    @(Model.ViewingHistory ? "Previous Calculation" : Model.IsOutdated ? "Outdated Calculation" : "Calculation Complete")
-                </span>
-
-            </div>
-
-
             @if (Model.IsOutdated)
             {
                 <div class="results-outdated-banner">
@@ -124,16 +165,24 @@
                         and are no longer current. Recalculate to see results for the saved pattern.
                     </span>
 
-                    <span>Use “Recalculate Saved Draft” below after reviewing the changes.</span>
+                    <span>Use “Recalculate Saved Draft” at the top right after reviewing the changes.</span>
 
                 </div>
             }
 
             @if (Model.ViewingHistory)
             {
-                <a asp-action="Index" asp-route-projectId="@Model.ProjectId" class="results-back-btn">View latest result</a>
+                <a asp-action="Index" asp-route-projectId="@Model.ProjectId" class="results-latest-link">
+                    <i class="bi bi-arrow-left-short"></i> View latest result
+                </a>
             }
 
+
+            @* =========================================================
+               DESIGN TOTALS
+               ========================================================= *@
+
+            <h3 class="results-section-label">Design totals</h3>
 
             <div class="stats-grid">
 
@@ -179,61 +228,68 @@
             </div>
 
 
-            @*max charge*@
+            @* =========================================================
+               YIELD
+               ========================================================= *@
 
-            <div class="metrics-grid">
+            <h3 class="results-section-label">Yield</h3>
 
-                <div class="metric-card">
+            <div class="stats-grid stats-grid-3">
 
-                    <div>
-                        <div class="stat-label">Max Charge Per Delay</div>
-                        <div class="stat-value">
-                            @Model.FormatNumber(Model.MaxChargePerDelayKg)
-                            <span class="stat-unit">kg</span>
-                        </div>
-                    </div>
-
-                </div>
-
-
-                <div class="metric-card">
-
-                    <div>
-                        <div class="stat-label">Powder Factor</div>
-                        <div class="stat-value">
-                            @if (Model.PowderFactorKgPerTonne is not null)
-                            {
-                                @Model.FormatNumber(Model.PowderFactorKgPerTonne.Value, 2)
-                                <span class="stat-unit">kg/t</span>
-                            }
-                            else
-                            {
-                                <span class="stat-unavailable">Not available</span>
-                            }
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-label">Estimated Volume</div>
                     <div class="stat-value">@(Model.EstimatedVolumeCubicMetres is { } volume ? Model.FormatNumber(volume, 2) + " m³" : "Not available")</div>
                 </div>
+
                 <div class="stat-card">
                     <div class="stat-label">Estimated Tonnage</div>
                     <div class="stat-value">@(Model.EstimatedTonnageTonnes is { } tonnage ? Model.FormatNumber(tonnage, 2) + " t" : "Not available")</div>
                 </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Powder Factor</div>
+                    <div class="stat-value">
+                        @if (Model.PowderFactorKgPerTonne is not null)
+                        {
+                            @Model.FormatNumber(Model.PowderFactorKgPerTonne.Value, 2)
+                            <span class="stat-unit">kg/t</span>
+                        }
+                        else
+                        {
+                            <span class="stat-unavailable">Not available</span>
+                        }
+                    </div>
+                </div>
+
+            </div>
+
+
+            @* =========================================================
+               BLAST EFFECTS
+               ========================================================= *@
+
+            <h3 class="results-section-label">Blast effects</h3>
+
+            <div class="stats-grid stats-grid-3">
+
+                <div class="stat-card">
+                    <div class="stat-label">Max Charge Per Delay</div>
+                    <div class="stat-value">
+                        @Model.FormatNumber(Model.MaxChargePerDelayKg)
+                        <span class="stat-unit">kg</span>
+                    </div>
+                </div>
+
                 <div class="stat-card">
                     <div class="stat-label">Predicted PPV</div>
                     <div class="stat-value">@(Model.PredictedPpvMmPerSecond is { } ppv ? Model.FormatNumber(ppv, 2) + " mm/s" : "Not available")</div>
                 </div>
+
                 <div class="stat-card">
                     <div class="stat-label">Idealized Flyrock Range</div>
                     <div class="stat-value">@(Model.PredictedFlyrockMetres is { } flyrock ? Model.FormatNumber(flyrock, 2) + " m" : "Not available")</div>
                 </div>
+
             </div>
 
 
@@ -334,28 +390,6 @@
 
                 </div>
             }
-
-
-            @*footer *@
-
-            <div class="results-footer">
-
-                <form asp-controller="Projects" asp-action="CalculatePhysics" method="post">
-                    <input type="hidden" name="projectId" value="@Model.ProjectId" />
-                    <button type="submit" class="generate-report-btn">Recalculate Saved Draft</button>
-                </form>
-
-                <a asp-controller="Reports"
-                   asp-action="Preview"
-                   asp-route-projectId="@Model.ProjectId"
-                   asp-route-resultId="@Model.ResultId"
-                   class="generate-report-btn">
-
-                    View Report
-
-                </a>
-
-            </div>
 
         }
 

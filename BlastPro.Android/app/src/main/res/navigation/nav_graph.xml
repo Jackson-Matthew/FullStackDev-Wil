@@ -14,13 +14,6 @@
         app:launchSingleTop="true"
         app:popUpTo="@id/notesFragment" />
     <action
-        android:id="@+id/action_global_chat"
-        app:destination="@id/chatFragment"
-        app:enterAnim="@anim/fade_in"
-        app:exitAnim="@anim/hold"
-        app:launchSingleTop="true"
-        app:popUpTo="@id/notesFragment" />
-    <action
         android:id="@+id/action_global_settings"
         app:destination="@id/settingsFragment"
         app:enterAnim="@anim/fade_in"
@@ -97,21 +90,6 @@
             android:name="photoPath"
             android:defaultValue=""
             app:argType="string" />
-    </fragment>
-
-    <!-- Chat is an optional module: delete this fragment, ChatFragment, fragment_chat and Config.CHAT_ENABLED to drop it. -->
-    <fragment
-        android:id="@+id/chatFragment"
-        android:name="com.example.blastpromobile.ui.ChatFragment"
-        android:label="Chat"
-        tools:layout="@layout/fragment_chat">
-        <action
-            android:id="@+id/action_chat_to_editor"
-            app:destination="@id/noteEditorFragment"
-            app:enterAnim="@anim/slide_in_subtle"
-            app:exitAnim="@anim/hold"
-            app:popEnterAnim="@anim/hold"
-            app:popExitAnim="@anim/slide_out_subtle" />
     </fragment>
 
     <fragment
