@@ -8,6 +8,10 @@ android {
     namespace = "com.example.blastpromobile"
     compileSdk = 35
 
+    val apiBaseUrl = providers.gradleProperty("blastProApiUrl")
+        .orElse("https://blastpro-api-2c61c74b-hnaxb6c4anfbh0cd.southafricanorth-01.azurewebsites.net/")
+        .get()
+
     defaultConfig {
         applicationId = "com.example.blastpromobile"
         minSdk = 26
@@ -20,14 +24,12 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "API_BASE_URL", "\"${providers.gradleProperty("blastProApiUrl").orElse("http://10.0.2.2:5002/").get()}\"")
+            buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         }
         release {
             isMinifyEnabled = false
-            val apiUrl = providers.gradleProperty("blastProApiUrl").orNull
-                ?: "https://your-hosted-api.example/"
-            require(apiUrl.startsWith("https://")) { "Release API URL must use HTTPS" }
-            buildConfigField("String", "API_BASE_URL", "\"$apiUrl\"")
+            require(apiBaseUrl.startsWith("https://")) { "Release API URL must use HTTPS" }
+            buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         }
     }
 

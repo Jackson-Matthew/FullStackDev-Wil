@@ -113,7 +113,7 @@ For hosting, configure `Jwt__Key` and `ConnectionStrings__DefaultConnection` as 
 
 ### Android app
 
-The debug build connects from the Android emulator to `http://10.0.2.2:5002/`. Start the API with its Development launch profile before signing in. Install Android SDK 35 and select an installed JDK 21 in Android Studio under **Settings > Build, Execution, Deployment > Build Tools > Gradle > Gradle JDK**. For terminal builds, point `JAVA_HOME` at that JDK. The repository does not contain a computer-specific Java path. Build from `BlastPro.Android`:
+Debug and release builds connect to the hosted Azure API by default, so an emulator or phone can use the app without a local API or Visual Studio running. The device needs internet access. Install Android SDK 35 and select an installed JDK 21 in Android Studio under **Settings > Build, Execution, Deployment > Build Tools > Gradle > Gradle JDK**. For terminal builds, point `JAVA_HOME` at that JDK. The repository does not contain a computer-specific Java path. Build from `BlastPro.Android`:
 
 ```powershell
 .\gradlew.bat assembleDebug
@@ -125,7 +125,7 @@ Install the debug APK on a running Android emulator with Android Studio, or run:
 & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r .\app\build\outputs\apk\debug\app-debug.apk
 ```
 
-To use another API address, pass `-PblastProApiUrl=https://your-api-host/` to Gradle. A release build must use HTTPS; configure its real hosted URL before distributing it. The app has no registration flow. Create and confirm accounts on the web first, then sign in on mobile with the same credentials. Photos are limited to three per note and 5 MB each. Mobile notes use the shared API while online; the old device-only notes are not migrated automatically. Main Company Users see their company's projects; Blasters see the projects they own.
+To use another API address for a local development build, pass `-PblastProApiUrl=http://10.0.2.2:5002/` to Gradle. A release build must use HTTPS. The app has no registration flow. Create accounts on the web first, then sign in on mobile with the same credentials. Photos are limited to three per note and 5 MB each. Mobile notes use the shared API while online; the old device-only notes are not migrated automatically. Main Company Users see their company's projects; Blasters see the projects they own.
 
 ## Test
 

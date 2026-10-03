@@ -14,7 +14,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
-import com.example.blastpromobile.Config
 import com.example.blastpromobile.R
 import com.example.blastpromobile.data.MobileSession
 import com.example.blastpromobile.databinding.ActivityMainBinding
@@ -100,15 +99,13 @@ class MainActivity : AppCompatActivity() {
     private fun setUpBottomBar() {
         binding.navNotes.setOnClickListener { goTo(R.id.action_global_notes) }
         binding.navNewNote.setOnClickListener { goTo(R.id.action_global_new_note) }
-        binding.navChat.setOnClickListener { goTo(R.id.action_global_chat) }
-        if (!Config.CHAT_ENABLED) binding.navChat.visibility = View.INVISIBLE
+        binding.navChat.visibility = View.INVISIBLE
     }
 
     private fun setUpDrawer() {
         binding.menuClose.setOnClickListener { closeMenu() }
         binding.menuNewNote.setOnClickListener { closeMenu(); goTo(R.id.action_global_new_note) }
         binding.menuNotes.setOnClickListener { closeMenu(); goTo(R.id.action_global_notes) }
-        binding.menuChat.setOnClickListener { closeMenu(); goTo(R.id.action_global_chat) }
         binding.menuSettings.setOnClickListener { closeMenu(); goTo(R.id.action_global_settings) }
         binding.menuSync.setOnClickListener {
             closeMenu()
@@ -117,14 +114,13 @@ class MainActivity : AppCompatActivity() {
             if (notes != null) notes.refresh() else goTo(R.id.action_global_notes)
         }
         binding.menuLogout.setOnClickListener { MobileSession.signOut(); closeMenu(); goTo(R.id.action_global_login) }
-        if (!Config.CHAT_ENABLED) binding.menuChat.visibility = View.GONE
+        binding.menuChat.visibility = View.GONE
     }
 
     /** Opens a main screen, ignoring taps on the screen the user is already on. */
     private fun goTo(actionId: Int) {
         val target = when (actionId) {
             R.id.action_global_notes -> R.id.notesFragment
-            R.id.action_global_chat -> R.id.chatFragment
             R.id.action_global_settings -> R.id.settingsFragment
             else -> null
         }
@@ -134,13 +130,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun onDestinationChanged(destination: NavDestination) {
         val id = destination.id
-        showBottomBar = id == R.id.notesFragment || id == R.id.chatFragment || id == R.id.settingsFragment
+        showBottomBar = id == R.id.notesFragment || id == R.id.settingsFragment
         updateBottomArea()
 
         binding.navNotes.isSelected = id == R.id.notesFragment
-        binding.navChat.isSelected = id == R.id.chatFragment
         binding.menuNotes.isSelected = id == R.id.notesFragment
-        binding.menuChat.isSelected = id == R.id.chatFragment
         binding.menuSettings.isSelected = id == R.id.settingsFragment
 
         // The menu can be swiped open only on the main screens (not on login or the editor).
