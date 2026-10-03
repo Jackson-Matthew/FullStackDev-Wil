@@ -28,16 +28,17 @@ public class BlasterDetailsRequest
     [Required, StringLength(80)] public string CertificationId { get; set; } = "";
 }
 
-public sealed class CreateBlasterRequest : BlasterDetailsRequest
+public sealed class CreateBlasterRequest
 {
     [Required, EmailAddress, StringLength(254)] public string Email { get; set; } = "";
+    [Required, StringLength(100, MinimumLength = 8)] public string Password { get; set; } = "";
+    [StringLength(150)] public string? FullName { get; set; }
+    [Phone, StringLength(30)] public string? PhoneNumber { get; set; }
+    [StringLength(80)] public string? CertificationId { get; set; }
 }
 
 public record BlasterStatusRequest([Required] bool? IsActive);
-public record AcceptInvitationRequest(
-    [Required, EmailAddress, StringLength(254)] string Email,
-    [Required, StringLength(4096)] string Token,
-    [Required, StringLength(100, MinimumLength = 8)] string Password);
+public record SetBlasterPasswordRequest([Required, StringLength(100, MinimumLength = 8)] string Password);
 
 public record BlasterDto(string Id, string FullName, string Email, string? PhoneNumber,
     string? CertificationId, bool IsActive, bool EmailConfirmed);

@@ -104,7 +104,6 @@ builder.Services.AddAuthorization();
 // builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IPasswordResetDelivery, DevelopmentPasswordResetDelivery>();
-builder.Services.AddScoped<IAccountEmailDelivery, DevelopmentAccountEmailDelivery>();
 
 // ---------------------------------------------------------------------------
 // 5. Controllers + Swagger (with Bearer Authorize button)

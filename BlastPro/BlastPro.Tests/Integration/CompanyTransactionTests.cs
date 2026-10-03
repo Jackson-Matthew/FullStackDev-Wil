@@ -17,7 +17,6 @@ public sealed class CompanyTransactionTests
     {
         await using var host = new ApiTestHost(sqlServer: true);
         await host.InitializeDatabaseAsync();
-        host.AccountMailbox.Available = false;
         using var client = host.Client();
         var request = CompanyTestSetup.Registration();
         Assert.Equal(HttpStatusCode.Created, (await client.PostAsJsonAsync("/api/companies", request)).StatusCode);
@@ -48,13 +47,15 @@ public sealed class CompanyTransactionTests
     }
 
     [Fact]
-    public async Task Failed_blaster_delivery_does_not_create_user_or_consume_seat()
+    public async Task Invalid_blaster_password_does_not_create_user_or_consume_seat()
     {
         await using var host = new ApiTestHost(sqlServer: true);
         using var main = host.Client();
         await CompanyTestSetup.CreateMainAsync(host, main);
-        host.AccountMailbox.FailSend = true;
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, (await main.PostAsJsonAsync("/api/company/blasters", CompanyTestSetup.BlasterRequest())).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await main.PostAsJsonAsync("/api/company/blasters", new
+        {
+            email = $"invalid-{Guid.NewGuid():N}@example.test", password = "weakpassword"
+        })).StatusCode);
         var company = (await main.GetFromJsonAsync<CompanyDto>("/api/company"))!;
         Assert.Equal(0, company.ActiveBlasterCount);
         Assert.Empty(company.Blasters);
@@ -68,8 +69,8 @@ public sealed class CompanyTransactionTests
         await using var host = new ApiTestHost(sqlServer: true);
         using var main = host.Client();
         await CompanyTestSetup.CreateMainAsync(host, main);
-        var first = await CompanyTestSetup.InviteAsync(main);
-        for (var i = 0; i < 4; i++) await CompanyTestSetup.InviteAsync(main);
+        var first = await CompanyTestSetup.CreateBlasterAsync(main);
+        for (var i = 0; i < 4; i++) await CompanyTestSetup.CreateBlasterAsync(main);
         (await main.PutAsJsonAsync($"/api/company/blasters/{first.Id}/status", new { isActive = false })).EnsureSuccessStatusCode();
         var responses = await Task.WhenAll(
             main.PostAsJsonAsync("/api/company/blasters", CompanyTestSetup.BlasterRequest()),

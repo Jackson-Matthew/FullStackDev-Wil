@@ -11,8 +11,8 @@ BlastPro is a work integrated learning project for managing blast projects, reco
 
 | Area | Available in the current build |
 | --- | --- |
-| Accounts | Create a company and its Main Company User, confirm email, sign in, sign out, and reset passwords through a local development mailbox. |
-| Company administration | Main Company Users manage company contact details, explosive products and prices, and invite, edit, deactivate, or reactivate Blasters. The API enforces five active Blasters per company. |
+| Accounts | Create a company and its Main Company User with immediate sign-in; sign in and out; use a local development mailbox for password reset. |
+| Company administration | Main Company Users manage company contact details, explosive products and prices, and create Blaster accounts directly with an email and password. They can set a Blaster's password, edit details, and deactivate or reactivate accounts. The API enforces five active Blasters per company. |
 | Profile | Users view and edit their permitted personal details. Company, role, and account status are controlled by the API. |
 | Projects | Create, search, filter, edit, and soft delete projects. New mobile projects appear on the web. |
 | Project notes | Web and Android users with project access can add notes and comments and store up to three JPEG, PNG, or WebP photos per note in the shared database. |
@@ -26,7 +26,7 @@ Explosive cost is shown only when every hole has an active, priced product in on
 ### Still under development
 
 - Direct PDF file download. The `DownloadPdf` action currently opens the browser print view.
-- Production deployment and production account email delivery (confirmation, invitation, and password reset).
+- Production deployment. Self-service password reset needs a delivery method outside local development; Blaster account creation does not use email delivery.
 
 ## Architecture
 
@@ -146,14 +146,14 @@ The test project covers authentication, company and owner access, account setup,
 | Local HTTPS certificate warning | Trust the development certificate with `dotnet dev-certs https --trust`. |
 | Migration reports that a table already exists | Use a new LocalDB database name through API user secrets; preserve the old database if it contains data you need. |
 | No password reset email arrives | Development reset links are written to `BlastPro/BlastPro.Api/App_Data/PasswordReset`, not sent by email. See the [account guide](BlastPro/docs/login-and-password-reset.md). |
-| No company confirmation or Blaster invitation arrives | Development account links are written to `BlastPro/BlastPro.Api/App_Data/AccountMail`. See [company setup](BlastPro/docs/company-accounts.md). |
+| A Blaster cannot sign in after the main user creates the account | Check the email and password entered on Add Blaster. For an older account created under the retired invitation flow, use Company → Set password. See [company setup](BlastPro/docs/company-accounts.md). |
 | Results show no total cost | Each hole needs an active, priced explosive product using the same currency. |
 | The report page says there are no results to report on | Save a calculation result for the project first, then reopen the report preview. |
 
 ## Further documentation
 
 - [Login and local password reset](BlastPro/docs/login-and-password-reset.md)
-- [Company setup, Blaster invitations, and profiles](BlastPro/docs/company-accounts.md)
+- [Company setup, Blaster accounts, and profiles](BlastPro/docs/company-accounts.md)
 - [Database model and migration notes](BlastPro/docs/database-plan.md)
 
 This repository currently has no production deployment guide or published demonstration link.

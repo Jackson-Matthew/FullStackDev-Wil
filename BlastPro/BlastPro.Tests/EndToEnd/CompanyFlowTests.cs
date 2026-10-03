@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using BlastPro.Api.Models.Dtos;
 using BlastPro.Tests.Support;
-using Microsoft.AspNetCore.WebUtilities;
 
 namespace BlastPro.Tests.EndToEnd;
 
@@ -113,7 +112,7 @@ public sealed class CompanyFlowTests
     }
 
     [Fact]
-    public async Task Main_user_invites_blaster_and_blaster_sets_password_through_form()
+    public async Task Main_user_creates_blaster_with_password_and_blaster_signs_in()
     {
         await using var api = new ApiTestHost();
         using var main = api.Client();
@@ -123,24 +122,16 @@ public sealed class CompanyFlowTests
         await SignIn(mainBrowser, registration.Email);
         var email = $"new-{Guid.NewGuid():N}@example.test";
         var createPage = await mainBrowser.GetStringAsync("/Blasters/Create");
-        Assert.DoesNotContain("name=\"Password\"", createPage);
-        var invited = await BrowserForms.SubmitAsync(mainBrowser, "/Blasters/Create", "/Blasters/Create", new()
+        Assert.Contains("name=\"Password\"", createPage);
+        var created = await BrowserForms.SubmitAsync(mainBrowser, "/Blasters/Create", "/Blasters/Create", new()
         {
-            ["FullName"] = "Invited Blaster", ["Email"] = email,
-            ["PhoneNumber"] = "+27 82 555 1234", ["CertificationId"] = "TEST-CERT"
+            ["Email"] = email, ["Password"] = ApiTestHost.Password,
+            ["ConfirmPassword"] = ApiTestHost.Password
         });
-        Assert.Equal(HttpStatusCode.Redirect, invited.StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect, created.StatusCode);
         Assert.Contains("1 of 5 active Blasters", await mainBrowser.GetStringAsync("/Company/Index"));
+        Assert.Contains("Set password", await mainBrowser.GetStringAsync("/Company/Index"));
         using var blasterBrowser = mvc.Browser();
-        var token = api.AccountMailbox.Invitations[email];
-        var path = QueryHelpers.AddQueryString("/Account/AcceptInvitation", new Dictionary<string, string?> { ["email"] = email, ["token"] = token });
-        var fields = new Dictionary<string, string>
-            { ["Email"] = email, ["Token"] = token, ["Password"] = ApiTestHost.Password, ["ConfirmPassword"] = "DifferentPassword123!" };
-        var mismatch = await BrowserForms.SubmitAsync(blasterBrowser, path, "/Account/AcceptInvitation", fields);
-        Assert.Contains("Passwords do not match", await mismatch.Content.ReadAsStringAsync());
-        fields["ConfirmPassword"] = ApiTestHost.Password;
-        var accepted = await BrowserForms.SubmitAsync(blasterBrowser, path, "/Account/AcceptInvitation", fields);
-        Assert.Equal(HttpStatusCode.Redirect, accepted.StatusCode);
         await SignIn(blasterBrowser, email);
         Assert.DoesNotContain("href=\"/Company/Index\"", await blasterBrowser.GetStringAsync("/Dashboard/Index"));
         foreach (var adminPath in new[] { "/Company/Index", "/Company/Edit", "/Blasters/Create" })
@@ -149,7 +140,20 @@ public sealed class CompanyFlowTests
             Assert.Equal(HttpStatusCode.Redirect, denied.StatusCode);
             Assert.Contains("AccessDenied", denied.Headers.Location!.OriginalString);
         }
-        Assert.Contains("Invited Blaster", await blasterBrowser.GetStringAsync("/Profile/Index"));
+        Assert.Contains(email, await blasterBrowser.GetStringAsync("/Profile/Index"));
+
+        var blasterId = Assert.Single((await main.GetFromJsonAsync<CompanyDto>("/api/company"))!.Blasters).Id;
+        var passwordPath = $"/Blasters/SetPassword/{blasterId}";
+        var passwordChange = await BrowserForms.SubmitAsync(mainBrowser, passwordPath, passwordPath, new()
+        {
+            ["Email"] = email, ["Password"] = "UpdatedPassword123!",
+            ["ConfirmPassword"] = "UpdatedPassword123!"
+        });
+        Assert.Equal(HttpStatusCode.Redirect, passwordChange.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await main.PostAsJsonAsync("/api/auth/login",
+            new { email, password = ApiTestHost.Password })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await main.PostAsJsonAsync("/api/auth/login",
+            new { email, password = "UpdatedPassword123!" })).StatusCode);
     }
 
     [Fact]
@@ -158,7 +162,7 @@ public sealed class CompanyFlowTests
         await using var api = new ApiTestHost();
         using var main = api.Client();
         var registration = await CompanyTestSetup.CreateMainAsync(api, main);
-        var blaster = await CompanyTestSetup.InviteAsync(main);
+        var blaster = await CompanyTestSetup.CreateBlasterAsync(main);
         await using var mvc = new MvcTestHost(api);
         using var browser = mvc.Browser();
         await SignIn(browser, registration.Email);
@@ -189,14 +193,14 @@ public sealed class CompanyFlowTests
     }
 
     [Fact]
-    public async Task New_forms_require_antiforgery_tokens_and_invalid_invitation_links_offer_recovery()
+    public async Task New_forms_require_antiforgery_tokens()
     {
         await using var api = new ApiTestHost();
         await using var mvc = new MvcTestHost(api);
         using var browser = mvc.Browser();
-        foreach (var path in new[] { "/Account/CreateCompany", "/Account/AcceptInvitation" })
-            Assert.Equal(HttpStatusCode.BadRequest, (await browser.PostAsync(path, new FormUrlEncodedContent(new Dictionary<string, string>()))).StatusCode);
-        Assert.Contains("Ask your company administrator", await browser.GetStringAsync("/Account/AcceptInvitation"));
+        Assert.Equal(HttpStatusCode.BadRequest, (await browser.PostAsync("/Account/CreateCompany",
+            new FormUrlEncodedContent(new Dictionary<string, string>()))).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await browser.GetAsync("/Account/AcceptInvitation")).StatusCode);
     }
 
     private static Task<HttpResponseMessage> SignIn(HttpClient browser, string email)

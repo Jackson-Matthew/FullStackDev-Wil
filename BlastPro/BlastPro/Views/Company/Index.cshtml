@@ -93,7 +93,7 @@
 
             @if (Model.Blasters.Count == 0)
             {
-                <div class="company-empty">No Blasters yet. Add your first Blaster to send an invitation.</div>
+                <div class="company-empty">No Blasters yet. Add your first Blaster account.</div>
             }
             else
             {
@@ -109,7 +109,8 @@
 
                     @foreach (var blaster in Model.Blasters)
                     {
-                        var status = !blaster.IsActive ? "Inactive" : blaster.EmailConfirmed ? "Active" : "Invited";
+                        var status = !blaster.IsActive ? "Inactive" : blaster.EmailConfirmed ? "Active" : "Needs password";
+                        var statusClass = !blaster.IsActive ? "inactive" : blaster.EmailConfirmed ? "active" : "invited";
 
                         <div class="blaster-row">
 
@@ -126,23 +127,18 @@
                             <div class="blaster-cell blaster-phone" data-label="Contact phone">@blaster.PhoneNumber</div>
 
                             <div class="blaster-cell" data-label="Status">
-                                <span class="blaster-status status-@status.ToLowerInvariant()">@status</span>
+                                <span class="blaster-status status-@statusClass">@status</span>
                             </div>
 
                             <div class="blaster-actions">
                                 <a asp-controller="Blasters" asp-action="Edit" asp-route-id="@blaster.Id" class="company-btn company-btn-outline">Edit</a>
+                                <a asp-controller="Blasters" asp-action="SetPassword" asp-route-id="@blaster.Id" class="company-btn company-btn-outline">Set password</a>
 
                                 <form asp-controller="Blasters" asp-action="SetStatus" asp-route-id="@blaster.Id" method="post" class="d-flex m-0">
                                     <input type="hidden" name="isActive" value="@((!blaster.IsActive).ToString().ToLowerInvariant())" />
                                     <button class="company-btn company-btn-outline" type="submit">@(blaster.IsActive ? "Deactivate" : "Reactivate")</button>
                                 </form>
 
-                                @if (blaster.IsActive && !blaster.EmailConfirmed)
-                                {
-                                    <form asp-controller="Blasters" asp-action="ResendInvitation" asp-route-id="@blaster.Id" method="post" class="d-flex m-0">
-                                        <button class="company-btn company-btn-outline" type="submit">Resend invitation</button>
-                                    </form>
-                                }
                             </div>
 
                         </div>
@@ -151,7 +147,7 @@
                 </div>
             }
 
-            <p class="company-footnote">Invited active accounts reserve a seat. Deactivated Blasters keep their designs.</p>
+            <p class="company-footnote">Active Blaster accounts reserve a seat. Deactivated Blasters keep their designs.</p>
 
         </div>
 

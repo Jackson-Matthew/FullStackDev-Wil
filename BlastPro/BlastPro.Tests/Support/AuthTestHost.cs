@@ -38,26 +38,11 @@ public sealed class TestMailbox : IPasswordResetDelivery
     }
 }
 
-public sealed class TestAccountMailbox : IAccountEmailDelivery
-{
-    public ConcurrentDictionary<string, string> Invitations { get; } = new();
-    public bool Available { get; set; } = true;
-    public bool FailSend { get; set; }
-    public Task PrepareAsync() => Available ? Task.CompletedTask : throw new IOException("Test delivery failure");
-    public Task SendInvitationAsync(string email, string token)
-    {
-        if (FailSend) throw new IOException("Test delivery failure");
-        Invitations[email] = token;
-        return Task.CompletedTask;
-    }
-}
-
 public sealed class ApiTestHost(TimeSpan? resetLifetime = null, int tokenMinutes = 10, bool sqlServer = false)
     : WebApplicationFactory<AuthController>
 {
     public const string Password = "TestPassword123!";
     public TestMailbox Mailbox { get; } = new();
-    public TestAccountMailbox AccountMailbox { get; } = new();
     private readonly string _database = Guid.NewGuid().ToString();
     private bool _databaseCreated;
 
@@ -83,8 +68,6 @@ public sealed class ApiTestHost(TimeSpan? resetLifetime = null, int tokenMinutes
             services.AddDataProtection().UseEphemeralDataProtectionProvider();
             services.RemoveAll<IPasswordResetDelivery>();
             services.AddSingleton<IPasswordResetDelivery>(Mailbox);
-            services.RemoveAll<IAccountEmailDelivery>();
-            services.AddSingleton<IAccountEmailDelivery>(AccountMailbox);
             // Minimal hosting reads startup JWT settings before the factory's final config overrides.
             services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
             {

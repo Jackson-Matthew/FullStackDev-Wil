@@ -28,21 +28,19 @@ public static class CompanyTestSetup
         fullName = "Test Blaster", email = email ?? $"blaster-{Guid.NewGuid():N}@example.test",
         phoneNumber = "+27 82 555 1234", certificationId = certification ?? $"CERT-{Guid.NewGuid():N}",
         // Hostile extra fields must never influence account creation.
-        companyId = 9999, role = "MainCompanyUser", password = "AdministratorKnows123!", isActive = false
+        companyId = 9999, role = "MainCompanyUser", password = ApiTestHost.Password, isActive = false
     };
 
-    public static async Task<BlasterDto> InviteAsync(HttpClient main)
+    public static async Task<BlasterDto> CreateBlasterAsync(HttpClient main)
     {
         var response = await main.PostAsJsonAsync("/api/company/blasters", BlasterRequest());
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<BlasterDto>())!;
     }
 
-    public static async Task<HttpClient> AcceptAsync(ApiTestHost host, BlasterDto blaster)
+    public static async Task<HttpClient> SignInBlasterAsync(ApiTestHost host, BlasterDto blaster)
     {
         var client = host.Client();
-        (await client.PostAsJsonAsync("/api/auth/accept-invitation", new
-            { blaster.Email, token = host.AccountMailbox.Invitations[blaster.Email], password = ApiTestHost.Password })).EnsureSuccessStatusCode();
         var login = await host.LoginAsync(client, blaster.Email);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", login.Token);
         return client;

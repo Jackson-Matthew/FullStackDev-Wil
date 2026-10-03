@@ -19,29 +19,29 @@ public sealed class CompanyAccessTests
         await using var host = new ApiTestHost();
         using var main = host.Client();
         await CompanyTestSetup.CreateMainAsync(host, main);
-        var blaster = await CompanyTestSetup.InviteAsync(main);
-        using var client = await CompanyTestSetup.AcceptAsync(host, blaster);
+        var blaster = await CompanyTestSetup.CreateBlasterAsync(main);
+        using var client = await CompanyTestSetup.SignInBlasterAsync(host, blaster);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/company")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.PutAsJsonAsync("/api/company", new { contactEmail = "office@example.test", contactPhone = "+27 11 555 1234" })).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("/api/company/blasters", CompanyTestSetup.BlasterRequest())).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync($"/api/company/blasters/{blaster.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.PutAsJsonAsync($"/api/company/blasters/{blaster.Id}/status", new { isActive = false })).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync($"/api/company/blasters/{blaster.Id}/invitation", new { })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.PutAsJsonAsync($"/api/company/blasters/{blaster.Id}/password", new { password = "ChangedPassword123!" })).StatusCode);
     }
 
     [Fact]
-    public async Task Main_users_cannot_read_update_deactivate_or_invite_another_companys_blasters()
+    public async Task Main_users_cannot_read_update_deactivate_or_set_password_for_another_companys_blasters()
     {
         await using var host = new ApiTestHost();
         using var companyA = host.Client();
         using var companyB = host.Client();
         await CompanyTestSetup.CreateMainAsync(host, companyA);
         await CompanyTestSetup.CreateMainAsync(host, companyB);
-        var blaster = await CompanyTestSetup.InviteAsync(companyB);
+        var blaster = await CompanyTestSetup.CreateBlasterAsync(companyB);
         Assert.Equal(HttpStatusCode.NotFound, (await companyA.GetAsync($"/api/company/blasters/{blaster.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await companyA.PutAsJsonAsync($"/api/company/blasters/{blaster.Id}", new { fullName = "Changed", phoneNumber = "+27 82 555 1234", certificationId = "Changed" })).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await companyA.PutAsJsonAsync($"/api/company/blasters/{blaster.Id}/status", new { isActive = false })).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await companyA.PostAsJsonAsync($"/api/company/blasters/{blaster.Id}/invitation", new { })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await companyA.PutAsJsonAsync($"/api/company/blasters/{blaster.Id}/password", new { password = "ChangedPassword123!" })).StatusCode);
         Assert.Empty((await companyA.GetFromJsonAsync<CompanyDto>("/api/company"))!.Blasters);
     }
 
@@ -53,10 +53,10 @@ public sealed class CompanyAccessTests
         using var outsiderMain = host.Client();
         await CompanyTestSetup.CreateMainAsync(host, main);
         await CompanyTestSetup.CreateMainAsync(host, outsiderMain);
-        var first = await CompanyTestSetup.InviteAsync(main);
-        var second = await CompanyTestSetup.InviteAsync(main);
-        using var firstClient = await CompanyTestSetup.AcceptAsync(host, first);
-        using var secondClient = await CompanyTestSetup.AcceptAsync(host, second);
+        var first = await CompanyTestSetup.CreateBlasterAsync(main);
+        var second = await CompanyTestSetup.CreateBlasterAsync(main);
+        using var firstClient = await CompanyTestSetup.SignInBlasterAsync(host, first);
+        using var secondClient = await CompanyTestSetup.SignInBlasterAsync(host, second);
         var firstProject = await CreateProject(firstClient, "First design");
         var secondProject = await CreateProject(secondClient, "Second design");
         var outsideProject = await CreateProject(outsiderMain, "Outside design");
@@ -80,8 +80,8 @@ public sealed class CompanyAccessTests
         await using var host = new ApiTestHost();
         using var main = host.Client();
         var registration = await CompanyTestSetup.CreateMainAsync(host, main);
-        var blaster = await CompanyTestSetup.InviteAsync(main);
-        using var client = await CompanyTestSetup.AcceptAsync(host, blaster);
+        var blaster = await CompanyTestSetup.CreateBlasterAsync(main);
+        using var client = await CompanyTestSetup.SignInBlasterAsync(host, blaster);
         var company = (await main.GetFromJsonAsync<CompanyDto>("/api/company"))!;
         (await client.PutAsJsonAsync("/api/profile", new
         {
@@ -127,11 +127,11 @@ public sealed class CompanyAccessTests
         using var other = host.Client();
         await CompanyTestSetup.CreateMainAsync(host, main);
         await CompanyTestSetup.CreateMainAsync(host, other);
-        var first = await CompanyTestSetup.InviteAsync(main);
+        var first = await CompanyTestSetup.CreateBlasterAsync(main);
         Assert.Equal(HttpStatusCode.Conflict, (await other.PostAsJsonAsync("/api/company/blasters", CompanyTestSetup.BlasterRequest(first.Email.ToUpperInvariant()))).StatusCode);
         Assert.Equal(HttpStatusCode.Conflict, (await main.PostAsJsonAsync("/api/company/blasters", CompanyTestSetup.BlasterRequest(certification: first.CertificationId))).StatusCode);
         Assert.Equal(HttpStatusCode.Created, (await other.PostAsJsonAsync("/api/company/blasters", CompanyTestSetup.BlasterRequest(certification: first.CertificationId))).StatusCode);
-        var second = await CompanyTestSetup.InviteAsync(main);
+        var second = await CompanyTestSetup.CreateBlasterAsync(main);
         Assert.Equal(HttpStatusCode.Conflict, (await main.PutAsJsonAsync($"/api/company/blasters/{second.Id}", new { second.FullName, second.PhoneNumber, first.CertificationId })).StatusCode);
     }
 

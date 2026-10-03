@@ -19,8 +19,8 @@ public sealed class ProductAdministrationTests
         using var companyB = host.Client();
         await CompanyTestSetup.CreateMainAsync(host, companyA);
         await CompanyTestSetup.CreateMainAsync(host, companyB);
-        var blaster = await CompanyTestSetup.InviteAsync(companyA);
-        using var blasterClient = await CompanyTestSetup.AcceptAsync(host, blaster);
+        var blaster = await CompanyTestSetup.CreateBlasterAsync(companyA);
+        using var blasterClient = await CompanyTestSetup.SignInBlasterAsync(host, blaster);
 
         var created = await companyA.PostAsJsonAsync("/api/company/products",
             new { name = "Bulk emulsion", pricePerKg = 35m, isActive = true });

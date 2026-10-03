@@ -23,14 +23,14 @@ directly to SQL Server.
 The API runs at `https://localhost:7002`; Swagger is available at
 `https://localhost:7002/swagger` but no longer opens a second browser window. Use an
 existing confirmed account, the development seed account, or **Create Company**.
-See [company account setup](company-accounts.md) for confirmations and Blaster invitations.
+See [company account setup](company-accounts.md) for direct Blaster account creation.
 Transaction tests use isolated temporary LocalDB databases; authentication tests use in-memory data.
 
 ## Login behaviour
 
 - Five failed password attempts lock the account for 15 minutes. A locked or
   inactive account receives the same invalid-login message as incorrect credentials.
-- Email confirmation is required before sign-in. Inactive companies cannot sign in.
+- New company and Blaster accounts can sign in immediately. Inactive companies cannot sign in.
 - Without Remember Me, the browser receives a session cookie, limited to 60 minutes
   or the API token's remaining lifetime, whichever is shorter.
 - With Remember Me, the cookie persists across browser restarts until the API token
@@ -46,8 +46,7 @@ Transaction tests use isolated temporary LocalDB databases; authentication tests
 Email delivery is not configured. In Development, Forgot Password saves a local HTML
 message containing a working reset link. The confirmation page explicitly explains
 that no email is sent. The response is identical for eligible, inactive and unknown
-addresses; only active, confirmed accounts receive a message. A pending Blaster must
-use their invitation to complete account setup.
+addresses; only active accounts eligible for sign-in receive a message.
 
 1. Submit the email address on Forgot Password.
 2. On the computer running the API, open
@@ -85,4 +84,6 @@ protected redirects, expired cookies and tokens, API outages, generic reset resp
 password validation, reset expiry and reuse, revoked sessions and the local mailbox.
 
 SQL Server migration behaviour and actual email delivery are not covered by these
-authentication tests. The production email provider remains a separate setup task.
+authentication tests. Production self-service password reset remains unavailable until
+a delivery method is added; account creation and Main Company User password setting do
+not require one.

@@ -12,19 +12,19 @@ public sealed class BlastersController(IApiClient api) : Controller
     public async Task<IActionResult> Create()
     {
         await LoadSeatCount();
-        return View(new BlasterViewModel());
+        return View(new CreateBlasterViewModel());
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(BlasterViewModel model)
+    public async Task<IActionResult> Create(CreateBlasterViewModel model)
     {
         if (ModelState.IsValid)
         {
             var result = await api.PostAsync<object>("api/company/blasters", new
-                { model.FullName, model.Email, model.PhoneNumber, model.CertificationId });
+                { model.Email, model.Password });
             if (result.Success)
             {
-                TempData["Success"] = "Blaster added. Their invitation is in the local development mailbox; they choose their own password.";
+                TempData["Success"] = "Blaster account created. Share the sign-in details securely.";
                 return RedirectToAction("Index", "Company");
             }
             ModelState.AddModelError(string.Empty, result.Error ?? "Could not add the Blaster.");
@@ -64,6 +64,34 @@ public sealed class BlastersController(IApiClient api) : Controller
         return View(model);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> SetPassword(string id)
+    {
+        var result = await api.GetAsync<BlasterViewModel>($"api/company/blasters/{Uri.EscapeDataString(id)}");
+        if (result.StatusCode == System.Net.HttpStatusCode.NotFound) return NotFound();
+        if (result.Success && result.Data is not null)
+            return View(new BlasterPasswordViewModel { Id = id, Email = result.Data.Email });
+        TempData["Error"] = result.Error;
+        return RedirectToAction("Index", "Company");
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetPassword(string id, BlasterPasswordViewModel model)
+    {
+        model.Id = id;
+        if (!ModelState.IsValid) return View(model);
+        var result = await api.PutAsync<object>($"api/company/blasters/{Uri.EscapeDataString(id)}/password",
+            new { model.Password });
+        if (result.StatusCode == System.Net.HttpStatusCode.NotFound) return NotFound();
+        if (!result.Success)
+        {
+            ModelState.AddModelError(string.Empty, result.Error ?? "Could not set the password.");
+            return View(model);
+        }
+        TempData["Success"] = "Blaster password set. Share it securely; any previous sign-in has been ended.";
+        return RedirectToAction("Index", "Company");
+    }
+
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> SetStatus(string id, bool isActive)
     {
@@ -71,16 +99,6 @@ public sealed class BlastersController(IApiClient api) : Controller
         if (result.StatusCode == System.Net.HttpStatusCode.NotFound) return NotFound();
         TempData[result.Success ? "Success" : "Error"] = result.Success
             ? (isActive ? "Blaster reactivated." : "Blaster deactivated. Their designs are retained.") : result.Error;
-        return RedirectToAction("Index", "Company");
-    }
-
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> ResendInvitation(string id)
-    {
-        var result = await api.PostAsync<object>($"api/company/blasters/{Uri.EscapeDataString(id)}/invitation", new { });
-        if (result.StatusCode == System.Net.HttpStatusCode.NotFound) return NotFound();
-        TempData[result.Success ? "Success" : "Error"] = result.Success
-            ? "New invitation requested. Open the latest message in the local development mailbox." : result.Error;
         return RedirectToAction("Index", "Company");
     }
 

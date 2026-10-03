@@ -3,7 +3,6 @@ using BlastPro.Api.Extensions;
 using BlastPro.Api.Models.Dtos;
 using BlastPro.Api.Models.Entities;
 using BlastPro.Api.Services;
-using BlastPro.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,10 +12,9 @@ namespace BlastPro.Api.Controllers;
 
 [ApiController, Route("api/company/blasters"), Authorize(Roles = DatabaseSeeder.MainCompanyUserRole)]
 public sealed class BlastersController(ApplicationDbContext db, UserManager<ApplicationUser> users,
-    IAccountEmailDelivery delivery, ILogger<BlastersController> logger) : ControllerBase
+    ILogger<BlastersController> logger) : ControllerBase
 {
     public const int SeatLimit = 5;
-    public const string InvitationPurpose = "BlasterInvitation";
 
     internal static IQueryable<ApplicationUser> CompanyBlasters(ApplicationDbContext db, int companyId)
         => db.Users.Where(u => u.CompanyId == companyId && db.UserRoles.Any(ur => ur.UserId == u.Id
@@ -40,32 +38,33 @@ public sealed class BlastersController(ApplicationDbContext db, UserManager<Appl
         if (companyId is null) return Unauthorized();
         try
         {
-            await delivery.PrepareAsync();
             await using var transaction = await AccountTransactions.BeginAsync(db, companyId);
             if (await Blasters.CountAsync(u => u.IsActive) >= SeatLimit) return SeatFull();
             if (await users.FindByEmailAsync(request.Email.Trim()) is not null)
                 return Conflict(new { message = "This email address is already registered." });
-            if (await CertificationExists(request.CertificationId)) return CertificationConflict();
+            if (!string.IsNullOrWhiteSpace(request.CertificationId)
+                && await CertificationExists(request.CertificationId)) return CertificationConflict();
             var user = new ApplicationUser
             {
-                CompanyId = companyId.Value, FullName = request.FullName.Trim(), Email = request.Email.Trim(),
-                UserName = request.Email.Trim(), PhoneNumber = request.PhoneNumber.Trim(),
-                CertificationId = request.CertificationId.Trim(), IsActive = true, EmailConfirmed = false,
+                CompanyId = companyId.Value,
+                FullName = string.IsNullOrWhiteSpace(request.FullName) ? request.Email.Trim() : request.FullName.Trim(),
+                Email = request.Email.Trim(), UserName = request.Email.Trim(),
+                PhoneNumber = request.PhoneNumber?.Trim(), CertificationId = request.CertificationId?.Trim(),
+                IsActive = true, EmailConfirmed = true,
                 CreatedAtUtc = DateTime.UtcNow, UpdatedAtUtc = DateTime.UtcNow
             };
-            var result = await users.CreateAsync(user);
+            var result = await users.CreateAsync(user, request.Password);
             if (!result.Succeeded) return IdentityErrors(result);
             result = await users.AddToRoleAsync(user, DatabaseSeeder.BlasterRole);
             if (!result.Succeeded) return IdentityErrors(result);
-            await SendInvitation(user);
             if (transaction is not null) await transaction.CommitAsync();
             return StatusCode(201, ToDto(user));
         }
         catch (DbUpdateException) { return Conflict(new { message = "Email and company certification ID must be unique." }); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
-            logger.LogWarning("Blaster invitation could not be completed.");
-            return StatusCode(503, new { message = "The Blaster invitation could not be sent." });
+            logger.LogWarning("Blaster account could not be created.");
+            return StatusCode(503, new { message = "The Blaster account could not be created." });
         }
     }
 
@@ -108,36 +107,25 @@ public sealed class BlastersController(ApplicationDbContext db, UserManager<Appl
         return NoContent();
     }
 
-    [HttpPost("{id}/invitation")]
-    public async Task<IActionResult> ResendInvitation(string id)
+    [HttpPut("{id}/password")]
+    public async Task<IActionResult> SetPassword(string id, SetBlasterPasswordRequest request)
     {
-        try
-        {
-            await delivery.PrepareAsync();
-            await using var transaction = await AccountTransactions.BeginAsync(db, User.GetCompanyId());
-            var user = await Blasters.FirstOrDefaultAsync(u => u.Id == id);
-            if (user is null) return NotFound();
-            if (!user.IsActive || user.EmailConfirmed || await users.HasPasswordAsync(user))
-                return BadRequest(new { message = "Only active Blasters awaiting setup can be invited." });
-            var result = await users.UpdateSecurityStampAsync(user);
-            if (!result.Succeeded) return IdentityErrors(result);
-            await SendInvitation(user);
-            if (transaction is not null) await transaction.CommitAsync();
-            return Ok(new { message = "A new invitation has been requested.", isDevelopmentDelivery = true });
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
-        {
-            logger.LogWarning("Blaster invitation delivery is unavailable.");
-            return StatusCode(503, new { message = "The Blaster invitation could not be sent." });
-        }
+        var user = await Blasters.FirstOrDefaultAsync(u => u.Id == id);
+        if (user is null) return NotFound();
+        await using var transaction = await AccountTransactions.BeginAsync(db, User.GetCompanyId());
+        user.EmailConfirmed = true;
+        user.UpdatedAtUtc = DateTime.UtcNow;
+        var result = await users.HasPasswordAsync(user)
+            ? await users.ResetPasswordAsync(user, await users.GeneratePasswordResetTokenAsync(user), request.Password)
+            : await users.AddPasswordAsync(user, request.Password);
+        if (!result.Succeeded) return IdentityErrors(result);
+        if (transaction is not null) await transaction.CommitAsync();
+        return NoContent();
     }
 
     private Task<bool> CertificationExists(string certification, string? exceptId = null)
         => db.Users.AnyAsync(u => u.CompanyId == User.GetCompanyId() && u.Id != exceptId
             && u.CertificationId == certification.Trim());
-    private async Task SendInvitation(ApplicationUser user)
-        => await delivery.SendInvitationAsync(user.Email!, PasswordResetTokens.Encode(
-            await users.GenerateUserTokenAsync(user, TokenOptions.DefaultProvider, InvitationPurpose)));
     private IActionResult SeatFull() => Conflict(new { message = "This company already has 5 active Blasters. Deactivate a Blaster to free a seat." });
     private IActionResult CertificationConflict() => Conflict(new { message = "This certification ID is already in use in your company." });
     private IActionResult IdentityErrors(IdentityResult result) => BadRequest(new { errors = result.Errors.Select(e => e.Description) });
