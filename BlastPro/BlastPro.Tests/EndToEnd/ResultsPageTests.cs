@@ -74,11 +74,15 @@ public sealed class ResultsPageTests
         Assert.Contains("report-hole-plan", reportHtml);
         Assert.Contains("S300 Volcano", reportHtml);
         Assert.Contains("Density (g/cm³)", reportHtml);
-        Assert.Contains("Print / Save PDF", reportHtml);
+        Assert.Contains("Download PDF", reportHtml);
         Assert.Contains("Test site", reportHtml);
         var printable = await browser.GetAsync($"/Reports/Print?projectId={projectId}");
         Assert.Equal(HttpStatusCode.OK, printable.StatusCode);
         Assert.Contains("report-hole-plan", await printable.Content.ReadAsStringAsync());
+        var pdf = await browser.GetAsync($"/Reports/DownloadPdf?projectId={projectId}");
+        Assert.Equal(HttpStatusCode.OK, pdf.StatusCode);
+        Assert.Equal("application/pdf", pdf.Content.Headers.ContentType?.MediaType);
+        Assert.StartsWith("%PDF", System.Text.Encoding.ASCII.GetString((await pdf.Content.ReadAsByteArrayAsync()).AsSpan(0, 4)));
 
         var unchangedDraft = await BrowserForms.SubmitAsync(browser,
             $"/PatternDesign/Index?projectId={projectId}", "/PatternDesign/SaveDraft",

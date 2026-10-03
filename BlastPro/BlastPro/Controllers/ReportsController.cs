@@ -1,6 +1,7 @@
 using BlastPro.Mvc.Models.Dtos;
 using BlastPro.Mvc.Models.ViewModels.Projects;
 using BlastPro.Mvc.Models.ViewModels.Reports;
+using BlastPro.Mvc.Services;
 using BlastPro.Mvc.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -41,8 +42,19 @@ public sealed class ReportsController(IApiClient api) : Controller
     }
 
     [HttpGet]
-    public IActionResult DownloadPdf(int projectId, int? resultId) =>
-        RedirectToAction(nameof(Print), new { projectId, resultId });
+    public async Task<IActionResult> DownloadPdf(int projectId, int? resultId)
+    {
+        var report = await LoadReport(projectId, resultId);
+        if (report is null) return RedirectToAction("Index", "Dashboard");
+        if (!report.HasResults)
+            return RedirectToAction(nameof(Preview), new { projectId });
+
+        var pdf = ReportPdfBuilder.Build(report);
+        var safeName = string.Concat(report.ProjectName.Select(c =>
+            char.IsLetterOrDigit(c) ? c : '-')).Trim('-');
+        return File(pdf, "application/pdf",
+            $"blast-report-{(safeName.Length == 0 ? "project" : safeName)}-{report.ResultId}.pdf");
+    }
 
     private async Task<ReportViewModel?> LoadReport(int projectId, int? resultId)
     {
