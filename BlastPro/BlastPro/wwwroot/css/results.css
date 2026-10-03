@@ -30,6 +30,35 @@
     }
 
 
+/* back navigation: Dashboard (orange) and Pattern Design (outlined) */
+
+.results-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.results-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 14px;
+    background-color: #FFFFFF;
+    border: 1px solid #D1D5DB;
+    border-radius: 5px;
+    color: #111827;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+    .results-nav-btn:hover {
+        background-color: #F3F4F6;
+        border-color: #9CA3AF;
+        color: #111827;
+    }
+
 /* the top bar */
 
 .results-topbar {

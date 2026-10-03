@@ -41,14 +41,26 @@
 
         <header class="results-topbar">
 
-            <a asp-controller="PatternDesign"
-               asp-action="Index"
-               asp-route-projectId="@Model.ProjectId"
-               class="results-back-btn">
+            <div class="results-nav">
 
-                <i class="bi bi-arrow-left"></i> Pattern Design
+                <a asp-controller="Dashboard"
+                   asp-action="Index"
+                   class="results-back-btn">
 
-            </a>
+                    <i class="bi bi-arrow-left"></i> Dashboard
+
+                </a>
+
+                <a asp-controller="PatternDesign"
+                   asp-action="Index"
+                   asp-route-projectId="@Model.ProjectId"
+                   class="results-nav-btn">
+
+                    Pattern Design
+
+                </a>
+
+            </div>
 
             <div class="results-topbar-title">
 
