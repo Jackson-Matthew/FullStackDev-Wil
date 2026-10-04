@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -7,7 +8,7 @@
     android:orientation="vertical"
     tools:ignore="HardcodedText">
 
-    <include layout="@layout/view_top_bar_back" />
+    <include layout="@layout/view_top_bar_plain" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -39,26 +40,37 @@
                 style="@style/BlastPro.Label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="20dp"
                 android:layout_marginBottom="4dp"
-                android:text="API address" />
+                android:text="Status" />
 
-            <EditText
-                android:id="@+id/edit_api_address"
-                style="@style/BlastPro.Field"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:focusable="false"
-                android:importantForAutofill="no"
-                android:inputType="none"
-                android:maxLines="1"
-                android:text="" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <View
+                    android:id="@+id/api_status_dot"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:background="@drawable/bg_status_dot"
+                    android:backgroundTint="@color/status_grey" />
+
+                <TextView
+                    android:id="@+id/api_status_text"
+                    style="@style/BlastPro.Body"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Checking API…" />
+            </LinearLayout>
 
             <TextView
                 style="@style/BlastPro.Label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="20dp"
                 android:layout_marginBottom="4dp"
                 android:text="About" />
 
@@ -67,6 +79,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="BlastPro Mobile 1.0" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_logout"
+                style="@style/BlastPro.Button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="16dp"
+                android:text="Log out"
+                app:icon="@drawable/ic_logout" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

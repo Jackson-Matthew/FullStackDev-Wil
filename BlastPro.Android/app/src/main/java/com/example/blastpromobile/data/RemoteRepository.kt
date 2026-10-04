@@ -77,6 +77,18 @@ class RemoteRepository(private val context: Context) {
         catch (error: Exception) { MobileSession.signOut(); throw error }
     }
 
+    /** True when the server answers at all; any HTTP response counts, only a failed connection is offline. */
+    suspend fun isOnline(): Boolean = withContext(Dispatchers.IO) {
+        runCatching {
+            val connection = (URL(base).openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = 5_000
+                readTimeout = 5_000
+            }
+            try { connection.responseCode; true } finally { connection.disconnect() }
+        }.getOrDefault(false)
+    }
+
     suspend fun projects(): List<RemoteProject> = JSONArray(call("GET", "/api/projects")).let { array ->
         (0 until array.length()).map { i -> array.getJSONObject(i).let { p ->
             RemoteProject(p.getInt("id"), p.getString("name"), p.getString("siteLocation"), p.getString("blastType"))

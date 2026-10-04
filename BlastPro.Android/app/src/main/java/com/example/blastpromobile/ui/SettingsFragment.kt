@@ -2,13 +2,29 @@ package com.example.blastpromobile.ui
 
 import android.os.Bundle
 import android.view.View
-import android.widget.EditText
-import com.example.blastpromobile.BuildConfig
+import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.example.blastpromobile.R
+import com.example.blastpromobile.data.MobileSession
+import com.example.blastpromobile.data.RemoteRepository
+import kotlinx.coroutines.launch
 
 class SettingsFragment : BaseFragment(R.layout.fragment_settings) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.findViewById<EditText>(R.id.edit_api_address).setText(BuildConfig.API_BASE_URL)
+        val dot = view.findViewById<View>(R.id.api_status_dot)
+        val text = view.findViewById<TextView>(R.id.api_status_text)
+        viewLifecycleOwner.lifecycleScope.launch {
+            val online = RemoteRepository(requireContext().applicationContext).isOnline()
+            dot.backgroundTintList = ContextCompat.getColorStateList(
+                requireContext(), if (online) R.color.status_green else R.color.blast_red)
+            text.text = if (online) "API online" else "API offline"
+        }
+        view.findViewById<View>(R.id.btn_logout).setOnClickListener {
+            MobileSession.signOut()
+            findNavController().safeNavigate(R.id.action_global_login)
+        }
     }
 }
