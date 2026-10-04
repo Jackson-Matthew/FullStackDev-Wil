@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.blastpromobile.R
 import com.example.blastpromobile.data.RemoteRepository
+import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
 
 class NewProjectFragment : BaseFragment(R.layout.fragment_new_project) {
@@ -24,7 +25,7 @@ class NewProjectFragment : BaseFragment(R.layout.fragment_new_project) {
         type.adapter = ArrayAdapter(requireContext(), R.layout.item_project_spinner, BLAST_TYPES)
             .also { it.setDropDownViewResource(R.layout.item_project_spinner) }
 
-        val create = view.findViewById<View>(R.id.btn_create)
+        val create = view.findViewById<MaterialButton>(R.id.btn_create)
         create.setOnClickListener {
             val n = name.text.toString().trim()
             val s = site.text.toString().trim()
@@ -32,13 +33,13 @@ class NewProjectFragment : BaseFragment(R.layout.fragment_new_project) {
                 toast("Enter a name and site location")
                 return@setOnClickListener
             }
-            create.isEnabled = false
+            create.setBusy(true, "Creating…")
             viewLifecycleOwner.lifecycleScope.launch {
                 try {
                     repo.createProject(n, s, type.selectedItem as String)
                     findNavController().safePop()
                 } catch (error: Exception) {
-                    create.isEnabled = true
+                    create.setBusy(false, "")
                     toast(error.message ?: "Could not create project")
                 }
             }

@@ -70,6 +70,7 @@ class MainActivity : AppCompatActivity() {
         binding.navNotes.setOnClickListener { goTo(R.id.action_global_notes) }
         binding.navNewNote.setOnClickListener { goTo(R.id.action_global_new_note) }
         binding.navSettings.setOnClickListener { goTo(R.id.action_global_settings) }
+        binding.navNewNote.addPressFeedback()
     }
 
     /** Opens a main screen, ignoring taps on the screen the user is already on. */

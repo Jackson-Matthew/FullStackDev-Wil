@@ -12,6 +12,7 @@ open class BaseFragment(@LayoutRes layoutId: Int) : Fragment(layoutId) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        view.addPressFeedbackToButtons()
         view.findViewById<View>(R.id.btn_back)?.setOnClickListener {
             findNavController().safePop()
         }

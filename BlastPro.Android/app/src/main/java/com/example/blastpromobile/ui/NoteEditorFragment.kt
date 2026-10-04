@@ -22,6 +22,7 @@ import com.example.blastpromobile.R
 import com.example.blastpromobile.data.RemotePhoto
 import com.example.blastpromobile.data.RemoteProject
 import com.example.blastpromobile.data.RemoteRepository
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import java.io.File
@@ -155,8 +156,8 @@ class NoteEditorFragment : BaseFragment(R.layout.fragment_note_editor) {
         val title = editTitle.text.toString().trim().ifBlank { if (pendingUris.isNotEmpty()) "Field photo" else "" }
         val body = editBody.text.toString().trim()
         if (title.isBlank() && body.isBlank()) { toast("Add a title, note text, or photo"); return }
-        val button = requireView().findViewById<View>(R.id.btn_save)
-        button.isEnabled = false
+        val button = requireView().findViewById<MaterialButton>(R.id.btn_save)
+        button.setBusy(true, "Saving…")
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 if (noteId == 0) {
@@ -167,7 +168,7 @@ class NoteEditorFragment : BaseFragment(R.layout.fragment_note_editor) {
                 pendingUris.toList().forEach { repo.uploadPhoto(projectId, noteId, it); pendingUris.remove(it) }
                 findNavController().popBackStack()
             } catch (error: Exception) { toast(error.message ?: "Could not save note or photo") }
-            finally { button.isEnabled = true }
+            finally { button.setBusy(false, "") }
         }
     }
 

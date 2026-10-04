@@ -14,6 +14,7 @@
     <color name="photo_placeholder">#FF4B5563</color>
     <color name="photo_viewer_bg">#FF111827</color>
     <color name="panel_light">#FFF3F4F6</color>
+    <color name="ripple_light">#66FFFFFF</color>
     <color name="scrim_dark">#99000000</color>
 
     <color name="status_blue">#FF3B82F6</color>
