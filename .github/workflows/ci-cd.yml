@@ -1,12 +1,12 @@
 name: CI/CD
 
-# Branch flow: feature/* -> develop -> main.
+# Branch flow: feature/* -> pull request -> main.
 # Every push and pull request is built and tested. Pushes to main (merges) are deployed to Azure.
 on:
   push:
-    branches: [main, develop, 'feature/**']
+    branches: [main, 'feature/**']
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
 permissions:
   contents: read

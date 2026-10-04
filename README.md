@@ -144,14 +144,13 @@ The test project covers authentication, company and owner access, account setup,
 | Branch | Purpose |
 | --- | --- |
 | `main` | Release branch. Whatever is merged here is deployed to Azure. |
-| `develop` | Integration branch. Finished features are merged here first and tested together. |
-| `feature/*` (and other topic branches) | One branch per feature or fix, created from `develop`. |
+| `feature/*` (and other topic branches) | One branch per feature or fix, created from `main`. Pushes to these branches are built and tested. |
 
-Flow: `feature/*` → pull request into `develop` → pull request from `develop` into `main`. Do not commit directly to `main`.
+Flow: `feature/*` → pull request into `main`. The pull request must pass the pipeline before it is merged. Do not commit directly to `main`.
 
 ### Pipeline
 
-[`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml) runs on every push to `main`, `develop` and `feature/**`, and on every pull request into `main` or `develop`.
+[`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml) runs on every push to `main` and `feature/**`, and on every pull request into `main`.
 
 | Job | What it does | Runs on |
 | --- | --- | --- |
