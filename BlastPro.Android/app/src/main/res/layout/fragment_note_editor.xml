@@ -41,7 +41,7 @@
                 style="@style/BlastPro.Label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="20dp"
                 android:layout_marginBottom="4dp"
                 android:text="Title" />
 
@@ -266,12 +266,14 @@
                 android:id="@+id/comments_section"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="16dp"
                 android:orientation="vertical">
                 <TextView
                     style="@style/BlastPro.Label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
                     android:text="Comments" />
                 <LinearLayout
                     android:id="@+id/comments_container"
@@ -283,14 +285,16 @@
                     style="@style/BlastPro.Field"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:hint="Add a comment"
                     android:inputType="textMultiLine|textCapSentences"
                     android:maxLength="2000" />
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_add_comment"
                     style="@style/BlastPro.Button"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:text="Post comment" />
             </LinearLayout>
         </LinearLayout>

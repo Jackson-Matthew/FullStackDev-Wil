@@ -5,7 +5,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.blastpromobile.R
 import com.example.blastpromobile.data.RemoteNote
@@ -47,7 +46,6 @@ class NotesAdapter(
         private val card: View = itemView.findViewById(R.id.card_note_root)
         private val title: TextView = itemView.findViewById(R.id.note_title)
         private val preview: TextView = itemView.findViewById(R.id.note_preview)
-        private val chip: TextView = itemView.findViewById(R.id.note_chip)
         private val date: TextView = itemView.findViewById(R.id.note_date)
         private val project: TextView = itemView.findViewById(R.id.note_project)
         private val photoCount: TextView = itemView.findViewById(R.id.note_photo_count)
@@ -57,11 +55,7 @@ class NotesAdapter(
             preview.text = note.body.ifBlank { "No text" }
             project.text = projectName
             date.text = runCatching { dateFmt.format(Date.from(Instant.parse(note.updatedAtUtc))) }.getOrDefault("")
-            chip.text = "Synced"
-            val colorRes = R.color.status_green
-            chip.backgroundTintList =
-                ContextCompat.getColorStateList(itemView.context, colorRes)
-
+            project.visibility = if (projectName.isBlank()) View.GONE else View.VISIBLE
             photoCount.text = note.photos.size.toString()
             card.setOnClickListener { onOpen(note) }
         }
