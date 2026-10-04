@@ -19,7 +19,6 @@ import com.example.blastpromobile.data.ApiFailure
 import com.example.blastpromobile.data.RemoteNote
 import com.example.blastpromobile.data.RemoteProject
 import com.example.blastpromobile.data.RemoteRepository
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class NotesFragment : BaseFragment(R.layout.fragment_notes) {
@@ -50,7 +49,9 @@ class NotesFragment : BaseFragment(R.layout.fragment_notes) {
             override fun onNothingSelected(parent: AdapterView<*>?) = Unit
         }
         search.doAfterTextChanged { showFiltered() }
-        view.findViewById<View>(R.id.btn_create_project).setOnClickListener { createProjectDialog() }
+        view.findViewById<View>(R.id.btn_create_project).setOnClickListener {
+            findNavController().safeNavigate(R.id.action_notes_to_new_project)
+        }
     }
 
     override fun onResume() {
@@ -90,27 +91,5 @@ class NotesFragment : BaseFragment(R.layout.fragment_notes) {
         adapter.submit(visible, projects.associate { it.id to it.name })
         empty.visibility = if (visible.isEmpty()) View.VISIBLE else View.GONE
         recycler.visibility = if (visible.isEmpty()) View.GONE else View.VISIBLE
-    }
-
-    private fun createProjectDialog() {
-        val context = requireContext()
-        val container = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(36, 12, 36, 0) }
-        val name = EditText(context).apply { hint = "Project name"; maxLines = 1 }
-        val site = EditText(context).apply { hint = "Site location"; maxLines = 1 }
-        val type = EditText(context).apply { hint = "Blast type, for example Surface"; maxLines = 1 }
-        container.addView(name); container.addView(site); container.addView(type)
-        MaterialAlertDialogBuilder(context).setTitle("New project").setView(container)
-            .setNegativeButton("Cancel", null)
-            .setPositiveButton("Create") { _, _ ->
-                val n = name.text.toString().trim()
-                val s = site.text.toString().trim()
-                val t = type.text.toString().trim()
-                if (n.isBlank() || s.isBlank() || t.isBlank()) {
-                    Toast.makeText(context, "Enter a name, site, and blast type", Toast.LENGTH_LONG).show()
-                } else viewLifecycleOwner.lifecycleScope.launch {
-                    try { repo.createProject(n, s, t); refresh() }
-                    catch (error: Exception) { Toast.makeText(context, error.message ?: "Could not create project", Toast.LENGTH_LONG).show() }
-                }
-            }.show()
     }
 }

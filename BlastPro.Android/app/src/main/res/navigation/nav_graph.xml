@@ -61,7 +61,20 @@
             app:exitAnim="@anim/hold"
             app:popEnterAnim="@anim/hold"
             app:popExitAnim="@anim/slide_out_subtle" />
+        <action
+            android:id="@+id/action_notes_to_new_project"
+            app:destination="@id/newProjectFragment"
+            app:enterAnim="@anim/slide_in_subtle"
+            app:exitAnim="@anim/hold"
+            app:popEnterAnim="@anim/hold"
+            app:popExitAnim="@anim/slide_out_subtle" />
     </fragment>
+
+    <fragment
+        android:id="@+id/newProjectFragment"
+        android:name="com.example.blastpromobile.ui.NewProjectFragment"
+        android:label="New Project"
+        tools:layout="@layout/fragment_new_project" />
 
     <fragment
         android:id="@+id/noteEditorFragment"

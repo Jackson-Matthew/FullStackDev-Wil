@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_screen"
+    android:orientation="vertical"
+    tools:ignore="HardcodedText">
+
+    <include layout="@layout/view_top_bar_back" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="16dp">
+
+            <TextView
+                style="@style/BlastPro.Heading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="New Project" />
+
+            <TextView
+                style="@style/BlastPro.Subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Create a project to attach notes and photos to." />
+
+            <TextView
+                style="@style/BlastPro.Label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="4dp"
+                android:text="Project name" />
+
+            <EditText
+                android:id="@+id/edit_project_name"
+                style="@style/BlastPro.Field"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Project name"
+                android:importantForAutofill="no"
+                android:inputType="textCapWords"
+                android:maxLines="1" />
+
+            <TextView
+                style="@style/BlastPro.Label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="4dp"
+                android:text="Site location" />
+
+            <EditText
+                android:id="@+id/edit_project_site"
+                style="@style/BlastPro.Field"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Site location"
+                android:importantForAutofill="no"
+                android:inputType="textCapWords"
+                android:maxLines="1" />
+
+            <TextView
+                style="@style/BlastPro.Label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="4dp"
+                android:text="Blast type" />
+
+            <Spinner
+                android:id="@+id/spinner_blast_type"
+                style="@style/BlastPro.Spinner"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:theme="@style/ThemeOverlay.BlastPro.Spinner" />
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="12dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_create"
+            style="@style/BlastPro.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Create project"
+            app:icon="@drawable/ic_check" />
+    </LinearLayout>
+</LinearLayout>
