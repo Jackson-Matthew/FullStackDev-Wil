@@ -3,22 +3,18 @@ package com.example.blastpromobile.ui
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
 import com.example.blastpromobile.R
-import com.example.blastpromobile.data.MobileSession
 import com.example.blastpromobile.databinding.ActivityMainBinding
 
-/** Hosts the screens, the bottom bar and the slide-out menu. */
+/** Hosts the screens and the bottom bar. */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -42,45 +38,19 @@ class MainActivity : AppCompatActivity() {
 
         setUpInsets()
         setUpBottomBar()
-        setUpDrawer()
 
         navController.addOnDestinationChangedListener { _, destination, _ -> onDestinationChanged(destination) }
-
-        // Back closes the menu first if it is open.
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (binding.drawerLayout.isDrawerOpen(GravityCompat.END)) {
-                    binding.drawerLayout.closeDrawer(GravityCompat.END)
-                } else {
-                    isEnabled = false
-                    onBackPressedDispatcher.onBackPressed()
-                    isEnabled = true
-                }
-            }
-        })
-    }
-
-    fun openMenu() {
-        binding.drawerLayout.openDrawer(GravityCompat.END)
-    }
-
-    private fun closeMenu() {
-        binding.drawerLayout.closeDrawer(GravityCompat.END)
     }
 
     /** Pads for the status bar, the navigation bar and the keyboard so nothing is hidden behind them. */
     private fun setUpInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.drawerLayout) { _, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.contentRoot) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             navBarInset = bars.bottom
             imeInset = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
             imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
 
             binding.contentRoot.setPadding(0, bars.top, 0, 0)
-            binding.drawerPanel.setPadding(
-                binding.drawerPanel.paddingLeft, bars.top + dp(16),
-                binding.drawerPanel.paddingRight, bars.bottom + dp(16)
-            )
             updateBottomArea()
             insets
         }
@@ -99,22 +69,7 @@ class MainActivity : AppCompatActivity() {
     private fun setUpBottomBar() {
         binding.navNotes.setOnClickListener { goTo(R.id.action_global_notes) }
         binding.navNewNote.setOnClickListener { goTo(R.id.action_global_new_note) }
-        binding.navChat.visibility = View.INVISIBLE
-    }
-
-    private fun setUpDrawer() {
-        binding.menuClose.setOnClickListener { closeMenu() }
-        binding.menuNewNote.setOnClickListener { closeMenu(); goTo(R.id.action_global_new_note) }
-        binding.menuNotes.setOnClickListener { closeMenu(); goTo(R.id.action_global_notes) }
-        binding.menuSettings.setOnClickListener { closeMenu(); goTo(R.id.action_global_settings) }
-        binding.menuSync.setOnClickListener {
-            closeMenu()
-            val host = supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment
-            val notes = host.childFragmentManager.primaryNavigationFragment as? NotesFragment
-            if (notes != null) notes.refresh() else goTo(R.id.action_global_notes)
-        }
-        binding.menuLogout.setOnClickListener { MobileSession.signOut(); closeMenu(); goTo(R.id.action_global_login) }
-        binding.menuChat.visibility = View.GONE
+        binding.navSettings.setOnClickListener { goTo(R.id.action_global_settings) }
     }
 
     /** Opens a main screen, ignoring taps on the screen the user is already on. */
@@ -134,15 +89,6 @@ class MainActivity : AppCompatActivity() {
         updateBottomArea()
 
         binding.navNotes.isSelected = id == R.id.notesFragment
-        binding.menuNotes.isSelected = id == R.id.notesFragment
-        binding.menuSettings.isSelected = id == R.id.settingsFragment
-
-        // The menu can be swiped open only on the main screens (not on login or the editor).
-        binding.drawerLayout.setDrawerLockMode(
-            if (showBottomBar) DrawerLayout.LOCK_MODE_UNLOCKED else DrawerLayout.LOCK_MODE_LOCKED_CLOSED,
-            GravityCompat.END
-        )
+        binding.navSettings.isSelected = id == R.id.settingsFragment
     }
-
-    private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 }

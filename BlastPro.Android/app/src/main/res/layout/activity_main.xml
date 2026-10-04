@@ -1,203 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/drawer_layout"
+    android:id="@+id/content_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/top_bar_bg"
+    android:orientation="vertical"
     tools:ignore="HardcodedText">
 
-    <!-- Screens + bottom bar -->
-    <LinearLayout
-        android:id="@+id/content_root"
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/nav_host"
+        android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        app:defaultNavHost="true"
+        app:navGraph="@navigation/nav_graph" />
+
+    <!-- Bottom bar: Notes, New Note (centre) and Settings -->
+    <LinearLayout
+        android:id="@+id/bottom_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:background="@color/top_bar_bg"
         android:orientation="vertical">
 
-        <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/nav_host"
-            android:name="androidx.navigation.fragment.NavHostFragment"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            app:defaultNavHost="true"
-            app:navGraph="@navigation/nav_graph" />
-
-        <!-- Bottom bar: Notes, New Note (centre) and Chat -->
         <LinearLayout
-            android:id="@+id/bottom_bar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/top_bar_bg"
-            android:orientation="vertical">
+            android:layout_height="72dp"
+            android:orientation="horizontal">
 
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:orientation="horizontal">
+                android:id="@+id/nav_notes"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center"
+                android:orientation="vertical">
 
-                <LinearLayout
-                    android:id="@+id/nav_notes"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="?attr/selectableItemBackground"
-                    android:gravity="center"
-                    android:orientation="vertical">
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:contentDescription="Notes"
+                    android:duplicateParentState="true"
+                    android:src="@drawable/ic_description"
+                    app:tint="@color/nav_item" />
 
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:contentDescription="Notes"
-                        android:duplicateParentState="true"
-                        android:src="@drawable/ic_description"
-                        app:tint="@color/nav_item" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:duplicateParentState="true"
+                    android:text="Notes"
+                    android:textColor="@color/nav_item"
+                    android:textSize="13sp" />
+            </LinearLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:duplicateParentState="true"
-                        android:text="Notes"
-                        android:textColor="@color/nav_item"
-                        android:textSize="13sp" />
-                </LinearLayout>
+            <FrameLayout
+                android:id="@+id/nav_new_note"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
 
-                <FrameLayout
-                    android:id="@+id/nav_new_note"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1">
+                <ImageView
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_circle_red"
+                    android:contentDescription="New note"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_add"
+                    app:tint="@color/white" />
+            </FrameLayout>
 
-                    <ImageView
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
-                        android:layout_gravity="center"
-                        android:background="@drawable/bg_circle_red"
-                        android:contentDescription="New note"
-                        android:padding="12dp"
-                        android:src="@drawable/ic_add"
-                        app:tint="@color/white" />
-                </FrameLayout>
+            <LinearLayout
+                android:id="@+id/nav_settings"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center"
+                android:orientation="vertical">
 
-                <LinearLayout
-                    android:id="@+id/nav_chat"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="?attr/selectableItemBackground"
-                    android:gravity="center"
-                    android:orientation="vertical">
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:contentDescription="Settings"
+                    android:duplicateParentState="true"
+                    android:src="@drawable/ic_settings"
+                    app:tint="@color/nav_item" />
 
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:contentDescription="Chat"
-                        android:duplicateParentState="true"
-                        android:src="@drawable/ic_forum"
-                        app:tint="@color/nav_item" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:duplicateParentState="true"
-                        android:text="Chat"
-                        android:textColor="@color/nav_item"
-                        android:textSize="13sp" />
-                </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:duplicateParentState="true"
+                    android:text="Settings"
+                    android:textColor="@color/nav_item"
+                    android:textSize="13sp" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-
-    <!-- Slide-out menu, opens from the right under the hamburger icon -->
-    <LinearLayout
-        android:id="@+id/drawer_panel"
-        android:layout_width="300dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="end"
-        android:background="@drawable/bg_drawer"
-        android:clickable="true"
-        android:focusable="true"
-        android:orientation="vertical"
-        android:padding="16dp">
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <include
-                layout="@layout/view_logo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical|start" />
-
-            <ImageButton
-                android:id="@+id/menu_close"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="center_vertical|end"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Close menu"
-                android:src="@drawable/ic_close"
-                app:tint="@color/white" />
-        </FrameLayout>
-
-        <TextView
-            android:id="@+id/menu_new_note"
-            style="@style/BlastPro.DrawerItem"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:drawableStart="@drawable/ic_add_circle_outline"
-            android:text="New Note" />
-
-        <TextView
-            android:id="@+id/menu_notes"
-            style="@style/BlastPro.DrawerItem"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:drawableStart="@drawable/ic_description"
-            android:text="Notes" />
-
-        <TextView
-            android:id="@+id/menu_chat"
-            style="@style/BlastPro.DrawerItem"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:drawableStart="@drawable/ic_forum"
-            android:text="Chat" />
-
-        <TextView
-            android:id="@+id/menu_settings"
-            style="@style/BlastPro.DrawerItem"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:drawableStart="@drawable/ic_settings"
-            android:text="Settings" />
-
-        <TextView
-            android:id="@+id/menu_sync"
-            style="@style/BlastPro.DrawerItem"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:drawableStart="@drawable/ic_sync"
-            android:text="Refresh" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/menu_logout"
-            style="@style/BlastPro.DrawerItem"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:drawableStart="@drawable/ic_logout"
-            android:text="Log Out" />
-    </LinearLayout>
-</androidx.drawerlayout.widget.DrawerLayout>
+</LinearLayout>

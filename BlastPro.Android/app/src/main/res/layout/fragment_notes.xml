@@ -8,7 +8,7 @@
     android:orientation="vertical"
     tools:ignore="HardcodedText">
 
-    <include layout="@layout/view_top_bar_menu" />
+    <include layout="@layout/view_top_bar_plain" />
 
     <LinearLayout
         android:layout_width="match_parent"
