@@ -82,10 +82,15 @@ public sealed class CompanyFlowTests
         Assert.Contains("Create Company", html);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task Main_user_registers_and_is_signed_in_immediately(bool sqlServer)
+    [Fact]
+    public Task Main_user_registers_and_is_signed_in_immediately() => RegisterAndSignIn(sqlServer: false);
+
+    // Needs SQL Server LocalDB, which CI runners do not have. CI skips the LocalDb category.
+    [Fact]
+    [Trait("Category", "LocalDb")]
+    public Task Main_user_registers_and_is_signed_in_immediately_on_sql_server() => RegisterAndSignIn(sqlServer: true);
+
+    private static async Task RegisterAndSignIn(bool sqlServer)
     {
         await using var api = new ApiTestHost(sqlServer: sqlServer);
         await api.InitializeDatabaseAsync();

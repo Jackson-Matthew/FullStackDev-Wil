@@ -10,6 +10,8 @@ namespace BlastPro.Tests.Integration;
 
 // These tests use isolated SQL Server LocalDB databases, so real rollback and inter-request locking
 // are verified. Each host deletes only its unique test database when disposed.
+// CI runners have no LocalDB, so the pipeline skips this category.
+[Trait("Category", "LocalDb")]
 public sealed class CompanyTransactionTests
 {
     [Fact]

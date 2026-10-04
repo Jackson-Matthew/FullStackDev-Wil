@@ -137,6 +137,44 @@ dotnet test .\BlastPro\BlastPro.slnx
 
 The test project covers authentication, company and owner access, account setup, Blaster seats, product prices and saved costs, project notes and photo access, calculations, result history, and MVC forms. Transaction tests require Windows SQL Server LocalDB and use temporary databases deleted after each test. Other tests use isolated in-memory data.
 
+## GitHub workflow (CI/CD)
+
+### Branches
+
+| Branch | Purpose |
+| --- | --- |
+| `main` | Release branch. Whatever is merged here is deployed to Azure. |
+| `develop` | Integration branch. Finished features are merged here first and tested together. |
+| `feature/*` (and other topic branches) | One branch per feature or fix, created from `develop`. |
+
+Flow: `feature/*` → pull request into `develop` → pull request from `develop` into `main`. Do not commit directly to `main`.
+
+### Pipeline
+
+[`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml) runs on every push to `main`, `develop` and `feature/**`, and on every pull request into `main` or `develop`.
+
+| Job | What it does | Runs on |
+| --- | --- | --- |
+| `test` | Builds the solution, runs the .NET tests (unit, integration and end to end) and the JavaScript tests. | All pushes and pull requests |
+| `android` | Builds the Android debug APK and uploads it as an artifact. | All pushes and pull requests |
+| `deploy-api` | Publishes `BlastPro.Api` and deploys it to Azure App Service. The API applies database migrations when it starts. | Push to `main` only, after `test` and `android` pass |
+| `deploy-web` | Publishes the MVC web app and deploys it to Azure App Service. | Push to `main` only, after `test` and `android` pass |
+
+Tests marked `Category=LocalDb` need SQL Server LocalDB, which GitHub runners do not have. The pipeline skips them. They still run locally with `dotnet test`.
+
+### One-time Azure setup
+
+The deploy jobs are skipped until these are set in the GitHub repository under **Settings > Secrets and variables > Actions**.
+
+| Type | Name | Value |
+| --- | --- | --- |
+| Variable | `AZURE_API_APP_NAME` | Name of the API App Service in Azure |
+| Variable | `AZURE_WEB_APP_NAME` | Name of the web App Service in Azure |
+| Secret | `AZURE_API_PUBLISH_PROFILE` | Contents of the API app's publish profile (Azure portal > the app > **Download publish profile**) |
+| Secret | `AZURE_WEB_PUBLISH_PROFILE` | Contents of the web app's publish profile |
+
+Keep `Jwt__Key` and `ConnectionStrings__DefaultConnection` in the App Service configuration, not in GitHub or the repository. To require a review before each deployment, add required reviewers to the `production` environment under **Settings > Environments**.
+
 ## Troubleshooting
 
 | Symptom | Check |

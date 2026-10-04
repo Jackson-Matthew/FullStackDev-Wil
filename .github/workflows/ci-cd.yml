@@ -1,0 +1,122 @@
+name: CI/CD
+
+# Branch flow: feature/* -> develop -> main.
+# Every push and pull request is built and tested. Pushes to main (merges) are deployed to Azure.
+on:
+  push:
+    branches: [main, develop, 'feature/**']
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build and test (.NET and JavaScript)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build
+        run: dotnet build BlastPro/BlastPro.Tests/BlastPro.Tests.csproj --configuration Release
+
+      # Tests marked Category=LocalDb need SQL Server LocalDB, which GitHub runners do not have.
+      # They still run locally and in Visual Studio.
+      - name: .NET tests
+        run: dotnet test BlastPro/BlastPro.Tests/BlastPro.Tests.csproj --configuration Release --no-build --filter "Category!=LocalDb" --logger "trx;LogFileName=results.trx"
+
+      - name: JavaScript tests
+        run: node --test BlastPro/BlastPro.Tests/JavaScript/timing-sequences.test.cjs
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: BlastPro/BlastPro.Tests/TestResults/*.trx
+
+  android:
+    name: Build Android app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: BlastPro.Android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: blastpro-debug-apk
+          path: BlastPro.Android/app/build/outputs/apk/debug/*.apk
+
+  # Deployment runs only for a push to main (a merged pull request) after tests pass.
+  # It is skipped until the Azure app names are set as repository variables, see README.
+  deploy-api:
+    name: Deploy API to Azure
+    needs: [test, android]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.AZURE_API_APP_NAME != ''
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency: deploy-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish API
+        run: dotnet publish BlastPro/BlastPro.Api/BlastPro.Api.csproj --configuration Release --output ./publish/api
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_API_APP_NAME }}
+          publish-profile: ${{ secrets.AZURE_API_PUBLISH_PROFILE }}
+          package: ./publish/api
+
+  deploy-web:
+    name: Deploy web app to Azure
+    needs: [test, android]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.AZURE_WEB_APP_NAME != ''
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency: deploy-web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish web app
+        run: dotnet publish BlastPro/BlastPro/BlastPro.Mvc.csproj --configuration Release --output ./publish/web
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEB_APP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEB_PUBLISH_PROFILE }}
+          package: ./publish/web
