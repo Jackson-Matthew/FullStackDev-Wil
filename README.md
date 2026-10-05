@@ -4,7 +4,7 @@ BlastPro is Group 21's work integrated learning application for planning, record
 
 **This is the first working phase of the full BlastPro project.** The earlier prototype and broader requirements documents guided the design; this README describes what the submitted code actually does. BlastPro is decision support for qualified blasters. Its calculations and warnings are planning estimates and do not approve a blast, determine a safe exclusion distance, or replace site procedures and professional review.
 
-## Start here for assessment
+
 
 | Item | Where to find it |
 | --- | --- |
@@ -18,7 +18,7 @@ BlastPro is Group 21's work integrated learning application for planning, record
 
 The hosted sign-in page returned HTTP 200 and the hosted API correctly rejected an unauthenticated `/api/auth/me` request with HTTP 401 on **5 October 2026**. Availability of the free Azure hosting tier can vary; the local setup below is the reproducible fallback. No passwords or deployment secrets are stored in this README.
 
-## What the submitted system does
+## What the system does
 
 | Area | Implemented behaviour |
 | --- | --- |
@@ -33,7 +33,7 @@ The hosted sign-in page returned HTTP 200 and the hosted API correctly rejected 
 
 Explosive cost is shown only if **every hole** has an active priced product in one currency. The optional sample-price action inserts editable demonstration prices; these are not supplier quotations. Saved results keep their calculated cost if prices later change.
 
-### Requirements and scope
+
 
 The team's Task 1 requirements and prototype describe a much broader eventual product. The assessment build focuses on the working web flow and the later Android notes companion agreed by the team. The following map helps distinguish delivered evidence from future requirements:
 
@@ -67,7 +67,7 @@ The MVC project renders web pages and calls the API; it does not access the data
 | [`BlastPro.Android/app/`](BlastPro.Android/app/) | Kotlin Android application |
 | [`BlastPro/docs/`](BlastPro/docs/) | Account, company, and database notes |
 
-## Suggested marker walkthrough
+
 
 Use a test company and non-sensitive demonstration data. A complete walk-through is:
 
@@ -153,10 +153,6 @@ Run the .NET suite from the repository root:
 dotnet test .\BlastPro\BlastPro.slnx
 ```
 
-On 5 October 2026 the solution built and **88/88 .NET tests passed** (0 failed, 0 skipped). The separate JavaScript timing suite also passed **4/4 tests** with `node --test BlastPro/BlastPro.Tests/JavaScript/timing-sequences.test.cjs`. Coverage includes authentication, role/company/owner access, company account creation and Blaster limits, product prices and saved costs, notes and photo access, calculation results/history, reports, and MVC flows. Some transaction tests require Windows LocalDB; other tests use isolated in-memory data.
-
-The Android debug build also completed successfully with `.\gradlew.bat :app:assembleDebug` on 5 October 2026. This confirms compilation; it does not claim that every phone model or hosted user flow was device-tested. The [GitHub Actions workflow](.github/workflows/ci-cd.yml) builds/tests the web/API and Android app on pushes and pull requests; it excludes tests tagged `LocalDb` on hosted runners. Run the full suite locally to include those tests.
-
 ## Deployment and operational notes
 
 The current demonstration environment uses **two Azure App Service web apps** (MVC and API) and **Azure SQL**. The Android app calls the hosted API directly. The repository has a deployment workflow for pushes to `main`, after the test and Android jobs pass. Its deployment jobs run only when the matching Azure app-name variables are set and the publish-profile secrets are available. Until that one-time GitHub configuration is complete, publishing the repository does not update the live apps.
@@ -185,11 +181,3 @@ The API's database connection string and JWT key stay in Azure App Service confi
 - Historical reports from calculations saved before pattern snapshots cannot show the exact earlier hole plan. Current saved calculations include a snapshot.
 - Android notes use live API requests. Offline save/queue/replay and an AI assistant are not implemented.
 - Production email delivery and a formal design approval/audit workflow are not in this release. Azure deployment automation depends on the GitHub variables and secrets listed above.
-
-## Further reading
-
-- [Company, Blaster and profile flow](BlastPro/docs/company-accounts.md)
-- [Login and local password reset](BlastPro/docs/login-and-password-reset.md)
-- [Database model and migrations](BlastPro/docs/database-plan.md)
-
-The full Task 1 requirements and presentation materials are maintained separately by the team. This README, the current source, and the commands above are the evidence for what this repository delivers now.
