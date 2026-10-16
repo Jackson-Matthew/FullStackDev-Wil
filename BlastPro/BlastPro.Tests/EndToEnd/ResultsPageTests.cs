@@ -64,6 +64,8 @@ public sealed class ResultsPageTests
         Assert.DoesNotContain("Every hole needs a priced explosive product", html);
         Assert.Contains("Flyrock is an idealized trajectory estimate", html);
         Assert.Contains("severity-warning", html);
+        Assert.Contains("warning-severity", html);
+        Assert.Contains("warnings-count-warning", html);
         Assert.DoesNotContain("Test 1 Pro", html);
         Assert.DoesNotContain("Save Results", html);
         var report = await browser.GetAsync($"/Reports/Preview?projectId={projectId}");
@@ -74,6 +76,7 @@ public sealed class ResultsPageTests
         Assert.Contains("report-hole-plan", reportHtml);
         Assert.Contains("S300 Volcano", reportHtml);
         Assert.Contains("Density (g/cm³)", reportHtml);
+        Assert.Contains("report-warning-warning", reportHtml);
         Assert.Contains("Download PDF", reportHtml);
         Assert.Contains("Test site", reportHtml);
         var printable = await browser.GetAsync($"/Reports/Print?projectId={projectId}");
@@ -83,6 +86,10 @@ public sealed class ResultsPageTests
         Assert.Equal(HttpStatusCode.OK, pdf.StatusCode);
         Assert.Equal("application/pdf", pdf.Content.Headers.ContentType?.MediaType);
         Assert.StartsWith("%PDF", System.Text.Encoding.ASCII.GetString((await pdf.Content.ReadAsByteArrayAsync()).AsSpan(0, 4)));
+
+        var dashboardWithWarnings = await browser.GetStringAsync("/Dashboard/Index");
+        Assert.Contains("results-warning-warning", dashboardWithWarnings);
+        Assert.Contains("highest severity Warning", dashboardWithWarnings);
 
         var unchangedDraft = await BrowserForms.SubmitAsync(browser,
             $"/PatternDesign/Index?projectId={projectId}", "/PatternDesign/SaveDraft",
@@ -139,6 +146,69 @@ public sealed class ResultsPageTests
         Assert.Contains("report-hole-plan", oldReportHtml);
         Assert.Contains("S300 Volcano", oldReportHtml);
         Assert.Contains("<td>5</td>", oldReportHtml);
+    }
+
+    [Fact]
+    public async Task Dashboard_badges_use_only_the_displayed_result_and_show_critical_severity()
+    {
+        await using var api = new ApiTestHost();
+        var user = await api.AddUserAsync();
+        var (projectId, _) = await SeedProject(api, user);
+        using (var scope = api.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.CalculationResults.Add(new CalculationResult
+            {
+                BlastProjectId = projectId,
+                CalculatedByUserId = user.Id,
+                CalculatedAtUtc = DateTime.UtcNow.AddMinutes(-1),
+                IsCurrent = false,
+                Warnings = new List<BlastWarning>
+                {
+                    new() { Code = "OLD", Severity = BlastPro.Api.Models.Enums.WarningSeverity.Critical, Message = "Past issue" }
+                }
+            });
+            db.CalculationResults.Add(new CalculationResult
+            {
+                BlastProjectId = projectId,
+                CalculatedByUserId = user.Id,
+                CalculatedAtUtc = DateTime.UtcNow,
+                IsCurrent = true,
+                Warnings = new List<BlastWarning>
+                {
+                    new() { Code = "CURRENT", Severity = BlastPro.Api.Models.Enums.WarningSeverity.Critical, Message = "Review now" },
+                    new() { Code = "INFO", Severity = BlastPro.Api.Models.Enums.WarningSeverity.Information, Message = "For context" }
+                }
+            });
+            await db.SaveChangesAsync();
+        }
+
+        await using var mvc = new MvcTestHost(api);
+        using var browser = mvc.Browser();
+        await Login(browser, user.Email!);
+        var dashboard = await browser.GetStringAsync("/Dashboard/Index");
+        Assert.Contains("results-warning-critical", dashboard);
+        Assert.Contains("highest severity Critical", dashboard);
+        Assert.Contains("2 calculation warnings", dashboard);
+        Assert.DoesNotContain("3 calculation warnings", dashboard);
+
+        var results = await browser.GetStringAsync($"/Results/Index?projectId={projectId}");
+        Assert.Contains("severity-critical", results);
+        Assert.Contains("severity-information", results);
+        var report = await browser.GetStringAsync($"/Reports/Preview?projectId={projectId}");
+        Assert.Contains("report-warning-critical", report);
+        Assert.Contains("report-warning-information", report);
+
+        using (var scope = api.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var current = await db.CalculationResults.SingleAsync(r => r.BlastProjectId == projectId && r.IsCurrent);
+            current.Warnings.Clear();
+            db.BlastWarnings.RemoveRange(db.BlastWarnings.Where(w => w.CalculationResultId == current.Id));
+            await db.SaveChangesAsync();
+        }
+        dashboard = await browser.GetStringAsync("/Dashboard/Index");
+        Assert.DoesNotContain("results-warning-badge", dashboard);
     }
 
     [Fact]

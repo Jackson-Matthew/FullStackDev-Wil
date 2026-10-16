@@ -6,6 +6,8 @@
     Layout = "_Layout";
 
     var inv = CultureInfo.InvariantCulture;
+    var highestSeverity = Model.Warnings.Any(w => w.Severity == "Critical") ? "critical"
+        : Model.Warnings.Any(w => w.Severity == "Warning") ? "warning" : "information";
 }
 
 <link rel="stylesheet" href="~/css/results.css" asp-append-version="true" />
@@ -301,7 +303,7 @@
 
                     <h3 class="warnings-title">Safety &amp; Compliance Warnings</h3>
 
-                    <span class="warnings-count-badge @(Model.WarningCount == 0 ? "warnings-count-clear" : "")">
+                    <span class="warnings-count-badge @(Model.WarningCount == 0 ? "warnings-count-clear" : $"warnings-count-{highestSeverity}")">
                         @(Model.WarningCount == 0 ? "No Issues Found" : $"{Model.WarningCount} {(Model.WarningCount == 1 ? "Issue" : "Issues")} Found")
                     </span>
 
@@ -318,13 +320,18 @@
                 {
                     foreach (var warning in Model.Warnings)
                     {
-                        var isCritical = warning.Severity == "Critical";
+                        var severity = warning.Severity switch
+                        {
+                            "Critical" => "critical",
+                            "Warning" => "warning",
+                            _ => "information"
+                        };
 
-                        <div class="warning-row @(isCritical ? "severity-critical" : "severity-warning")">
+                        <div class="warning-row severity-@severity">
 
-                            <i class="bi @(isCritical ? "bi-exclamation-circle-fill" : "bi-exclamation-triangle-fill") warning-icon"></i>
+                            <i class="bi @(severity == "critical" ? "bi-exclamation-octagon-fill" : severity == "warning" ? "bi-exclamation-triangle-fill" : "bi-info-circle-fill") warning-icon" aria-hidden="true"></i>
 
-                            <span>@warning.Message</span>
+                            <span><strong class="warning-severity">@warning.Severity</strong>@warning.Message</span>
 
                         </div>
                     }

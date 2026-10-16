@@ -54,6 +54,39 @@ public class ProjectsController : ControllerBase
             })
             .ToListAsync();
 
+        if (results.Count > 0)
+        {
+            var projectIds = results.Select(p => p.Id).ToArray();
+            var resultWarnings = await _db.CalculationResults.AsNoTracking()
+                .Where(r => projectIds.Contains(r.BlastProjectId))
+                .Select(r => new
+                {
+                    r.BlastProjectId,
+                    r.Id,
+                    r.IsCurrent,
+                    r.CalculatedAtUtc,
+                    WarningCount = r.Warnings.Count,
+                    HighestSeverity = r.Warnings.Select(w => (int?)w.Severity).Max()
+                })
+                .ToListAsync();
+
+            var displayedResults = resultWarnings
+                .OrderByDescending(r => r.IsCurrent)
+                .ThenByDescending(r => r.CalculatedAtUtc)
+                .ThenByDescending(r => r.Id)
+                .GroupBy(r => r.BlastProjectId)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            foreach (var project in results)
+            {
+                if (!displayedResults.TryGetValue(project.Id, out var displayed)) continue;
+                project.WarningCount = displayed.WarningCount;
+                project.HighestWarningSeverity = displayed.HighestSeverity is int severity
+                    ? ((WarningSeverity)severity).ToString()
+                    : null;
+            }
+        }
+
         return Ok(results);
     }
 

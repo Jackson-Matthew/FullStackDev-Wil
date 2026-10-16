@@ -494,8 +494,8 @@
     border-radius: 20px;
     font-size: 0.72rem;
     font-weight: 700;
-    background-color: #FFE7E5;
-    color: #D32F2F;
+    background-color: #e8f1ff;
+    color: #17447e;
     white-space: nowrap;
 }
 
@@ -503,6 +503,9 @@
         background-color: #E6F7EA;
         color: #1E7B34;
     }
+
+    .warnings-count-badge.warnings-count-warning { background-color: #fff0bd; color: #704700; }
+    .warnings-count-badge.warnings-count-critical { background-color: #ffe0dc; color: #a61b19; }
 
 .warning-row {
     display: flex;
@@ -519,14 +522,20 @@
     }
 
     .warning-row.severity-critical {
-        background-color: #FDEDED;
-        color: #C0392B;
+        background-color: #fff0ee;
+        border: 2px solid #c62828;
+        border-left-width: 6px;
+        color: #831b19;
     }
 
     .warning-row.severity-warning {
-        background-color: #FFF8E6;
-        color: #8A6100;
+        background-color: #fff8e4;
+        border: 1px solid #d99818;
+        border-left-width: 5px;
+        color: #704700;
     }
+
+    .warning-row.severity-information { background-color: #edf5ff; border: 1px solid #8eb9ed; border-left-width: 4px; color: #17447e; }
 
     .warning-row.severity-clear {
         background-color: #E6F7EA;
@@ -546,6 +555,9 @@
 .severity-warning .warning-icon {
     color: #D4A017;
 }
+
+.severity-information .warning-icon { color: #2765ad; }
+.warning-severity { display: block; margin-bottom: 3px; font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; }
 
 .severity-clear .warning-icon {
     color: #1E7B34;

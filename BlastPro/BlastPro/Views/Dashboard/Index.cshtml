@@ -163,6 +163,12 @@
                     {
                         var status = string.IsNullOrWhiteSpace(p.Status) ? "Draft" : p.Status;
                         var statusKey = status.ToLowerInvariant();
+                        var warningLevel = p.HighestWarningSeverity switch
+                        {
+                            "Critical" => "critical",
+                            "Warning" => "warning",
+                            _ => "information"
+                        };
 
                         <div class="project-row project-row-five"
                              data-project-name="@p.Name.ToLowerInvariant()"
@@ -237,8 +243,16 @@
                                    asp-action="Index"
                                    asp-route-projectId="@p.Id"
                                    class="project-action-btn results-btn"
-                                   title="View calculation results">
+                                   title="@(p.WarningCount > 0 ? $"View results: {p.WarningCount} calculation {(p.WarningCount == 1 ? "warning" : "warnings")}; highest severity {p.HighestWarningSeverity}" : "View calculation results")">
                                     Results
+                                    @if (p.WarningCount > 0)
+                                    {
+                                        <span class="results-warning-badge results-warning-@warningLevel"
+                                              aria-label="@p.WarningCount calculation @(p.WarningCount == 1 ? "warning" : "warnings"); highest severity @p.HighestWarningSeverity">
+                                            <i class="bi @(warningLevel == "information" ? "bi-info-circle-fill" : "bi-exclamation-triangle-fill")" aria-hidden="true"></i>
+                                            @p.WarningCount
+                                        </span>
+                                    }
                                 </a>
 
                                 <a asp-controller="Projects"

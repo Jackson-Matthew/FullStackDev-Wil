@@ -219,7 +219,7 @@
 
 .project-actions {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 6px;
     align-items: center;
     justify-content: flex-end;
@@ -247,6 +247,25 @@
 /* Every action shares one colour; only Delete stands apart */
 .project-action-btn { background: #111111; border-color: #111111; color: #FFFFFF; }
 .project-action-btn:hover { background: #333333; border-color: #333333; color: #FFFFFF; }
+
+.results-warning-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 23px;
+    min-height: 20px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #173b70;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.results-warning-badge.results-warning-warning { background: #fff0bd; color: #704700; }
+.results-warning-badge.results-warning-critical { background: #ffe0dc; color: #a61b19; }
+.results-warning-badge .bi { font-size: 0.7rem; }
 
 /* Delete: red outline */
 .project-action-btn.delete-btn { background: #FFFFFF; border-color: #DC3545; color: #DC3545; }

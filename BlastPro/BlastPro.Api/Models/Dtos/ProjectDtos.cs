@@ -9,6 +9,8 @@ public class ProjectSummaryDto
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
+    public int WarningCount { get; set; }
+    public string? HighestWarningSeverity { get; set; }
 }
 
 public class ProjectDetailDto

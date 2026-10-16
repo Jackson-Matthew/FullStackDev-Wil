@@ -88,7 +88,14 @@
             <ul class="report-warning-list">
                 @foreach (var warning in Model.Warnings)
                 {
-                    <li class="@(warning.Severity == "Critical" ? "is-critical" : "")">
+                    var severity = warning.Severity switch
+                    {
+                        "Critical" => "critical",
+                        "Warning" => "warning",
+                        _ => "information"
+                    };
+                    <li class="report-warning-@severity">
+                        <span class="report-warning-icon" aria-hidden="true">@(severity == "critical" ? "!" : severity == "warning" ? "!" : "i")</span>
                         <strong>@warning.Severity</strong><span>@warning.Message</span>
                     </li>
                 }

@@ -340,20 +340,24 @@ public static class ReportPdfBuilder
 
             foreach (var warning in _report.Warnings)
             {
-                var critical = warning.Severity == "Critical";
-                var lines = Wrap(warning.Message, _body, ContentWidth - 100);
+                var (border, fill, ink) = warning.Severity switch
+                {
+                    "Critical" => (XColor.FromArgb(0xC6, 0x28, 0x28), XColor.FromArgb(0xFF, 0xF0, 0xEE), XColor.FromArgb(0x83, 0x1B, 0x19)),
+                    "Warning" => (XColor.FromArgb(0xD9, 0x98, 0x18), XColor.FromArgb(0xFF, 0xF8, 0xE4), XColor.FromArgb(0x70, 0x47, 0x00)),
+                    _ => (XColor.FromArgb(0x8E, 0xB9, 0xED), XColor.FromArgb(0xED, 0xF5, 0xFF), XColor.FromArgb(0x17, 0x44, 0x7E))
+                };
+                var lines = Wrap(warning.Message, _body, ContentWidth - 115);
                 var height = Math.Max(1, lines.Count) * (_body.Height + 2) + 12;
                 Ensure(height + 6);
                 _gfx.DrawRoundedRectangle(
-                    new XPen(critical ? XColor.FromArgb(0xF1, 0xB6, 0xB1) : XColor.FromArgb(0xF0, 0xDF, 0xBA), 1),
-                    Brush(critical ? XColor.FromArgb(0xFF, 0xF2, 0xF0) : XColor.FromArgb(0xFF, 0xFA, 0xF0)),
+                    new XPen(border, warning.Severity == "Critical" ? 2 : 1),
+                    Brush(fill),
                     Margin, _y, ContentWidth, height, 6, 6);
-                var ink = critical ? XColor.FromArgb(0x84, 0x26, 0x1F) : XColor.FromArgb(0x65, 0x49, 0x1B);
-                Text(warning.Severity, _bold, ink, Margin + 12, _y + 6, 70);
+                Text(warning.Severity.ToUpperInvariant(), _bold, ink, Margin + 12, _y + 6, 85);
                 var ty = _y + 6;
                 foreach (var line in lines)
                 {
-                    Text(line, _body, ink, Margin + 88, ty, ContentWidth - 100);
+                    Text(line, _body, ink, Margin + 103, ty, ContentWidth - 115);
                     ty += _body.Height + 2;
                 }
                 _y += height + 6;
