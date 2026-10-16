@@ -28,15 +28,13 @@ public sealed class ResultsPageTests
         Assert.Contains("Calculation.DelayWindowMilliseconds", patternHtml);
         Assert.Contains("Calculation.ExclusionRadiusMetres", patternHtml);
 
-        var draft = await BrowserForms.SubmitAsync(browser,
+        var reviewFields = CalculationFields(projectId, holeId);
+        reviewFields["continueToResults"] = "true";
+        var review = await BrowserForms.SubmitAsync(browser,
             $"/PatternDesign/Index?projectId={projectId}", "/PatternDesign/SaveDraft",
-            CalculationFields(projectId, holeId));
-        Assert.Equal(HttpStatusCode.Redirect, draft.StatusCode);
-        var first = await BrowserForms.SubmitAsync(browser,
-            $"/Results/Index?projectId={projectId}", "/Projects/CalculatePhysics",
-            new Dictionary<string, string> { ["projectId"] = projectId.ToString() });
-        Assert.Equal(HttpStatusCode.Redirect, first.StatusCode);
-        Assert.Contains("Results", first.Headers.Location!.ToString());
+            reviewFields);
+        Assert.Equal(HttpStatusCode.Redirect, review.StatusCode);
+        Assert.Contains("Results", review.Headers.Location!.ToString());
         using (var scope = api.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -52,6 +50,8 @@ public sealed class ResultsPageTests
         var page = await browser.GetAsync($"/Results/Index?projectId={projectId}");
         var html = await page.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+        Assert.Contains("Results calculated", html);
+        Assert.DoesNotContain("No results yet", html);
         Assert.Contains("102.00", html);
         Assert.Contains("255.00", html);
         Assert.Contains("0.23 mm/s", html);

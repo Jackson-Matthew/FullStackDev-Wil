@@ -71,9 +71,9 @@ public sealed class ProjectFlowTests
                 ["ReceptorStructureType"] = "Unspecified", ["continueToResults"] = "true"
             });
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Contains("Results", response.Headers.Location!.ToString());
+        Assert.Contains("PatternDesign", response.Headers.Location!.ToString());
         var reopened = await browser.GetAsync(response.Headers.Location!);
-        Assert.Contains("Pattern draft saved", await reopened.Content.ReadAsStringAsync());
+        Assert.Contains("Complete the saved draft before calculating", await reopened.Content.ReadAsStringAsync());
     }
 
     [Fact]

@@ -1,5 +1,6 @@
 using BlastPro.Mvc.Models.Dtos;
 using BlastPro.Mvc.Models.ViewModels.Projects;
+using BlastPro.Mvc.Services;
 using BlastPro.Mvc.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -54,6 +55,7 @@ public sealed class PatternDesignController : Controller
         }
 
         if (TempData["Success"] is string success) ViewData["Success"] = success;
+        if (TempData["Error"] is string error) ViewData["Error"] = error;
         return View(PatternView, result.Data);
     }
 
@@ -120,9 +122,18 @@ public sealed class PatternDesignController : Controller
             return View(PatternView, model);
         }
 
-        TempData["Success"] = "Pattern draft saved.";
         if (continueToResults)
+        {
+            var calculationError = await SavedDraftCalculator.CalculateAsync(_api, model.ProjectId);
+            if (calculationError is not null)
+            {
+                TempData["Error"] = calculationError;
+                return RedirectToAction(nameof(Index), new { projectId = model.ProjectId });
+            }
+            TempData["Success"] = "Results calculated.";
             return RedirectToAction("Index", "Results", new { projectId = model.ProjectId });
+        }
+        TempData["Success"] = "Pattern draft saved.";
         return RedirectToAction("Index", "Dashboard");
     }
 

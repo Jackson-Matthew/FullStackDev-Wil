@@ -133,7 +133,7 @@
                 <h3 class="results-empty-title">No results yet</h3>
 
                 <p class="results-empty-text">
-                    Save the pattern draft, then calculate its results here. Any missing site values will be listed before calculation.
+                    Open Pattern Design and choose Save &amp; Review Results to calculate and view the results. Complete any missing site inputs shown there.
                 </p>
 
                 <a asp-controller="PatternDesign"
@@ -144,11 +144,6 @@
                     Go to Pattern Design
 
                 </a>
-
-                <form asp-controller="Projects" asp-action="CalculatePhysics" method="post" class="mt-3">
-                    <input type="hidden" name="projectId" value="@Model.ProjectId" />
-                    <button type="submit" class="results-empty-btn">Calculate Saved Draft</button>
-                </form>
 
             </div>
 
