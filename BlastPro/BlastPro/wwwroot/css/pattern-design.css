@@ -3,8 +3,8 @@
        ========================================================= */
 
 .design-page {
-    padding-top: 25px;
-    padding-bottom: 40px;
+    padding-top: 30px;
+    padding-bottom: 50px;
 }
 
 
@@ -50,11 +50,12 @@
 .back-btn {
     display: inline-flex;
     align-items: center;
-    min-height: 32px;
+    gap: 6px;
+    height: 32px;
     padding: 0 12px;
     background-color: #FF8C00;
     border: 1px solid #FF8C00;
-    border-radius: 5px;
+    border-radius: 8px;
     color: #FFFFFF;
     font-size: 0.85rem;
     font-weight: 500;
@@ -75,9 +76,9 @@
 
 .design-topbar {
     background: #FFFFFF;
-    border: 1px solid #d9dee4;
-    border-radius: 10px;
-    margin: 14px 0 18px;
+    border: 1px solid #000000;
+    border-radius: 12px;
+    margin: 0 0 18px;
     overflow: hidden;
 }
 
@@ -90,8 +91,8 @@
 }
 
 .design-title {
-    color: #18232f;
-    font-size: 1.25rem;
+    color: #0B1B3A;
+    font-size: 1.4rem;
     font-weight: 700;
     margin: 0;
     min-width: 0;
@@ -501,16 +502,16 @@ select.param-input {
 .review-results-btn {
     min-height: 40px;
     padding: 0 18px;
-    border-radius: 5px;
+    border-radius: 8px;
     font-size: 0.85rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .save-draft-btn {
-    background-color: #000000;
-    border: 1px solid #000000;
+    background-color: #111111;
+    border: 1px solid #111111;
     color: #FFFFFF;
 }
 
@@ -524,13 +525,14 @@ select.param-input {
     align-items: center;
     text-decoration: none;
     background-color: #FFFFFF;
-    border: 1px solid #334155;
-    color: #182334;
+    border: 1px solid #D1D5DB;
+    color: #111827;
 }
 
     .review-results-btn:hover {
-        background-color: #f1f5f9;
-        color: #182334;
+        background-color: #F3F4F6;
+        border-color: #9CA3AF;
+        color: #111827;
     }
 
 
@@ -563,7 +565,7 @@ select.param-input {
 .design-main-grid { display: grid; grid-template-columns: minmax(0, 1.07fr) minmax(0, .93fr); gap: 22px; align-items: start; }
 .design-input-column, .design-preview-column { min-width: 0; }
 .design-preview-column { position: sticky; top: 22px; }
-.design-card { border: 1px solid #d9dee4; border-radius: 12px; box-shadow: 0 2px 10px rgba(20, 31, 44, .035); }
+.design-card { border: 1px solid #000000; border-radius: 12px; }
 .design-card-header { padding: 20px 22px 11px; }
 .design-card-body { padding: 0 22px 22px; }
 .design-card-title { color: #18232f; font-size: 1rem; letter-spacing: -.01em; }

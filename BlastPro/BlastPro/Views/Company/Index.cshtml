@@ -136,7 +136,7 @@
 
                                 <form asp-controller="Blasters" asp-action="SetStatus" asp-route-id="@blaster.Id" method="post" class="d-flex m-0">
                                     <input type="hidden" name="isActive" value="@((!blaster.IsActive).ToString().ToLowerInvariant())" />
-                                    <button class="company-btn company-btn-outline" type="submit">@(blaster.IsActive ? "Deactivate" : "Reactivate")</button>
+                                    <button class="company-btn company-btn-outline @(blaster.IsActive ? "company-btn-danger" : "")" type="submit">@(blaster.IsActive ? "Deactivate" : "Reactivate")</button>
                                 </form>
 
                             </div>

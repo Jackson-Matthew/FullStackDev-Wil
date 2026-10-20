@@ -7,10 +7,13 @@
 
 <section class="container product-form-page">
 
+    <div class="bp-backbar">
+        <a asp-action="Index" class="bp-back-btn"><i class="bi bi-arrow-left"></i> Products and prices</a>
+    </div>
+
     <div class="products-card product-form-card">
 
         <div class="product-form-header">
-            <a asp-action="Index" class="product-back"><i class="bi bi-arrow-left"></i> Products and prices</a>
             <h1 class="products-title">@(Model.Id == 0 ? "Add Product" : "Edit Product")</h1>
             <p class="products-subtitle">Prices are in ZAR per kilogram and apply to new calculations only.</p>
         </div>

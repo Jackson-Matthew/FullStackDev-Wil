@@ -4,14 +4,14 @@
 
 .profile-page {
     max-width: 1000px;
-    padding-top: 34px;
+    padding-top: 30px;
     padding-bottom: 50px;
 }
 
 .profile-card {
     background: #FFFFFF;
-    border-radius: 14px;
-    box-shadow: 0 6px 26px rgba(0, 0, 0, 0.18);
+    border: 1px solid #000000;
+    border-radius: 12px;
     color: #111827;
     overflow: hidden;
 }
@@ -58,9 +58,9 @@
 }
 
 .profile-name {
-    color: #000000;
-    font-size: 1.05rem;
-    font-weight: 600;
+    color: #0B1B3A;
+    font-size: 1.4rem;
+    font-weight: 700;
     margin: 0;
     overflow-wrap: anywhere;
 }
@@ -82,16 +82,16 @@
     align-items: center;
     background: #FF0000;
     border: 1px solid #FF0000;
-    border-radius: 6px;
+    border-radius: 8px;
     color: #FFFFFF;
     cursor: pointer;
     display: inline-flex;
     font-family: inherit;
     font-size: 0.85rem;
     font-weight: 600;
-    height: 36px;
+    height: 40px;
     justify-content: center;
-    padding: 0 28px;
+    padding: 0 18px;
     text-decoration: none;
 }
 
@@ -105,14 +105,14 @@
     align-items: center;
     background: #FFFFFF;
     border: 1px solid #D1D5DB;
-    border-radius: 6px;
+    border-radius: 8px;
     color: #111827;
     display: inline-flex;
     font-size: 0.85rem;
-    font-weight: 500;
-    height: 36px;
+    font-weight: 600;
+    height: 40px;
     justify-content: center;
-    padding: 0 22px;
+    padding: 0 18px;
     text-decoration: none;
 }
 
@@ -139,8 +139,8 @@
     margin-bottom: 8px;
 }
 
-.profile-value,
-.profile-body .form-control {
+/* Read-only values: grey fill, so they don't look editable */
+.profile-value {
     background: #F8F8F8;
     border: 1px solid transparent;
     border-radius: 8px;
@@ -149,6 +149,17 @@
     min-height: 42px;
     overflow-wrap: anywhere;
     padding: 11px 16px;
+}
+
+/* Edit inputs: white with a border, same as every other form */
+.profile-body .form-control {
+    background: #FFFFFF;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    color: #111827;
+    font-size: 0.9rem;
+    min-height: 42px;
+    padding: 8px 12px;
 }
 
     .profile-value.is-empty { color: #9CA3AF; }
@@ -230,3 +241,4 @@
     .profile-head-actions .profile-secondary-btn,
     .profile-head-actions .profile-edit-btn { flex: 1; }
 }
+

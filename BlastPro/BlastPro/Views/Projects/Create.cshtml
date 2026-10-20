@@ -10,6 +10,10 @@
 
 <div class="container create-project-page">
 
+    <div class="bp-backbar">
+        <a asp-controller="Dashboard" asp-action="Index" class="bp-back-btn"><i class="bi bi-arrow-left"></i> Dashboard</a>
+    </div>
+
     <div class="create-project-card">
 
         <form asp-controller="Projects" asp-action="Create" method="post" novalidate>

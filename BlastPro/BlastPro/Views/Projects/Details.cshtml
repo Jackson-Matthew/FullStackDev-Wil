@@ -5,52 +5,60 @@
     Layout = "_Layout";
 }
 
-<div class="container py-4">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-        <div>
-            <a asp-controller="Dashboard" asp-action="Index" class="text-decoration-none">
-                &larr; Back to Dashboard
+<section class="container bp-page">
+
+    <header class="bp-topbar">
+        <div class="bp-topbar-main">
+            <a asp-controller="Dashboard" asp-action="Index" class="bp-back-btn">
+                <i class="bi bi-arrow-left"></i> Dashboard
             </a>
-            <h2 class="mt-2 mb-0">@Model.Project.Name</h2>
+            <h1 class="bp-title">@Model.Project.Name</h1>
         </div>
 
-        <div class="d-flex gap-2">
-            <a asp-controller="ProjectNotes" asp-action="Index" asp-route-projectId="@Model.Project.Id" class="btn btn-outline-light">Notes and photos</a>
-            <a asp-action="Edit" asp-route-id="@Model.Project.Id" class="btn btn-outline-dark">
-                Edit Project
-            </a>
+        <div class="bp-actions">
+            <a asp-controller="ProjectNotes" asp-action="Index" asp-route-projectId="@Model.Project.Id" class="bp-btn bp-btn-sm bp-btn-dark">Notes</a>
+            <a asp-action="Edit" asp-route-id="@Model.Project.Id" class="bp-btn bp-btn-sm">Edit</a>
             <a asp-controller="PatternDesign"
                asp-action="Index"
                asp-route-projectId="@Model.Project.Id"
-               class="btn btn-danger">
+               class="bp-btn bp-btn-sm bp-btn-primary">
                 Pattern Design
             </a>
         </div>
-    </div>
+    </header>
 
-    <div class="card mb-4">
-        <div class="card-header fw-semibold">Project Details</div>
-        <div class="card-body">
-            <dl class="row mb-0">
-                <dt class="col-sm-3">Site Location</dt>
-                <dd class="col-sm-9">@Model.Project.SiteLocation</dd>
-
-                <dt class="col-sm-3">Blast Type</dt>
-                <dd class="col-sm-9">@Model.Project.BlastType</dd>
-
-                <dt class="col-sm-3">Status</dt>
-                <dd class="col-sm-9">@Model.Project.Status</dd>
-
-                <dt class="col-sm-3">Rock Type</dt>
-                <dd class="col-sm-9">@(Model.Project.RockType ?? "Not set")</dd>
+    <div class="bp-card mb-4">
+        <div class="bp-card-header">
+            <h2 class="bp-section-title">Project Details</h2>
+        </div>
+        <div class="bp-card-body">
+            <dl class="bp-details">
+                <div>
+                    <dt>Site Location</dt>
+                    <dd>@Model.Project.SiteLocation</dd>
+                </div>
+                <div>
+                    <dt>Blast Type</dt>
+                    <dd>@Model.Project.BlastType</dd>
+                </div>
+                <div>
+                    <dt>Status</dt>
+                    <dd>@Model.Project.Status</dd>
+                </div>
+                <div>
+                    <dt>Rock Type</dt>
+                    <dd>@(Model.Project.RockType ?? "Not set")</dd>
+                </div>
             </dl>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-header fw-semibold">Hole Pattern</div>
+    <div class="bp-card">
+        <div class="bp-card-header">
+            <h2 class="bp-section-title">Hole Pattern</h2>
+        </div>
         <div class="table-responsive">
-            <table class="table table-striped align-middle mb-0">
+            <table class="bp-table">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -66,7 +74,7 @@
                     @if (Model.Holes.Count == 0)
                     {
                         <tr>
-                            <td colspan="7" class="text-center py-4">No holes have been added yet.</td>
+                            <td colspan="7" class="bp-empty">No holes have been added yet.</td>
                         </tr>
                     }
                     else
@@ -88,4 +96,5 @@
             </table>
         </div>
     </div>
-</div>
+
+</section>

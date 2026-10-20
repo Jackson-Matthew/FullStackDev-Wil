@@ -11,7 +11,7 @@
 .products-card {
     background: #FFFFFF;
     border: 1px solid #000000;
-    border-radius: 18px;
+    border-radius: 12px;
     color: #111827;
     padding: 26px 28px 22px;
 }
@@ -27,7 +27,7 @@
 
 .products-title {
     color: #0B1B3A;
-    font-size: 1.45rem;
+    font-size: 1.4rem;
     font-weight: 700;
     margin: 0;
 }
@@ -54,11 +54,11 @@
     cursor: pointer;
     display: inline-flex;
     font-family: inherit;
-    font-size: 0.8rem;
-    font-weight: 500;
-    height: 38px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    height: 40px;
     justify-content: center;
-    padding: 0 16px;
+    padding: 0 18px;
     text-decoration: none;
     white-space: nowrap;
 }
@@ -81,7 +81,7 @@
     font-size: 0.85rem;
     font-weight: 600;
     gap: 8px;
-    height: 38px;
+    height: 40px;
     padding: 0 18px;
     text-decoration: none;
     white-space: nowrap;
@@ -230,9 +230,10 @@
 }
 
     .product-actions .products-btn {
-        font-size: 0.75rem;
-        height: 30px;
-        padding: 0 14px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        height: 32px;
+        padding: 0 12px;
     }
 
 
@@ -240,7 +241,7 @@
 
 .product-form-page {
     max-width: 640px;
-    padding-top: 40px;
+    padding-top: 30px;
     padding-bottom: 50px;
 }
 
@@ -251,18 +252,6 @@
     padding: 22px 28px 18px;
 }
 
-.product-back {
-    align-items: center;
-    color: #6B7280;
-    display: inline-flex;
-    font-size: 0.78rem;
-    font-weight: 500;
-    gap: 6px;
-    margin-bottom: 12px;
-    text-decoration: none;
-}
-
-    .product-back:hover { color: #FF0000; }
 
 .product-form-body { padding: 22px 28px 26px; }
 
@@ -399,9 +388,6 @@
     padding-top: 18px;
 }
 
-.product-cancel { height: 40px; padding: 0 18px; }
-
-.product-form-actions .products-add-btn { height: 40px; }
 
 
 /* ---------- Smaller screens ---------- */
