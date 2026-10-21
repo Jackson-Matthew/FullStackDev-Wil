@@ -3,16 +3,11 @@
     Layout = "_Layout";
 }
 
-<div class="container" style="max-width: 420px; margin-top: 80px;">
-    <div class="card shadow-sm">
-        <div class="card-body p-4 text-center">
-            <h2 class="mb-3 text-danger">Access Denied</h2>
-            <p class="text-muted">
-                You do not have permission to access this resource.
-            </p>
-            <a asp-action="Index" asp-controller="Dashboard" class="btn btn-primary mt-3">
-                Back to Dashboard
-            </a>
-        </div>
+<section class="container bp-page">
+    <div class="bp-card bp-message">
+        <i class="bi bi-shield-lock bp-message-icon" aria-hidden="true"></i>
+        <h1 class="bp-title mt-2">Access Denied</h1>
+        <p class="bp-subtitle">You do not have permission to access this page.</p>
+        <a asp-action="Index" asp-controller="Dashboard" class="bp-btn bp-btn-primary">Back to Dashboard</a>
     </div>
-</div>
+</section>

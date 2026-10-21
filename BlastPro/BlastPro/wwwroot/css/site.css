@@ -9,7 +9,7 @@ html {
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+  box-shadow: 0 0 0 0.15rem rgba(255, 0, 0, 0.2);
 }
 
 html {
@@ -29,3 +29,229 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+/* =========================================================
+   SHARED UI STANDARD
+   One look for every page. Page stylesheets follow these
+   values; simple pages use the bp-* classes directly.
+   Card: white, 12px corners, black border.
+   Buttons: 40px (32px compact), 8px corners.
+   ========================================================= */
+
+.bp-page {
+  max-width: 1100px;
+  padding-top: 30px;
+  padding-bottom: 50px;
+}
+
+.bp-page-narrow { max-width: 640px; }
+
+.bp-card {
+  background: #FFFFFF;
+  border: 1px solid #000000;
+  border-radius: 12px;
+  color: #111827;
+  overflow: hidden;
+}
+
+.bp-card-header {
+  border-bottom: 1px solid #E5E7EB;
+  padding: 22px 26px 18px;
+}
+
+.bp-card-body { padding: 22px 26px; }
+
+.bp-card-footer {
+  border-top: 1px solid #E5E7EB;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 16px 26px;
+}
+
+.bp-title {
+  color: #0B1B3A;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.bp-subtitle {
+  color: #6B7280;
+  font-size: 0.85rem;
+  margin: 4px 0 0;
+}
+
+.bp-section-title {
+  color: #0B1B3A;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* White header bar with back button, title and actions */
+.bp-topbar {
+  align-items: center;
+  background: #FFFFFF;
+  border: 1px solid #000000;
+  border-radius: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding: 12px 16px;
+}
+
+/* Back button on its own above a form card */
+.bp-backbar { margin-bottom: 20px; }
+
+.bp-topbar-main {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.bp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bp-btn {
+  align-items: center;
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  color: #111827;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  gap: 6px;
+  height: 40px;
+  justify-content: center;
+  line-height: 1;
+  padding: 0 18px;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.bp-btn:hover { background: #F3F4F6; border-color: #9CA3AF; color: #111827; }
+
+.bp-btn-sm { font-size: 0.8rem; font-weight: 500; height: 32px; padding: 0 12px; }
+
+.bp-btn-primary { background: #FF0000; border-color: #FF0000; color: #FFFFFF; }
+.bp-btn-primary:hover { background: #CC0000; border-color: #CC0000; color: #FFFFFF; }
+
+.bp-btn-dark { background: #111111; border-color: #111111; color: #FFFFFF; }
+.bp-btn-dark:hover { background: #333333; border-color: #333333; color: #FFFFFF; }
+
+.bp-btn-danger { background: #FFFFFF; border-color: #DC3545; color: #DC3545; }
+.bp-btn-danger:hover { background: #DC3545; border-color: #DC3545; color: #FFFFFF; }
+
+/* Orange "back" button used at the top of inner pages */
+.bp-back-btn {
+  align-items: center;
+  background: #FF8C00;
+  border: 1px solid #FF8C00;
+  border-radius: 8px;
+  color: #FFFFFF;
+  display: inline-flex;
+  font-size: 0.85rem;
+  font-weight: 500;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.bp-back-btn:hover { background: #E07B00; border-color: #E07B00; color: #FFFFFF; }
+
+.bp-details {
+  display: grid;
+  gap: 14px 24px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin: 0;
+}
+
+.bp-details dt {
+  color: #6B7280;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.bp-details dd { color: #111827; font-weight: 500; margin: 4px 0 0; }
+
+.bp-table { margin: 0; width: 100%; }
+
+.bp-table th {
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+  color: #6B7280;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 12px 16px;
+  text-transform: uppercase;
+}
+
+.bp-table td {
+  border-bottom: 1px solid #F1F2F4;
+  color: #111827;
+  font-size: 0.9rem;
+  padding: 12px 16px;
+}
+
+.bp-table tr:last-child td { border-bottom: none; }
+
+.bp-empty {
+  color: #6B7280;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.bp-field { margin-bottom: 18px; }
+
+.bp-label {
+  color: #111827;
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.bp-card .form-control,
+.bp-card .form-select {
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  min-height: 42px;
+}
+
+.bp-card .form-control:focus,
+.bp-card .form-select:focus {
+  border-color: #FF0000;
+  box-shadow: 0 0 0 0.15rem rgba(255, 0, 0, 0.2);
+}
+
+.bp-error { color: #DC3545; display: block; font-size: 0.8rem; margin-top: 4px; }
+
+.bp-summary { color: #DC3545; font-size: 0.85rem; }
+.bp-summary ul { margin-bottom: 0; padding-left: 18px; }
+
+.bp-message {
+  margin: 40px auto;
+  max-width: 480px;
+  padding: 36px 30px;
+  text-align: center;
+}
+
+.bp-message-icon { color: #FF0000; font-size: 2.2rem; }
+.bp-message .bp-subtitle { font-size: 0.9rem; margin: 10px 0 22px; }

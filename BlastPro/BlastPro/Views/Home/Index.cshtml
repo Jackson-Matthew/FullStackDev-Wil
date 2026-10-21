@@ -1,8 +1,11 @@
-﻿@{
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="container bp-page">
+    <div class="bp-card bp-message">
+        <h1 class="bp-title">Welcome to <span class="blast-text">Blast</span>Pro</h1>
+        <p class="bp-subtitle">Drill and blast engineering software.</p>
+        <a asp-controller="Dashboard" asp-action="Index" class="bp-btn bp-btn-primary">Go to Dashboard</a>
+    </div>
+</section>

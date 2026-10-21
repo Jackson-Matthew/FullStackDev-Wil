@@ -1,14 +1,50 @@
 @model BlastPro.Mvc.Models.ViewModels.CompanyViewModel
 @{ ViewData["Title"] = "Edit Company"; }
-<link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
-<section class="admin-panel admin-form">
-    <h1>Edit company contact details</h1>
-    <form asp-action="Edit" method="post">
-        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
-        <div class="mb-3"><label asp-for="ContactEmail" class="form-label"></label><input asp-for="ContactEmail" class="form-control" /></div>
-        <div class="mb-3"><label asp-for="ContactPhone" class="form-label"></label><input asp-for="ContactPhone" class="form-control" /></div>
-        <div class="mb-3"><label asp-for="Address" class="form-label"></label><textarea asp-for="Address" class="form-control" rows="3"></textarea></div>
-        <button type="submit" class="btn btn-danger">Save details</button> <a asp-action="Index" class="btn btn-outline-light">Cancel</a>
-    </form>
+
+<section class="container bp-page bp-page-narrow">
+
+    <div class="bp-backbar">
+        <a asp-action="Index" class="bp-back-btn"><i class="bi bi-arrow-left"></i> Company</a>
+    </div>
+
+    <div class="bp-card">
+
+        <div class="bp-card-header">
+            <h1 class="bp-title">Edit Company Details</h1>
+            <p class="bp-subtitle">Update the contact details for @Model.Name.</p>
+        </div>
+
+        <form asp-action="Edit" method="post">
+            <div class="bp-card-body">
+                <div asp-validation-summary="All" class="bp-summary" role="alert"></div>
+
+                <div class="bp-field">
+                    <label asp-for="ContactEmail" class="bp-label"></label>
+                    <input asp-for="ContactEmail" class="form-control" autocomplete="email" />
+                    <span asp-validation-for="ContactEmail" class="bp-error"></span>
+                </div>
+
+                <div class="bp-field">
+                    <label asp-for="ContactPhone" class="bp-label"></label>
+                    <input asp-for="ContactPhone" class="form-control" autocomplete="tel" />
+                    <span asp-validation-for="ContactPhone" class="bp-error"></span>
+                </div>
+
+                <div class="bp-field mb-0">
+                    <label asp-for="Address" class="bp-label"></label>
+                    <textarea asp-for="Address" class="form-control" rows="3" autocomplete="street-address"></textarea>
+                    <span asp-validation-for="Address" class="bp-error"></span>
+                </div>
+            </div>
+
+            <div class="bp-card-footer">
+                <a asp-action="Index" class="bp-btn">Cancel</a>
+                <button type="submit" class="bp-btn bp-btn-primary"><i class="bi bi-check-lg"></i> Save details</button>
+            </div>
+        </form>
+
+    </div>
+
 </section>
+
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

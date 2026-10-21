@@ -1,7 +1,7 @@
 
 .results-page {
-    padding-top: 25px;
-    padding-bottom: 40px;
+    padding-top: 30px;
+    padding-bottom: 50px;
 }
 
 
@@ -11,11 +11,11 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    min-height: 34px;
-    padding: 0 14px;
+    height: 32px;
+    padding: 0 12px;
     background-color: #FF8C00;
     border: 1px solid #FF8C00;
-    border-radius: 5px;
+    border-radius: 8px;
     color: #FFFFFF;
     font-size: 0.85rem;
     font-weight: 500;
@@ -41,11 +41,11 @@
 .results-nav-btn {
     display: inline-flex;
     align-items: center;
-    min-height: 34px;
-    padding: 0 14px;
+    height: 32px;
+    padding: 0 12px;
     background-color: #FFFFFF;
     border: 1px solid #D1D5DB;
-    border-radius: 5px;
+    border-radius: 8px;
     color: #111827;
     font-size: 0.85rem;
     font-weight: 500;
@@ -67,8 +67,8 @@
     flex-wrap: wrap;
     gap: 12px 16px;
     background-color: #FFFFFF;
-    border: 1px solid #d9dee4;
-    border-radius: 10px;
+    border: 1px solid #000000;
+    border-radius: 12px;
     margin-bottom: 20px;
     padding: 12px 16px;
 }
@@ -83,8 +83,8 @@
 }
 
 .results-title {
-    color: #18232f;
-    font-size: 1.25rem;
+    color: #0B1B3A;
+    font-size: 1.4rem;
     font-weight: 700;
     margin: 0;
     overflow-wrap: anywhere;
@@ -126,10 +126,10 @@
     align-items: center;
     justify-content: center;
     gap: 7px;
-    height: 34px;
+    height: 32px;
     padding: 0 14px;
     border: 1px solid transparent;
-    border-radius: 6px;
+    border-radius: 8px;
     font-family: inherit;
     font-size: 0.82rem;
     font-weight: 600;
@@ -219,8 +219,8 @@
 
 .results-empty-state {
     background-color: #FFFFFF;
-    border: 1px solid #E4E4E4;
-    border-radius: 10px;
+    border: 1px solid #000000;
+    border-radius: 12px;
     padding: 60px 20px;
     text-align: center;
 }
@@ -249,14 +249,14 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 42px;
+    height: 40px;
     padding: 0 20px;
     background-color: #FF0000;
     border: 1px solid #FF0000;
-    border-radius: 6px;
+    border-radius: 8px;
     color: #FFFFFF;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     text-decoration: none;
     transition: all 0.2s ease;
 }
@@ -284,8 +284,8 @@
 .stat-card {
     position: relative;
     background-color: #FFFFFF;
-    border: 1px solid #E4E4E4;
-    border-radius: 10px;
+    border: 1px solid #000000;
+    border-radius: 12px;
     padding: 18px 20px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
@@ -346,8 +346,8 @@
 
 .metric-card {
     background-color: #FFFFFF;
-    border: 1px solid #E4E4E4;
-    border-radius: 10px;
+    border: 1px solid #000000;
+    border-radius: 12px;
     padding: 20px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     display: flex;
@@ -465,8 +465,8 @@
 
 .warnings-card {
     background-color: #FFFFFF;
-    border: 1px solid #E4E4E4;
-    border-radius: 10px;
+    border: 1px solid #000000;
+    border-radius: 12px;
     padding: 20px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     margin-bottom: 16px;
@@ -568,8 +568,8 @@
 
 .previous-results-card {
     background-color: #FFFFFF;
-    border: 1px solid #E4E4E4;
-    border-radius: 10px;
+    border: 1px solid #000000;
+    border-radius: 12px;
     overflow: hidden;
     margin-bottom: 16px;
 }

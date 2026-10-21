@@ -8,13 +8,14 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    min-height: 42px;
+    height: 40px;
     background-color: #FF0000;
     border: 1px solid #FF0000;
     color: #FFFFFF;
     padding: 0 18px;
-    border-radius: 5px;
-    font-weight: 500;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
     transition: all 0.2s ease;
@@ -29,7 +30,7 @@
 .project-filters {
     background-color: #FFFFFF;
     border: 1px solid #000000;
-    border-radius: 6px;
+    border-radius: 12px;
     padding: 20px;
     margin-bottom: 25px;
 }
@@ -43,10 +44,10 @@
 .project-search,
 .project-status {
     background-color: #FFFFFF;
-    border: 1px solid #000000;
+    border: 1px solid #D1D5DB;
     color: #000000;
     min-height: 42px;
-    border-radius: 5px;
+    border-radius: 8px;
 }
 
     .project-search::placeholder {
@@ -69,7 +70,7 @@
 .projects-card {
     background-color: #FFFFFF;
     border: 1px solid #000000;
-    border-radius: 6px;
+    border-radius: 12px;
     overflow: hidden;
 }
 
@@ -233,7 +234,7 @@
     height: 32px;
     padding: 0 12px;
     border: 1px solid transparent;
-    border-radius: 6px;
+    border-radius: 8px;
     font-family: inherit;
     font-size: 0.8rem;
     font-weight: 500;
@@ -244,7 +245,7 @@
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-/* Every action shares one colour; only Delete stands apart */
+/* Navigation actions share one colour; Edit and Delete use outlines */
 .project-action-btn { background: #111111; border-color: #111111; color: #FFFFFF; }
 .project-action-btn:hover { background: #333333; border-color: #333333; color: #FFFFFF; }
 
@@ -267,12 +268,16 @@
 .results-warning-badge.results-warning-critical { background: #ffe0dc; color: #a61b19; }
 .results-warning-badge .bi { font-size: 0.7rem; }
 
+/* Edit: grey outline, same as Edit buttons on other pages */
+.project-action-btn.edit-btn { background: #FFFFFF; border-color: #D1D5DB; color: #111827; }
+.project-action-btn.edit-btn:hover { background: #F3F4F6; border-color: #9CA3AF; color: #111827; }
+
 /* Delete: red outline */
 .project-action-btn.delete-btn { background: #FFFFFF; border-color: #DC3545; color: #DC3545; }
 .project-action-btn.delete-btn:hover { background: #DC3545; border-color: #DC3545; color: #FFFFFF; }
 
 /* Mid-width screens: compact buttons so they stay on one line */
-@media (max-width: 1280px) {
+@media (max-width: 1399px) {
     .project-header-five,
     .project-row-five {
         grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 0.8fr) 370px;

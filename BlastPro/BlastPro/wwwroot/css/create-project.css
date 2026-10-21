@@ -1,13 +1,13 @@
 ﻿.create-project-page {
-    max-width: 460px;
-    margin-top: 60px;
-    margin-bottom: 40px;
+    max-width: 520px;
+    padding-top: 30px;
+    padding-bottom: 50px;
 }
 
 .create-project-card {
     background-color: #FFFFFF;
     border: 1px solid #000000;
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
 }
 .create-project-header {
@@ -16,14 +16,14 @@
 }
 
 .create-project-title {
-    color: #000000;
+    color: #0B1B3A;
     font-size: 1.4rem;
     font-weight: 700;
     margin-bottom: 6px;
 }
 
 .create-project-subtitle {
-    color: #333333;
+    color: #6B7280;
     font-size: 0.85rem;
     margin-bottom: 0;
 }
@@ -107,24 +107,25 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 44px;
-    padding: 0 22px;
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 0.95rem;
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
     text-decoration: none;
     transition: all 0.2s ease;
 }
 
 .create-cancel-btn {
     background-color: #FFFFFF;
-    border: 1px solid #000000;
-    color: #000000;
+    border: 1px solid #D1D5DB;
+    color: #111827;
 }
 
     .create-cancel-btn:hover {
-        background-color: #F5F5F5;
-        color: #000000;
+        background-color: #F3F4F6;
+        border-color: #9CA3AF;
+        color: #111827;
     }
 
 .create-submit-btn {
@@ -138,3 +139,4 @@
         border-color: #CC0000;
         color: #FFFFFF;
     }
+

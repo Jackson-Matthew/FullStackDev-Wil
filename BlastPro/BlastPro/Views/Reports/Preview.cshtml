@@ -5,7 +5,7 @@
 }
 <link rel="stylesheet" href="~/css/report.css" asp-append-version="true" />
 
-<main class="report-page report-page-wide">
+<section class="report-page report-page-wide">
     @if (!Model.HasResults)
     {
         <div class="report-empty">
@@ -29,7 +29,7 @@
         <div class="report-view">
             <aside class="report-side no-print" aria-label="Report actions">
                 <a asp-controller="Dashboard" asp-action="Index" class="report-side-btn report-side-back">
-                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                    <i class="bi bi-arrow-left"></i> Dashboard
                 </a>
                 <a asp-controller="Reports" asp-action="DownloadPdf" asp-route-projectId="@Model.ProjectId"
                    asp-route-resultId="@Model.ResultId" class="report-side-btn report-side-download">
@@ -44,7 +44,7 @@
             </div>
         </div>
     }
-</main>
+</section>
 
 @section Scripts {
     <script src="~/js/reports.js" asp-append-version="true"></script>
