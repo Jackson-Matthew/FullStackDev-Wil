@@ -1,6 +1,19 @@
 # BlastPro
 
-BlastPro is Group 21's work integrated learning application for planning, recording, and reviewing surface blast designs. It combines a browser based design workspace with an Android field notebook. Both clients use the same ASP.NET Core API and SQL Server database, so authorised project notes and photos appear across the web and mobile apps.
+BlastPro is the BlastPro Team's (Group 16) work integrated learning application for planning, recording, and reviewing surface blast designs. It combines a browser based design workspace with an Android field notebook. Both clients use the same ASP.NET Core API and SQL Server database, so authorised project notes and photos appear across the web and mobile apps.
+
+## Final assessment submission — Group 16
+
+The final assessment documents and presentation are in [`submission/`](submission/README.md). The source code remains in the application folders below.
+
+| Submission item | File or link |
+| --- | --- |
+| Final project report | [BlastPro_Final_Project_Report.docx](submission/BlastPro_Final_Project_Report.docx) |
+| Complete web and Android user manual | [BlastPro_Complete_User_Manual.docx](submission/BlastPro_Complete_User_Manual.docx) |
+| Presentation retained for the final demonstration | [BlastPro_Task2_Hosted_Final.pptx](submission/BlastPro_Task2_Hosted_Final.pptx) |
+| Demonstration video | [Watch the selected demonstration recording](https://youtu.be/vXlie9qM5x8) |
+
+The report includes this repository's link and the demonstration video link. Individual declaration and peer-review completion are handled separately by each student.
 
 **This is the first working phase of the full BlastPro project.** The earlier prototype and broader requirements documents guided the design; this README describes what the submitted code actually does. BlastPro is decision support for qualified blasters. Its calculations and warnings are planning estimates and do not approve a blast, determine a safe exclusion distance, or replace site procedures and professional review.
 
